@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -12,7 +11,6 @@ import java.sql.SQLException;
 public class DBManager {
     public static Connection connect() {
         File dbPath = new File("database/log.db");
-        System.out.println(dbPath.getAbsolutePath());
         if (!Files.exists(Path.of(dbPath.getAbsolutePath()))) {
             try {
                 Files.createDirectories(Path.of(dbPath.getParentFile().getCanonicalPath()));
@@ -24,12 +22,13 @@ public class DBManager {
         }
 
         String dbUrl = "jdbc:sqlite:" + dbPath.getAbsolutePath();
-        System.out.println(dbUrl);
+        Connection dbCon = null;
         try {
-            return DriverManager.getConnection(dbUrl);
+             dbCon = DriverManager.getConnection(dbUrl);
         } catch (SQLException theE) {
             System.err.println("Error connecting to database " + theE.getMessage());
             System.exit(1);
         }
+        return dbCon;
     }
 }
