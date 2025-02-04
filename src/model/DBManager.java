@@ -82,13 +82,14 @@ public final class DBManager {
             );
             if (!res.next()) {
                 System.out.println("making new table");
-                statement.executeUpdate("CREATE TABLE \"eventlog\" (\n" +
-                        "\t\"id\"\tINTEGER NOT NULL UNIQUE,\n" +
-                        "\t\"event\"\tTEXT,\n" +
-                        "\t\"path\"\tTEXT,\n" +
-                        "\t\"Timestamp\"\tDATETIME DEFAULT CURRENT_TIMESTAMP,\n" +
-                        "\tPRIMARY KEY(\"id\" AUTOINCREMENT)\n" +
-                        ");");
+                statement.executeUpdate("""
+                        CREATE TABLE "eventlog" (
+                        \t"id"\tINTEGER NOT NULL UNIQUE,
+                        \t"event"\tTEXT,
+                        \t"path"\tTEXT,
+                        \t"Timestamp"\tDATETIME DEFAULT CURRENT_TIMESTAMP,
+                        \tPRIMARY KEY("id" AUTOINCREMENT)
+                        );""");
                 System.out.println("added table");
             }
         } catch (SQLException e) {
