@@ -27,7 +27,7 @@ public final class DBManager {
     }
 
     public void connect() {
-        File dbPath = new File("database/log.db");
+        File dbPath = new File("database/log.sql");
         if (!Files.exists(Path.of(dbPath.getAbsolutePath()))) {
             try {
                 Files.createDirectories(Path.of(dbPath.getParentFile().getCanonicalPath()));
