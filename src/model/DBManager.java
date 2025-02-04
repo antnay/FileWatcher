@@ -40,6 +40,7 @@ public final class DBManager {
         String dbUrl = "jdbc:sqlite:" + dbPath.getAbsolutePath();
         try {
             connection = DriverManager.getConnection(dbUrl);
+            System.out.println("Connected to database");
             initDB();
         } catch (SQLException theE) {
             System.err.println("Error connecting to database " + theE.getMessage());
