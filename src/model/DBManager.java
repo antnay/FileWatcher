@@ -11,7 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public final class DBManager {
+final class DBManager {
 
     private static final DBManager DB_INSTANCE = new DBManager();
 
@@ -22,11 +22,11 @@ public final class DBManager {
         // TODO: Maybe call connect() right away?
     }
 
-    public static DBManager getDBManager() {
+    static DBManager getDBManager() {
         return DB_INSTANCE;
     }
 
-    public void connect() {
+    void connect() {
         File dbPath = new File("database/log.sql");
         if (!Files.exists(Path.of(dbPath.getAbsolutePath()))) {
             try {
@@ -48,7 +48,7 @@ public final class DBManager {
         }
     }
 
-    public void disconnect() {
+    void disconnect() {
         try {
             if (!isConnected()) {
                 connection.close();
@@ -61,7 +61,7 @@ public final class DBManager {
     }
 
     // test
-    public void addToTable(String event) {
+    void addToTable(String event) {
         String insertSQL = "INSERT INTO eventlog(event) VALUES(?)";
         try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
             preparedStatement.setString(1, event);
@@ -73,7 +73,7 @@ public final class DBManager {
         }
     }
 
-    private void initDB() {
+    void initDB() {
         if (!isConnected()) {
             throw new IllegalStateException("Cannot add to table while disconnected");
         }
