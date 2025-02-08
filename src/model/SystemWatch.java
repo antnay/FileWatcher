@@ -37,12 +37,12 @@ public class SystemWatch {
         myWatchKeys = new TreeMap<>();
         myExts = new LinkedList<>();
         myIsRunning = false;
-        myExecutor = Executors.newSingleThreadExecutor();
         myPCS = new PropertyChangeSupport(this);
     }
 
     public void startWatch() {
         myIsRunning = true;
+        myExecutor = Executors.newSingleThreadExecutor();
         runLogger();
         myPCS.firePropertyChange(ModelProperties.START, null, null);
     }
@@ -51,6 +51,11 @@ public class SystemWatch {
         myIsRunning = false;
         myExecutor.shutdownNow();
         myPCS.firePropertyChange(ModelProperties.STOP, null, null);
+        System.out.println("shut down executor");
+    }
+
+    public boolean isRunning() {
+        return myIsRunning;
     }
 
     public void addDir(final Path theDirectory) {
@@ -94,6 +99,7 @@ public class SystemWatch {
     }
 
     private void runLogger() {
+        System.out.println("running logger");
         myExecutor.submit(() -> {
             while (myIsRunning) {
                 WatchKey key;

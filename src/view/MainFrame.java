@@ -2,6 +2,7 @@ package view;
 
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashMap;
@@ -14,7 +15,9 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 
-public class MainFrame extends JFrame {
+import model.ModelProperties;
+
+public class MainFrame extends JFrame implements PropertyChangeListener {
 
     private Map<String, JMenuItem> myMenuMap;
     private final PropertyChangeSupport myPCS;
@@ -107,5 +110,20 @@ public class MainFrame extends JFrame {
      */
     public void removePropertyChangeListener(final PropertyChangeListener theListener) {
         myPCS.removePropertyChangeListener(theListener);
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent theEvent) {
+        System.out.println("view pc: " + theEvent.getPropertyName());
+        switch (theEvent.getPropertyName()) {
+            case ModelProperties.START:
+                myControlPanel.updateStartStopButt(true);
+                break;
+            case ModelProperties.STOP:
+                myControlPanel.updateStartStopButt(false);
+                break;
+            default:
+                break;
+        }
     }
 }

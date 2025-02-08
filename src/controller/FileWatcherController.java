@@ -19,12 +19,13 @@ public class FileWatcherController implements PropertyChangeListener {
         myMainFrame.addPropertyChangeListener(this);
         mySysWatch = theSystemWatch;
         mySysWatch.addPropertyChangeListener(this);
+        mySysWatch.addPropertyChangeListener(theView);
         mySysWatch.addDir(Path.of(System.getProperty("user.home")));
     }
 
     @Override
     public void propertyChange(PropertyChangeEvent theEvent) {
-        System.out.println("propertyChange: " + theEvent.getPropertyName());
+        System.out.println("controller pc: " + theEvent.getPropertyName());
         switch (theEvent.getPropertyName()) {
             case ModelProperties.START:
                 System.out.println("model started logging");
@@ -34,8 +35,11 @@ public class FileWatcherController implements PropertyChangeListener {
                 break;
             case ViewProperties.START_STOP_BUTTON:
                 System.out.println("start stop button pressed");
-                // TODO: if running then stop else run
-                mySysWatch.startWatch();
+                if (mySysWatch.isRunning()) {
+                    mySysWatch.stopWatch();
+                } else {
+                    mySysWatch.startWatch();
+                }
                 break;
             case ViewProperties.SUBMIT_BUTTON:
                 System.out.println("submit button pressed");

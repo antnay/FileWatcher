@@ -17,6 +17,10 @@ class ControlPanel extends JPanel {
         initButtons();
     }
 
+    void updateStartStopButt(boolean theIsRunning) {
+        myStartStopButton.setText((theIsRunning) ? "Stop" : "Start");
+    }
+
     private void initButtons() {
         myStartStopButton = new JButton("Start");
         myStartStopButton.addActionListener(theEvent -> {
