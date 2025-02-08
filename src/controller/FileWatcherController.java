@@ -24,6 +24,7 @@ public class FileWatcherController implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent theEvent) {
+        System.out.println("propertyChange: " + theEvent.getPropertyName());
         switch (theEvent.getPropertyName()) {
             case ModelProperties.START:
                 System.out.println("model started logging");

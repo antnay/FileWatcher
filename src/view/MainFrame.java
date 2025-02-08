@@ -2,6 +2,8 @@ package view;
 
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -15,7 +17,9 @@ import javax.swing.KeyStroke;
 public class MainFrame extends JFrame {
 
     private Map<String, JMenuItem> myMenuMap;
-    JFrame controlsView;
+    private final PropertyChangeSupport myPCS;
+    private ControlPanel myControlPanel;
+    // private LogPanel myLogPanel;
 
     public MainFrame() {
         setTitle("FileWatcher");
@@ -23,6 +27,7 @@ public class MainFrame extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         myMenuMap = new HashMap<>();
+        myPCS = new PropertyChangeSupport(this);
         initMenuBar();
         initFrames();
     }
@@ -31,24 +36,29 @@ public class MainFrame extends JFrame {
         JMenuBar menuBar = new JMenuBar();
         JMenu fileItem = new JMenu("File");
         menuBar.add(fileItem);
-        fileItem.add(createMenuItem("Start", theE -> System.out.println("start stop"),
-                Optional.of("startStop"), Optional.of(KeyEvent.VK_ENTER))); // change state once clicked to display stop
+        fileItem.add(createMenuItem("Start", theE -> {
+            myPCS.firePropertyChange(ViewProperties.START_STOP_BUTTON, null, null);
+        }, Optional.of("startStop"), Optional.of(KeyEvent.VK_ENTER))); // change state once clicked to display stop
         // fileItem.add(createMenuItem("stop", null, KeyEvent.VK_S));
-        fileItem.add(createMenuItem("Save", theE -> System.out.println("save"),
-                Optional.empty(), Optional.of(KeyEvent.VK_S)));
-
+        fileItem.add(createMenuItem("Save", theE -> {
+            myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
+        }, Optional.empty(), Optional.of(KeyEvent.VK_S)));
         JMenu helpItem = new JMenu("Help");
         menuBar.add(helpItem);
-        helpItem.add(createMenuItem("About", theE -> System.out.println("about"),
-                Optional.empty(), Optional.empty()));
-        helpItem.add(createMenuItem("Show Shortcuts", theE -> System.out.println("shortcuts"),
-                Optional.of("shortcuts"), Optional.of(KeyEvent.VK_K)));
+        helpItem.add(createMenuItem("About", theE -> {
+            myPCS.firePropertyChange(ViewProperties.ABOUT, null, null);
+        }, Optional.empty(), Optional.empty()));
+        helpItem.add(createMenuItem("Show Shortcuts", theE -> {
+            myPCS.firePropertyChange(ViewProperties.SHORTCUTS, null, null);
+        }, Optional.of("shortcuts"), Optional.of(KeyEvent.VK_K)));
 
         setJMenuBar(menuBar);
     }
 
     private void initFrames() {
-
+        myControlPanel = new ControlPanel(myPCS);
+        add(myControlPanel);
+        // myLogPanel = new LogPanel(myPCS);
     }
 
     /**
@@ -70,4 +80,32 @@ public class MainFrame extends JFrame {
         return menuItem;
     }
 
+    /**
+     * Add a PropertyChangeListener to the listener list.
+     * The listener is registered for all properties.
+     * The same listener object may be added more than once, and will be called
+     * as many times as it is added.
+     * If {@code listener} is null, no exception is thrown and no action
+     * is taken.
+     *
+     * @param theListener The PropertyChangeListener to be added
+     */
+    public void addPropertyChangeListener(final PropertyChangeListener theListener) {
+        myPCS.addPropertyChangeListener(theListener);
+    }
+
+    /**
+     * Remove a PropertyChangeListener from the listener list.
+     * This removes a PropertyChangeListener that was registered
+     * for all properties.
+     * If {@code listener} was added more than once to the same event
+     * source, it will be notified one less time after being removed.
+     * If {@code listener} is null, or was never added, no exception is
+     * thrown and no action is taken.
+     *
+     * @param theListener The PropertyChangeListener to be removed
+     */
+    public void removePropertyChangeListener(final PropertyChangeListener theListener) {
+        myPCS.removePropertyChangeListener(theListener);
+    }
 }
