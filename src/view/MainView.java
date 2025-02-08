@@ -16,13 +16,14 @@ import javax.swing.KeyStroke;
 
 public class MainView extends JFrame implements PropertyChangeListener {
 
-    Map<String, JMenuItem> menuItemM = new HashMap<>();
+    Map<String, JMenuItem> myMenuMap;
 
     public MainView() {
         setTitle("FileWatcher");
         setSize(500, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        myMenuMap = new HashMap<>();
         initMenuBar();
     }
 
@@ -61,6 +62,7 @@ public class MainView extends JFrame implements PropertyChangeListener {
     }
 
     /**
+     * Helper method for making menu items.
      * 
      * @param theName
      * @param theAction
@@ -74,7 +76,7 @@ public class MainView extends JFrame implements PropertyChangeListener {
         menuItem.addActionListener(theAction);
         theHotKey.ifPresent(hotKey -> menuItem.setAccelerator(
                 KeyStroke.getKeyStroke(hotKey, KeyEvent.META_DOWN_MASK)));
-        menuItemM.put((theName.isPresent()) ? theName.get() : theText, menuItem);
+        myMenuMap.put((theName.isPresent()) ? theName.get() : theText, menuItem);
         return menuItem;
     }
 
