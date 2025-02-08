@@ -34,7 +34,6 @@ public class SystemWatch {
         myExts = new LinkedList<>();
         myIsRunning = false;
         myExecutor = Executors.newSingleThreadExecutor();
-        // runLogger();
     }
 
     public void startWatch() {
@@ -54,7 +53,6 @@ public class SystemWatch {
             throw new IllegalArgumentException("Directory does not exist");
         }
         try {
-            System.out.println(theDirectory.toString());
             myWatchKeys.put(theDirectory.toString(),
                     theDirectory.register(myWatchService, StandardWatchEventKinds.ENTRY_CREATE,
                             StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY));
