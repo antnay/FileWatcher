@@ -2,8 +2,6 @@ package view;
 
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -14,17 +12,19 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 
-public class MainView extends JFrame implements PropertyChangeListener {
+public class MainFrame extends JFrame {
 
     private Map<String, JMenuItem> myMenuMap;
+    JFrame controlsView;
 
-    public MainView() {
+    public MainFrame() {
         setTitle("FileWatcher");
         setSize(500, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         myMenuMap = new HashMap<>();
         initMenuBar();
+        initFrames();
     }
 
     private void initMenuBar() {
@@ -47,18 +47,8 @@ public class MainView extends JFrame implements PropertyChangeListener {
         setJMenuBar(menuBar);
     }
 
-    /**
-     * This method gets called when a bound property is changed.
-     *
-     * @param theEvent A PropertyChangeEvent object describing the event source
-     *                 and the property that has changed.
-     */
-    @Override
-    public void propertyChange(final PropertyChangeEvent theEvent) {
-        switch (theEvent.getPropertyName()) {
-            // case SOME_EVENT:
-            default:
-        }
+    private void initFrames() {
+
     }
 
     /**
