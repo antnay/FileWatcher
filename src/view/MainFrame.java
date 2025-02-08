@@ -1,13 +1,11 @@
 package view;
 
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -19,17 +17,19 @@ import model.ModelProperties;
 
 public class MainFrame extends JFrame implements PropertyChangeListener {
 
-    private Map<String, JMenuItem> myMenuMap;
     private final PropertyChangeSupport myPCS;
     private ControlPanel myControlPanel;
     // private LogPanel myLogPanel;
+    private JMenuItem myStartStopMItem;
+    private JMenuItem mySaveLogMItem;
+    private JMenuItem myAboutMItem;
+    private JMenuItem myShortcutMItem;
 
     public MainFrame() {
         setTitle("FileWatcher");
         setSize(500, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        myMenuMap = new HashMap<>();
         myPCS = new PropertyChangeSupport(this);
         initMenuBar();
         initFrames();
@@ -39,21 +39,36 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         JMenuBar menuBar = new JMenuBar();
         JMenu fileItem = new JMenu("File");
         menuBar.add(fileItem);
-        fileItem.add(createMenuItem("Start", theE -> {
+
+        myStartStopMItem = new JMenuItem("Start Logging");
+        myStartStopMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.START_STOP_BUTTON, null, null);
-        }, Optional.of("startStop"), Optional.of(KeyEvent.VK_ENTER))); // change state once clicked to display stop
-        // fileItem.add(createMenuItem("stop", null, KeyEvent.VK_S));
-        fileItem.add(createMenuItem("Save", theE -> {
+        });
+        myStartStopMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.META_DOWN_MASK));
+        fileItem.add(myStartStopMItem);
+
+
+        mySaveLogMItem = new JMenuItem("Save Log");
+        mySaveLogMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
-        }, Optional.empty(), Optional.of(KeyEvent.VK_S)));
-        JMenu helpItem = new JMenu("Help");
-        menuBar.add(helpItem);
-        helpItem.add(createMenuItem("About", theE -> {
+        });
+        mySaveLogMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.META_DOWN_MASK));
+        fileItem.add(mySaveLogMItem);
+
+
+        myAboutMItem = new JMenuItem("About");
+        myAboutMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.ABOUT, null, null);
-        }, Optional.empty(), Optional.empty()));
-        helpItem.add(createMenuItem("Show Shortcuts", theE -> {
+        });
+        fileItem.add(myAboutMItem);
+
+
+        myShortcutMItem = new JMenuItem("Show Shortcuts");
+        myShortcutMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SHORTCUTS, null, null);
-        }, Optional.of("shortcuts"), Optional.of(KeyEvent.VK_K)));
+        });
+        myShortcutMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, KeyEvent.META_DOWN_MASK));
+        fileItem.add(myShortcutMItem);
 
         setJMenuBar(menuBar);
     }
@@ -62,25 +77,6 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         myControlPanel = new ControlPanel(myPCS);
         add(myControlPanel);
         // myLogPanel = new LogPanel(myPCS);
-    }
-
-    /**
-     * Helper method for making menu items.
-     * 
-     * @param theName
-     * @param theAction
-     * @param theHotKey
-     * @return
-     */
-    private JMenuItem createMenuItem(final String theText, ActionListener theAction,
-            final Optional<String> theName, final Optional<Integer> theHotKey) {
-        JMenuItem menuItem = new JMenuItem(theText);
-        theName.ifPresent(name -> menuItem.setName(name));
-        menuItem.addActionListener(theAction);
-        theHotKey.ifPresent(hotKey -> menuItem.setAccelerator(
-                KeyStroke.getKeyStroke(hotKey, KeyEvent.META_DOWN_MASK)));
-        myMenuMap.put((theName.isPresent()) ? theName.get() : theText, menuItem);
-        return menuItem;
     }
 
     /**
@@ -118,9 +114,11 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         switch (theEvent.getPropertyName()) {
             case ModelProperties.START:
                 myControlPanel.updateStartStopButt(true);
+                myStartStopMItem.setText("Stop Logging");
                 break;
             case ModelProperties.STOP:
                 myControlPanel.updateStartStopButt(false);
+                myStartStopMItem.setText("Start Logging");
                 break;
             default:
                 break;
