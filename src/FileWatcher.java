@@ -1,5 +1,7 @@
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+
+import controller.FileWatcherController;
 import view.MainView;
 
 /**
@@ -24,6 +26,7 @@ public class FileWatcher {
 
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+                FileWatcherController fileWatcherController = new FileWatcherController();
                 MainView view = new MainView();
                 view.setVisible(true);
             }
