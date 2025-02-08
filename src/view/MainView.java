@@ -16,7 +16,7 @@ import javax.swing.KeyStroke;
 
 public class MainView extends JFrame implements PropertyChangeListener {
 
-    Map<String, JMenuItem> myMenuMap;
+    private Map<String, JMenuItem> myMenuMap;
 
     public MainView() {
         setTitle("FileWatcher");
