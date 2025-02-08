@@ -44,13 +44,13 @@ public class SystemWatch {
     public void startWatch() {
         myIsRunning = true;
         runLogger();
-        myPCS.firePropertyChange(FileWatcherProperties.START, null, null);
+        myPCS.firePropertyChange(ModelProperties.START, null, null);
     }
 
     public void stopWatch() {
         myIsRunning = false;
         myExecutor.shutdownNow();
-        myPCS.firePropertyChange(FileWatcherProperties.STOP, null, null);
+        myPCS.firePropertyChange(ModelProperties.STOP, null, null);
     }
 
     public void addDir(final Path theDirectory) {
@@ -111,7 +111,7 @@ public class SystemWatch {
         });
     }
 
-       /**
+    /**
      * Add a PropertyChangeListener to the listener list.
      * The listener is registered for all properties.
      * The same listener object may be added more than once, and will be called
