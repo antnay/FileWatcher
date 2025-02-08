@@ -1,12 +1,13 @@
 package controller;
 
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import model.DBManager;
-
 
 public class FileWatcherController {
 
-    public static void main(String[] theArgs) {
-        DBManager.getDBManager().connect();
-        DBManager.getDBManager().addToTable("test 1");
+    private FileWatcherController() {
     }
+
+
 }
