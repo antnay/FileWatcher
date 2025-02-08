@@ -1,5 +1,7 @@
 package model;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -14,6 +16,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
 import java.util.LinkedList;
 
 public class SystemWatch {
@@ -23,27 +26,31 @@ public class SystemWatch {
     private WatchService myWatchService;
     private ExecutorService myExecutor;
     private boolean myIsRunning;
+    private final PropertyChangeSupport myPCS;
 
     public SystemWatch() {
         try {
             myWatchService = FileSystems.getDefault().newWatchService();
-        } catch (IOException e) {
+        } catch (IOException theE) {
             // TODO Auto-generated catch block
         }
         myWatchKeys = new TreeMap<>();
         myExts = new LinkedList<>();
         myIsRunning = false;
         myExecutor = Executors.newSingleThreadExecutor();
+        myPCS = new PropertyChangeSupport(this);
     }
 
     public void startWatch() {
         myIsRunning = true;
         runLogger();
+        myPCS.firePropertyChange(FileWatcherProperties.START, null, null);
     }
 
     public void stopWatch() {
         myIsRunning = false;
-        // myExecutor.shutdownNow();
+        myExecutor.shutdownNow();
+        myPCS.firePropertyChange(FileWatcherProperties.STOP, null, null);
     }
 
     public void addDir(final Path theDirectory) {
@@ -93,7 +100,7 @@ public class SystemWatch {
                 try {
                     while ((key = myWatchService.take()) != null) {
                         for (WatchEvent<?> event : key.pollEvents()) {
-                            System.out.println(event.kind()+ " " + event.context());
+                            System.out.println(event.kind() + " " + event.context());
                         }
                         key.reset();
                     }
@@ -102,5 +109,34 @@ public class SystemWatch {
                 }
             }
         });
+    }
+
+       /**
+     * Add a PropertyChangeListener to the listener list.
+     * The listener is registered for all properties.
+     * The same listener object may be added more than once, and will be called
+     * as many times as it is added.
+     * If {@code listener} is null, no exception is thrown and no action
+     * is taken.
+     *
+     * @param theListener The PropertyChangeListener to be added
+     */
+    public void addPropertyChangeListener(final PropertyChangeListener theListener) {
+        myPCS.addPropertyChangeListener(theListener);
+    }
+
+    /**
+     * Remove a PropertyChangeListener from the listener list.
+     * This removes a PropertyChangeListener that was registered
+     * for all properties.
+     * If {@code listener} was added more than once to the same event
+     * source, it will be notified one less time after being removed.
+     * If {@code listener} is null, or was never added, no exception is
+     * thrown and no action is taken.
+     *
+     * @param theListener The PropertyChangeListener to be removed
+     */
+    public void removePropertyChangeListener(final PropertyChangeListener theListener) {
+        myPCS.removePropertyChangeListener(theListener);
     }
 }
