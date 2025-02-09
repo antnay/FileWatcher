@@ -54,50 +54,80 @@ final class DBManager {
                 connection.close();
                 connection = null;
             }
+            System.out.println("Disconnected from database");
         } catch (SQLException theE) {
             System.err.println("Error trying to close database.");
             // TODO: Handle this error
         }
     }
 
-    // test
-    void addToTable(String event) {
-        String insertSQL = "INSERT INTO eventlog(event) VALUES(?)";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
-            preparedStatement.setString(1, event);
-            preparedStatement.executeUpdate();
-            System.out.println("Inserted event: " + event);
+    void clearTable() {
+        try {
+            Statement statement = connection.createStatement();
+            statement.execute("DELETE FROM eventlog");
+        } catch (SQLException theE) {
+            // TODO: Handle this error
+        }
+    }
+
+    void addEvent(Event theEvent) {
+        if (!isConnected()) {
+            throw new IllegalStateException("Not connected to database");
+        }
+        try (PreparedStatement statement = connection.prepareStatement("""
+                INSERT INTO
+                eventlog(extension, filename, path, event, timestamp)
+                VALUES (?, ?, ?, ?, ?)
+                """)) {
+            statement.setString(1, theEvent.getMyExtension());
+            statement.setString(2, theEvent.getFileName());
+            statement.setString(3, theEvent.getPath());
+            statement.setString(4, theEvent.geEventKind());
+            statement.setString(5, theEvent.getTimeStamp());
+            statement.execute();
         } catch (SQLException e) {
-            throw new RuntimeException("Error inserting event", e);
             // TODO: Handle this error
         }
     }
 
     void initDB() {
         if (!isConnected()) {
-            throw new IllegalStateException("Cannot add to table while disconnected");
+            throw new IllegalStateException("Not connected to database");
         }
         try (Statement statement = connection.createStatement()) {
             ResultSet res = statement.executeQuery(
-                    "SELECT name FROM sqlite_master WHERE type='table' AND name='eventlog';"
-            );
+                    "SELECT * FROM sqlite_master WHERE type='table' AND name='eventlog';");
             if (!res.next()) {
-                System.out.println("making new table");
                 statement.executeUpdate("""
                         CREATE TABLE "eventlog" (
                         \t"id"\tINTEGER NOT NULL UNIQUE,
-                        \t"event"\tTEXT,
+                        \t"extension"\tTEXT,
+                        \t"filename"\tTEXT,
                         \t"path"\tTEXT,
-                        \t"Timestamp"\tDATETIME DEFAULT CURRENT_TIMESTAMP,
+                        \t"event"\tTEXT,
+                        \t"timestamp"\tDATETIME,
                         \tPRIMARY KEY("id" AUTOINCREMENT)
                         );""");
                 System.out.println("added table");
             }
+            // res = statement.executeQuery(
+            // "SELECT name FROM sqlite_master WHERE type='table' AND name='users';"
+            // );
+            // if (!res.next()) {
+            // statement.executeUpdate("""
+            // CREATE TABLE "eventlog" (
+            // \t"id"\tINTEGER NOT NULL UNIQUE,
+            // \t"username"\tTEXT UNIQUE,
+            // \t"password"\tTEXT, // hash me
+            // \t"timestamp"\tDATETIME DEFAULT DATETIME,
+            // \tPRIMARY KEY("id" AUTOINCREMENT)
+            // );""");
+            // System.out.println("configured DB");
+            // }
         } catch (SQLException e) {
             throw new RuntimeException(e);
             // TODO: Handle this error
         }
-
     }
 
     /**

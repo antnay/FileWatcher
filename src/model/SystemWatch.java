@@ -11,12 +11,14 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import java.util.LinkedList;
 
 public class SystemWatch {
@@ -25,17 +27,21 @@ public class SystemWatch {
     private List<String> myExts;
     private WatchService myWatchService;
     private ExecutorService myExecutor;
+    private Queue<Event> myEventQueue;
     private boolean myIsRunning;
     private final PropertyChangeSupport myPCS;
 
     public SystemWatch() {
         try {
-            myWatchService = FileSystems.getDefault().newWatchService();
+            myWatchService = FileSystems.getDefault().newWatchService(); // TODO: Find out a way to prevent this from
+                                                                         // watching before user starts watch
         } catch (IOException theE) {
             // TODO Auto-generated catch block
         }
+        DBManager.getDBManager().connect();
         myWatchKeys = new TreeMap<>();
         myExts = new LinkedList<>();
+        myEventQueue = new ConcurrentLinkedQueue<>();
         myIsRunning = false;
         myPCS = new PropertyChangeSupport(this);
     }
@@ -52,6 +58,12 @@ public class SystemWatch {
         myExecutor.shutdownNow();
         myPCS.firePropertyChange(ModelProperties.STOP, null, null);
         System.out.println("shut down executor");
+    }
+
+    public void clearLog() {
+
+        DBManager.getDBManager().clearTable();
+        myPCS.firePropertyChange(ModelProperties.CLEAR_TABLE, null, null);
     }
 
     public boolean isRunning() {
@@ -98,6 +110,19 @@ public class SystemWatch {
         myExts.remove(theExtension);
     }
 
+    public void saveToLog() {
+        myEventQueue.forEach(System.out::println);
+        if (!myEventQueue.isEmpty()) {
+            DBManager dBInstance = DBManager.getDBManager();
+            Event curEvent = myEventQueue.poll();
+            System.out.println(curEvent.getFileName());
+            while (curEvent != null) {
+                dBInstance.addEvent(curEvent);
+                curEvent = myEventQueue.poll();
+            }
+        }
+    }
+
     private void runLogger() {
         System.out.println("running logger");
         myExecutor.submit(() -> {
@@ -106,7 +131,12 @@ public class SystemWatch {
                 try {
                     while ((key = myWatchService.take()) != null) {
                         for (WatchEvent<?> event : key.pollEvents()) {
-                            System.out.println(event.kind() + " " + event.context());
+                            String path = ((Path) key.watchable()).resolve(event.context().toString()).toString();
+                            // TODO: Get extension
+                            Event logEvent = new Event("", event.context().toString(), path, event.kind().toString(),
+                                    LocalDateTime.now());
+                            myEventQueue.add(logEvent);
+                            System.out.println("added event to queue");
                         }
                         key.reset();
                     }
@@ -145,4 +175,5 @@ public class SystemWatch {
     public void removePropertyChangeListener(final PropertyChangeListener theListener) {
         myPCS.removePropertyChangeListener(theListener);
     }
+
 }

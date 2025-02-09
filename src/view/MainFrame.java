@@ -4,8 +4,6 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -47,7 +45,6 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         myStartStopMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.META_DOWN_MASK));
         fileItem.add(myStartStopMItem);
 
-
         mySaveLogMItem = new JMenuItem("Save Log");
         mySaveLogMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
@@ -55,13 +52,11 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         mySaveLogMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.META_DOWN_MASK));
         fileItem.add(mySaveLogMItem);
 
-
         myAboutMItem = new JMenuItem("About");
         myAboutMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.ABOUT, null, null);
         });
         fileItem.add(myAboutMItem);
-
 
         myShortcutMItem = new JMenuItem("Show Shortcuts");
         myShortcutMItem.addActionListener(theE -> {

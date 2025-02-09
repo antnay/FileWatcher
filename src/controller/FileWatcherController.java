@@ -44,6 +44,12 @@ public class FileWatcherController implements PropertyChangeListener {
             case ViewProperties.SUBMIT_BUTTON:
                 System.out.println("submit button pressed");
                 break;
+            case ViewProperties.CLEAR_LOG_BUTTON:
+                System.out.println("clearing table");
+                mySysWatch.clearLog();
+                break;
+            case ViewProperties.SAVE_LOG:
+                mySysWatch.saveToLog();
             default:
                 break;
         }
