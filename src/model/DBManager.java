@@ -26,6 +26,15 @@ final class DBManager {
         return DB_INSTANCE;
     }
 
+    /**
+     * Checks connection to database.
+     *
+     * @return true if there is a connection to the database, false otherwise.
+     */
+    public boolean isConnected() {
+        return connection != null;
+    }
+
     void connect() {
         File dbPath = new File("database/log.sql");
         if (!Files.exists(Path.of(dbPath.getAbsolutePath()))) {
@@ -43,6 +52,7 @@ final class DBManager {
             System.out.println("Connected to database");
             initDB();
         } catch (SQLException theE) {
+            connection = null;
             System.err.println("Error connecting to database " + theE.getMessage());
             // TODO: Handle this error
             //theE.printStackTrace(); (If we want to log what the exact error is)
@@ -57,7 +67,7 @@ final class DBManager {
             }
             System.out.println("Disconnected from database");
         } catch (SQLException theE) {
-            System.err.println("Error trying to close database.");
+            System.err.println("Error closing database: " + theE.getMessage());
             // TODO: Handle this error
             //theE.printStackTrace();
         }
@@ -69,7 +79,7 @@ final class DBManager {
             statement.execute("DELETE FROM eventlog");
         } catch (SQLException theE) {
             // TODO: Handle this error
-            // System.err.println("Error clearing table: " + theE.getMessage());
+            System.err.println("Error clearing table: " + theE.getMessage());
             // theE.printStackTrace();
         }
     }
@@ -91,7 +101,7 @@ final class DBManager {
             statement.execute();
         } catch (SQLException e) {
             // TODO: Handle this error
-            // System.err.println("Error adding event: " + e.getMessage());
+            System.err.println("Error adding event to database: " + e.getMessage());
             //e.printStackTrace();
         }
     }
@@ -136,13 +146,5 @@ final class DBManager {
         }
     }
 
-    /**
-     * Checks connection to database.
-     *
-     * @return true if there is a connection to the database, false otherwise.
-     */
-    private boolean isConnected() {
-        return connection != null;
-    }
 
 }
