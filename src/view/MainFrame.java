@@ -37,6 +37,8 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         JMenuBar menuBar = new JMenuBar();
         JMenu fileItem = new JMenu("File");
         menuBar.add(fileItem);
+        JMenu helpItem = new JMenu("Help");
+        menuBar.add(helpItem);
 
         myStartStopMItem = new JMenuItem("Start Logging");
         myStartStopMItem.addActionListener(theE -> {
@@ -56,14 +58,14 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         myAboutMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.ABOUT, null, null);
         });
-        fileItem.add(myAboutMItem);
+        helpItem.add(myAboutMItem);
 
         myShortcutMItem = new JMenuItem("Show Shortcuts");
         myShortcutMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SHORTCUTS, null, null);
         });
         myShortcutMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, KeyEvent.META_DOWN_MASK));
-        fileItem.add(myShortcutMItem);
+        helpItem.add(myShortcutMItem);
 
         setJMenuBar(menuBar);
     }
