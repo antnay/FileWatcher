@@ -12,6 +12,7 @@ class ControlPanel extends JPanel {
     private JButton myStartStopButton;
     private JButton mySubmitButton;
     private JButton myClearButton; // temp
+    private JButton mySaveLogButton;
 
     ControlPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
@@ -38,5 +39,11 @@ class ControlPanel extends JPanel {
             myPCS.firePropertyChange(ViewProperties.CLEAR_LOG_BUTTON, null, null);
         });
         add(myClearButton);
+
+        mySaveLogButton = new JButton("Save");
+        mySaveLogButton.addActionListener(theEvent -> {
+            myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
+        });
+        add(mySaveLogButton);
     }
 }

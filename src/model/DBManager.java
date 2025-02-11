@@ -45,6 +45,7 @@ final class DBManager {
         } catch (SQLException theE) {
             System.err.println("Error connecting to database " + theE.getMessage());
             // TODO: Handle this error
+            //theE.printStackTrace(); (If we want to log what the exact error is)
         }
     }
 
@@ -58,6 +59,7 @@ final class DBManager {
         } catch (SQLException theE) {
             System.err.println("Error trying to close database.");
             // TODO: Handle this error
+            //theE.printStackTrace();
         }
     }
 
@@ -67,6 +69,8 @@ final class DBManager {
             statement.execute("DELETE FROM eventlog");
         } catch (SQLException theE) {
             // TODO: Handle this error
+            // System.err.println("Error clearing table: " + theE.getMessage());
+            // theE.printStackTrace();
         }
     }
 
@@ -87,6 +91,8 @@ final class DBManager {
             statement.execute();
         } catch (SQLException e) {
             // TODO: Handle this error
+            // System.err.println("Error adding event: " + e.getMessage());
+            //e.printStackTrace();
         }
     }
 

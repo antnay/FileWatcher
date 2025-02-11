@@ -34,9 +34,16 @@ public class SystemWatch {
     public SystemWatch() {
         try {
             myWatchService = FileSystems.getDefault().newWatchService(); // TODO: Find out a way to prevent this from
-                                                                         // watching before user starts watch
+                                                                        // watching before user starts watch
+            /**
+             * myWatchService = null; (initializing WatchService later on so that it doesn't start watching before the users starts watching)
+             */
+
         } catch (IOException theE) {
             // TODO Auto-generated catch block
+            /**
+             * System.err.println("Error initializing SystemWatch: " + theE.getMessage()); (Tells us any errors that's happening)
+             */
         }
         DBManager.getDBManager().connect();
         myWatchKeys = new TreeMap<>();
@@ -46,6 +53,7 @@ public class SystemWatch {
         myPCS = new PropertyChangeSupport(this);
     }
 
+
     public void startWatch() {
         myIsRunning = true;
         myExecutor = Executors.newSingleThreadExecutor();
@@ -53,12 +61,66 @@ public class SystemWatch {
         myPCS.firePropertyChange(ModelProperties.START, null, null);
     }
 
+    /**
+     *  public void startWatch() {
+     *         if (myIsRunning) {
+     *         System.out.println("Watch service already running.");
+     *         return;
+     *     }
+     *
+     *     try {
+     *         myWatchService = FileSystems.getDefault().newWatchService();
+     *     }
+     *
+     *     catch (IOException theE) { // This doesn't have to be in it
+     *         System.err.println("Error starting WatchService: " + theE.getMessage());
+     *         return;
+     *  }
+     *
+     *         //Take the code that we have from below, and add a println to ensure that the FileWatcher is watching
+     *         myIsRunning = true;
+     *         myExecutor = Executors.newSingleThreadExecutor();
+     *         runLogger();
+     *         myPCS.firePropertyChange(ModelProperties.START, null, null);
+     *         System.out.println("Started watching directories."); // This doesn't have to be in it
+     *  }
+     */
+
     public void stopWatch() {
         myIsRunning = false;
         myExecutor.shutdownNow();
         myPCS.firePropertyChange(ModelProperties.STOP, null, null);
         System.out.println("shut down executor");
     }
+
+    /**
+     *      // For the FileWatcher to stop watching -->
+     *
+     * public void stopWatch() {
+     *     if (!myIsRunning) {
+     *         System.out.println("Watch service is not running.");
+     *         return;
+     *     }
+     *
+     *     myIsRunning = false;
+     *     myExecutor.shutdownNow();
+     *
+     *     try {
+     *         if (myWatchService != null) {
+     *             myWatchService.close(); // Close WatchService
+     *             myWatchService = null;
+     *         }
+     *     }
+     *
+     *     catch (IOException theE) { // This doesn't have to be in it
+     *         System.err.println("Error closing WatchService: " + e.getMessage());
+     *     }
+     *
+     *     myPCS.firePropertyChange(ModelProperties.STOP, null, null);
+     *     System.out.println("Stopped watching directories."); // This doesn't have to be in it
+     * }
+     *
+     */
 
     public void clearLog() {
 
