@@ -32,21 +32,7 @@ public class SystemWatch {
     private final PropertyChangeSupport myPCS;
 
     public SystemWatch() {
-        try {
-            myWatchService = FileSystems.getDefault().newWatchService(); // TODO: Find out a way to prevent this from
-                                                                         // watching before user starts watch
-            /**
-             * myWatchService = null; (initializing WatchService later on so that it doesn't
-             * start watching before the users starts watching)
-             */
-
-        } catch (IOException theE) {
-            // TODO Auto-generated catch block
-            /**
-             * System.err.println("Error initializing SystemWatch: " + theE.getMessage());
-             * (Tells us any errors that's happening)
-             */
-        }
+        myWatchService = null;
         DBManager.getDBManager().connect();
         myWatchKeys = new TreeMap<>();
         myExts = new LinkedList<>();
@@ -56,78 +42,50 @@ public class SystemWatch {
     }
 
     public void startWatch() {
+        if (myIsRunning) {
+            throw new IllegalStateException("System watch is already running");
+        }
+        try {
+            myWatchService = FileSystems.getDefault().newWatchService();
+            myWatchKeys.forEach((path, watchKey) -> {
+                try {
+                    watchKey = Path.of(path).register(myWatchService, StandardWatchEventKinds.ENTRY_CREATE,
+                            StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
+                } catch (IOException e) {
+                    System.err.println("Error adding path to WatchService");
+                }
+            });
+        } catch (IOException theE) {
+            System.err.println("Error initializing systemWatch: " + theE.getMessage());
+        }
         myIsRunning = true;
         myExecutor = Executors.newSingleThreadExecutor();
         runLogger();
         myPCS.firePropertyChange(ModelProperties.START, null, null);
     }
 
-    /**
-     * public void startWatch() {
-     * if (myIsRunning) {
-     * System.out.println("Watch service already running.");
-     * return;
-     * }
-     *
-     * try {
-     * myWatchService = FileSystems.getDefault().newWatchService();
-     * }
-     *
-     * catch (IOException theE) { // This doesn't have to be in it
-     * System.err.println("Error starting WatchService: " + theE.getMessage());
-     * return;
-     * }
-     *
-     * //Take the code that we have from below, and add a println to ensure that the
-     * FileWatcher is watching
-     * myIsRunning = true;
-     * myExecutor = Executors.newSingleThreadExecutor();
-     * runLogger();
-     * myPCS.firePropertyChange(ModelProperties.START, null, null);
-     * System.out.println("Started watching directories."); // This doesn't have to
-     * be in it
-     * }
-     */
-
     public void stopWatch() {
+        if (!myIsRunning) {
+            throw new IllegalStateException("System watch is not running");
+        }
         myIsRunning = false;
+        try {
+            myWatchService.close();
+        } catch (IOException theE) {
+            System.err.println("Error closing systemWatch: " + theE.getMessage());
+        }
+        // theDirectory.register(myWatchService, StandardWatchEventKinds.ENTRY_CREATE,
+        // StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY));
+        myWatchService = null;
         myExecutor.shutdownNow();
         myPCS.firePropertyChange(ModelProperties.STOP, null, null);
         System.out.println("shut down executor");
     }
 
-    /**
-     * // For the FileWatcher to stop watching -->
-     *
-     * public void stopWatch() {
-     * if (!myIsRunning) {
-     * System.out.println("Watch service is not running.");
-     * return;
-     * }
-     *
-     * myIsRunning = false;
-     * myExecutor.shutdownNow();
-     *
-     * try {
-     * if (myWatchService != null) {
-     * myWatchService.close(); // Close WatchService
-     * myWatchService = null;
-     * }
-     * }
-     *
-     * catch (IOException theE) { // This doesn't have to be in it
-     * System.err.println("Error closing WatchService: " + e.getMessage());
-     * }
-     *
-     * myPCS.firePropertyChange(ModelProperties.STOP, null, null);
-     * System.out.println("Stopped watching directories."); // This doesn't have to
-     * be in it
-     * }
-     *
-     */
-
     public void clearLog() {
-
+        if (!DBManager.getDBManager().isConnected()) {
+            throw new IllegalStateException("Not connected a database");
+        }
         DBManager.getDBManager().clearTable();
         myPCS.firePropertyChange(ModelProperties.CLEAR_TABLE, null, null);
     }
@@ -142,15 +100,7 @@ public class SystemWatch {
         } else if (Files.notExists(theDirectory, LinkOption.NOFOLLOW_LINKS)) {
             throw new IllegalArgumentException("Directory does not exist");
         }
-        try {
-            myWatchKeys.put(theDirectory.toString(),
-                    theDirectory.register(myWatchService, StandardWatchEventKinds.ENTRY_CREATE,
-                            StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY));
-            System.out.println("Successfully registered: " + theDirectory);
-        } catch (IOException theEvent) {
-            System.out.println(theEvent.getMessage());
-        }
-
+        myWatchKeys.put(theDirectory.toString(), null);
     }
 
     public void removeDir(final Path theDirectory) {
@@ -164,19 +114,22 @@ public class SystemWatch {
 
     public void addExt(String theExtension) {
         if (theExtension.isEmpty()) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Cannot add extension: " + theExtension);
         }
         myExts.add(theExtension);
     }
 
     public void removeExt(String theExtension) {
         if (!myExts.contains(theExtension)) {
-            throw new IllegalArgumentException("Directory is not in watch list");
+            throw new IllegalArgumentException("Extension is not in watch list");
         }
         myExts.remove(theExtension);
     }
 
     public void saveToLog() {
+        if (!DBManager.getDBManager().isConnected()) {
+            throw new IllegalStateException("Not connected to database");
+        }
         myEventQueue.forEach(System.out::println);
         if (!myEventQueue.isEmpty()) {
             DBManager dBInstance = DBManager.getDBManager();
@@ -199,6 +152,10 @@ public class SystemWatch {
                         for (WatchEvent<?> event : key.pollEvents()) {
                             String path = ((Path) key.watchable()).resolve(event.context().toString()).toString();
                             // TODO: Get extension
+                            if (event.context().toString().equals(".DS_Store")) { // ignore ds store changes in macs
+                                continue;
+                            }
+                            // TODO: possibly ignore all shell history files?????
                             Event logEvent = new Event("", event.context().toString(), path, event.kind().toString(),
                                     LocalDateTime.now());
                             myEventQueue.add(logEvent);
