@@ -54,6 +54,10 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         mySaveLogMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.META_DOWN_MASK));
         fileItem.add(mySaveLogMItem);
 
+        JMenuItem openDBFrameItem = new JMenuItem("SQL Query Executor");
+        openDBFrameItem.addActionListener(e -> new DBFrame().setVisible(true));
+        fileItem.add(openDBFrameItem);
+
         myAboutMItem = new JMenuItem("About");
         myAboutMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.ABOUT, null, null);
