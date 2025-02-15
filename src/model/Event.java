@@ -38,4 +38,15 @@ class Event {
     final String getTimeStamp() {
         return myTimeStamp.toString();
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sB = new StringBuilder();
+        sB.append("file: ").append(myFileName)
+                .append("\npath: ").append(myPath)
+                .append("\nextension: ").append(myExtension)
+                .append("\nkind: ").append(myEventKind)
+                .append("\ntime: ").append(myTimeStamp);
+        return sB.toString();
+    }
 }
