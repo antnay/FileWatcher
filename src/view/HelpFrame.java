@@ -4,8 +4,8 @@ import javax.swing.JFrame;
 import javax.swing.JTextArea;
 import java.awt.*;
 
-public class HelpFrame extends JFrame {
-    public HelpFrame() {
+class HelpFrame extends JFrame {
+    HelpFrame() {
         setTitle("About");
         setLocationRelativeTo(null);
 
