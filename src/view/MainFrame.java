@@ -56,6 +56,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 
         myAboutMItem = new JMenuItem("About");
         myAboutMItem.addActionListener(theE -> {
+            JFrame aboutFrame = new HelpFrame();
             myPCS.firePropertyChange(ViewProperties.ABOUT, null, null);
         });
         helpItem.add(myAboutMItem);
