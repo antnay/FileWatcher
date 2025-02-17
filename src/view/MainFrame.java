@@ -1,5 +1,6 @@
 package view;
 
+import java.awt.FlowLayout;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -12,23 +13,25 @@ import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 
 import model.ModelProperties;
+import model.Event;
 
 public class MainFrame extends JFrame implements PropertyChangeListener {
 
     private final PropertyChangeSupport myPCS;
     private ControlPanel myControlPanel;
-    // private LogPanel myLogPanel;
+    private LogPanel myLogPanel;
     private JMenuItem myStartStopMItem;
     private JMenuItem mySaveLogMItem;
     private JMenuItem myAboutMItem;
     private JMenuItem myShortcutMItem;
 
     public MainFrame() {
+        myPCS = new PropertyChangeSupport(this);
         setTitle("FileWatcher");
         setSize(500, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        myPCS = new PropertyChangeSupport(this);
+        setLayout(new FlowLayout());
         initMenuBar();
         initFrames();
     }
@@ -78,7 +81,8 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private void initFrames() {
         myControlPanel = new ControlPanel(myPCS);
         add(myControlPanel);
-        // myLogPanel = new LogPanel(myPCS);
+        myLogPanel = new LogPanel(myPCS);
+        add(myLogPanel);
     }
 
     /**
@@ -121,6 +125,12 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
             case ModelProperties.STOP:
                 myControlPanel.updateStartStopButt(false);
                 myStartStopMItem.setText("Start Logging");
+                break;
+            case ModelProperties.EVENT:
+                Object event = theEvent.getNewValue();
+                if (event.getClass().getName().equals("model.Event")) {
+                    myLogPanel.addEvent((Event) event);
+                }
                 break;
             default:
                 break;

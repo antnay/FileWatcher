@@ -3,15 +3,11 @@ package model;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
-// import java.nio.file.attribute.;;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitOption;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
@@ -24,7 +20,6 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.LinkedList;
 
@@ -173,6 +168,7 @@ public class SystemWatch {
                             // TODO: Get extension
                             Event logEvent = new Event("", fileName, path,
                                     event.kind().toString(), LocalDateTime.now());
+                            myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
                             System.out.println(logEvent);
                             myEventQueue.add(logEvent);
                             // System.out.println("added event to queue");
