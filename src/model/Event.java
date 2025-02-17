@@ -2,14 +2,14 @@ package model;
 
 import java.time.LocalDateTime;
 
-class Event {
+public final class Event {
     private final String myExtension;
     private final String myFileName;
     private final String myPath;
     private final String myEventKind;
     private final LocalDateTime myTimeStamp;
 
-    Event(final String theExtension, final String theFileName, final String thePath,
+    public Event(final String theExtension, final String theFileName, final String thePath,
             final String theEventKind, final LocalDateTime theTimestamp) {
         // TODO: Clean up fields to prevent malicous attacks
         myExtension = theExtension;
@@ -37,5 +37,20 @@ class Event {
 
     final String getTimeStamp() {
         return myTimeStamp.toString();
+    }
+
+    public final Object[] toArray() {
+        return new Object[] { myExtension, myFileName, myPath, myEventKind, myTimeStamp };
+    }
+
+    @Override
+    public final String toString() {
+        StringBuilder sB = new StringBuilder();
+        sB.append("file: ").append(myFileName)
+                .append("\nextension: ").append(myExtension)
+                .append("\npath: ").append(myPath)
+                .append("\nkind: ").append(myEventKind)
+                .append("\ntime: ").append(myTimeStamp);
+        return sB.toString();
     }
 }
