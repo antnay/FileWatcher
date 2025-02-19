@@ -8,7 +8,7 @@ import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
-import controller.DBController;
+import java.beans.PropertyChangeSupport;
 
 // query and view db
 public class DBFrame extends JFrame {
@@ -17,9 +17,10 @@ public class DBFrame extends JFrame {
     private JTable databaseRecords;
     private JTextField enteringQueries;
     private JButton searchQueryExecuteButton;
-    private DBController dbController; //To handle database queries
+    private final PropertyChangeSupport myPCS;
 
-    public DBFrame () {
+    public DBFrame (PropertyChangeSupport pcs) {
+        this.myPCS = pcs;
         setTitle("SQL Query Executor");
         setSize(900, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); //Close the DBFrame only
@@ -58,9 +59,11 @@ public class DBFrame extends JFrame {
 
     private void runSearchQuery() {
         String query = obtainSearchQuery();
-        //DefaultTableModel tableModel = dbController.executeQuery(query); (Will uncomment it once I resolve it in the DBController)
-        //databaseRecords.setModel(tableModel);
+        myPCS.firePropertyChange("Query Execute", null, query); // Notify the controller
+    }
 
+    public void updateTable(DefaultTableModel tableModel) {
+        databaseRecords.setModel(tableModel);
     }
     }
 
