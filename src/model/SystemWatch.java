@@ -140,12 +140,12 @@ public class SystemWatch {
         if (!DBManager.getDBManager().isConnected()) {
             throw new IllegalStateException("Not connected to database");
         }
-        myEventQueue.forEach(System.out::println);
+        int size = myEventQueue.size();
         if (!myEventQueue.isEmpty()) {
             DBManager dBInstance = DBManager.getDBManager();
             Event curEvent = myEventQueue.poll();
             System.out.println(curEvent.getFileName());
-            while (curEvent != null) {
+            for (int i = 0; i < size; i++) {
                 dBInstance.addEvent(curEvent);
                 curEvent = myEventQueue.poll();
             }
