@@ -230,7 +230,7 @@ public class SystemWatch {
     }
 
     private void registerDirTree(Path theRoot, boolean theEventSpec) {
-        int[] intarray = new int[]{1, 2, 3};
+        myPCS.firePropertyChange(ModelProperties.REGISTER_START, null, null); // if gui needs to be held until done registering
         try {
             System.out.println("trying to walk: " + theRoot.toFile());
             Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
@@ -270,7 +270,7 @@ public class SystemWatch {
             // TODO Auto-generated catch block
         }
         System.out.println("Done walking");
-        myPCS.firePropertyChange(ModelProperties.REGISTER_ALL, null, null); // if gui needs to be held until done registering
+        myPCS.firePropertyChange(ModelProperties.REGISTER_DONE, null, null); // if gui needs to be held until done registering
         System.out.println(count);
     }
 
