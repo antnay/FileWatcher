@@ -11,8 +11,8 @@ import view.ViewProperties;
 
 public class FileWatcherController implements PropertyChangeListener {
 
-    private SystemWatch mySysWatch;
-    private MainFrame myMainFrame;
+    private final SystemWatch mySysWatch;
+    private final MainFrame myMainFrame;
 
     public FileWatcherController(MainFrame theView, SystemWatch theSystemWatch) {
         myMainFrame = theView;
@@ -25,7 +25,7 @@ public class FileWatcherController implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent theEvent) {
-        System.out.println("controller pc: " + theEvent.getPropertyName());
+//        System.out.println("controller pc: " + theEvent.getPropertyName());
         switch (theEvent.getPropertyName()) {
             case ModelProperties.START:
                 System.out.println("model started logging");

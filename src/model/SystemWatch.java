@@ -30,7 +30,7 @@ import java.util.concurrent.Executors;
 
 public class SystemWatch {
 
-    private List<String> myExts;
+    private final List<String> myExts;
     private final Queue<Event> myEventQueue;
     private final List<Path> myPathList;
     private final PropertyChangeSupport myPCS;
@@ -54,12 +54,12 @@ public class SystemWatch {
         if (myIsRunning) {
             throw new IllegalStateException("System watch is already running");
         }
-//        myWatchKeys = new ConcurrentHashMap<>();
         try {
             myWatchService = FileSystems.getDefault().newWatchService();
         } catch (IOException e) {
             // TODO Auto-generated catch block
         }
+//        myWatchKeys = new ConcurrentHashMap<>();
 //        myWatchKeys.forEach((path, watchKey) -> {
 //            WatchKey res = registerDirectory(path);
 //            if (res == null) {
@@ -177,7 +177,7 @@ public class SystemWatch {
             new Thread(this::registerPathList).start();
             WatchKey key;
             try {
-//                while ((key = myWatchService.poll(100, TimeUnit.MILLISECONDS)) != null) {
+//                while ((key = myWatchService.poll(1, TimeUnit.SECONDS)) != null) {
                 while ((key = myWatchService.take()) != null) {
                     for (WatchEvent<?> event : key.pollEvents()) {
                         String fileName = event.context().toString();
