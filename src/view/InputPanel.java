@@ -1,5 +1,6 @@
 package view;
 
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -34,15 +35,22 @@ public class InputPanel extends JPanel {
     }
 
     private JPanel createExtensionPanel() {
-        // label for extension field
+        // label for extension combo box
         JLabel extensionLabel = new JLabel("Monitor by extension");
 
-        // text field for extension
-        JTextField extensionField = new JTextField();
+        // combo box for extension
+        String[] commonExtensions = {
+                ".txt",
+                ".exe",
+                ".jar"
+        };
+
+        JComboBox<String> extensionList = new JComboBox<>(commonExtensions);
+        extensionList.setEditable(true);
 
         JPanel extensionPanel = new JPanel(new BorderLayout());
         extensionPanel.add(extensionLabel, BorderLayout.NORTH);
-        extensionPanel.add(extensionField, BorderLayout.CENTER);
+        extensionPanel.add(extensionList, BorderLayout.CENTER);
 
         return extensionPanel;
     }
