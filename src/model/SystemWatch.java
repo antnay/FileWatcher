@@ -2,17 +2,25 @@ package model;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.ClosedWatchServiceException;
+import java.nio.file.FileSystemLoopException;
 import java.nio.file.FileSystems;
-import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -20,25 +28,25 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.Pattern;
-import java.util.LinkedList;
 
 public class SystemWatch {
 
+    private final List<String> myExts;
+    private final Queue<Event> myEventQueue;
+    private final List<Path> myPathList;
+    private final PropertyChangeSupport myPCS;
     private Map<Path, WatchKey> myWatchKeys;
-    private List<String> myExts;
     private WatchService myWatchService;
     private ExecutorService myExecutor;
-    private Queue<Event> myEventQueue;
     private boolean myIsRunning;
-    private final PropertyChangeSupport myPCS;
+    private int count = 0;
 
     public SystemWatch() {
         myWatchService = null;
         DBManager.getDBManager().connect();
-        myWatchKeys = new TreeMap<>();
         myExts = new LinkedList<>();
         myEventQueue = new ConcurrentLinkedQueue<>();
+        myPathList = new LinkedList<>();
         myIsRunning = false;
         myPCS = new PropertyChangeSupport(this);
     }
@@ -52,6 +60,7 @@ public class SystemWatch {
         } catch (IOException e) {
             // TODO Auto-generated catch block
         }
+        myWatchKeys = new TreeMap<>();
         myWatchKeys.forEach((path, watchKey) -> {
             WatchKey res = registerDirectory(path);
             if (res == null) {
@@ -76,9 +85,8 @@ public class SystemWatch {
         } catch (IOException theE) {
             System.err.println("Error closing systemWatch: " + theE.getMessage());
         }
-        // theDirectory.register(myWatchService, StandardWatchEventKinds.ENTRY_CREATE,
-        // StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY));
         myWatchService = null;
+        myWatchKeys = null;
         myExecutor.shutdownNow();
         myPCS.firePropertyChange(ModelProperties.STOP, null, null);
         System.out.println("shut down executor");
@@ -102,7 +110,7 @@ public class SystemWatch {
         } else if (Files.notExists(theDirectory, LinkOption.NOFOLLOW_LINKS)) {
             throw new IllegalArgumentException("Directory does not exist");
         }
-        myWatchKeys.put(theDirectory, null);
+        myPathList.add(theDirectory);
     }
 
     public void removeDir(final Path theDirectory) {
@@ -129,76 +137,147 @@ public class SystemWatch {
         myExts.remove(theExtension);
     }
 
-    public void saveToLog() {
+    public void saveToDB() {
         if (!DBManager.getDBManager().isConnected()) {
             throw new IllegalStateException("Not connected to database");
         }
-        myEventQueue.forEach(System.out::println);
+        int size = myEventQueue.size();
         if (!myEventQueue.isEmpty()) {
             DBManager dBInstance = DBManager.getDBManager();
             Event curEvent = myEventQueue.poll();
             System.out.println(curEvent.getFileName());
-            while (curEvent != null) {
+            for (int i = 0; i < size; i++) {
                 dBInstance.addEvent(curEvent);
                 curEvent = myEventQueue.poll();
             }
         }
     }
 
-    private void runLogger() {
-        System.out.println("running logger");
-        myExecutor.submit(() -> {
-            registerDirTree();
-            while (myIsRunning) {
-                WatchKey key;
-                Pattern pattern = Pattern.compile("\\.\\w+");
-                try {
-                    while ((key = myWatchService.take()) != null) {
-                        for (WatchEvent<?> event : key.pollEvents()) {
-                            // TODO: Check if event is directory creation, add to map and register with
-                            // watchservice
-                            // if directory then registerDir()
-                            String fileName = event.context().toString();
-                            boolean match = pattern.matcher(fileName).matches();
-                            if (match) { // TODO: make me optional?
-                                continue;
-                            }
-                            String path = ((Path) key.watchable()).resolve(fileName).toString();
-                            // myWatchKeys.getOrDefault(path, path);
-                            // TODO: Get extension
-                            Event logEvent = new Event("", fileName, path,
-                                    event.kind().toString(), LocalDateTime.now());
-                            myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
-                            System.out.println(logEvent);
-                            myEventQueue.add(logEvent);
-                            // System.out.println("added event to queue");
-                        }
-                        key.reset();
-                    }
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
+    private void regEvent(String theEvent, String theFileName, Path thePath) {
+        String extension = "";
+        int i = theFileName.length() - 1;
+        while (i >= 0) {
+            char currentChar = theFileName.charAt(i);
+            if (currentChar == '.') {
+                if (i == 0) {
+                    break;
                 }
+                extension = theFileName.substring(i + 1);
+                break;
+            }
+            i--;
+        }
+        Event logEvent = new Event(extension, theFileName, thePath.toString(),
+                theEvent, LocalDateTime.now());
+        myEventQueue.add(logEvent);
+        myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
+    }
+
+    private void runLogger() {
+        myExecutor.submit(() -> {
+            new Thread(this::registerPathList).start();
+            WatchKey key;
+            try {
+                // while ((key = myWatchService.poll(1, TimeUnit.SECONDS)) != null) {
+                while ((key = myWatchService.take()) != null) {
+                    for (WatchEvent<?> event : key.pollEvents()) {
+                        String fileName = event.context().toString();
+                        Path path = ((Path) key.watchable()).resolve(fileName);
+                        WatchEvent.Kind<?> eType = event.kind();
+                        // FIXME: when deleting directory, path.isdirectory does not work
+                        if (path.toFile().isDirectory()) {
+                            if (eType == StandardWatchEventKinds.ENTRY_CREATE) {
+                                registerDirTree(path, true);
+                            } else if (eType == StandardWatchEventKinds.ENTRY_DELETE) {
+                                System.out.println("removing directory from watch");
+                                // TODO: remove directory tree
+                            }
+                            continue;
+                        }
+                        regEvent(event.kind().toString(), fileName, path);
+                    }
+                    key.reset();
+                }
+            } catch (InterruptedException | ClosedWatchServiceException theEvent) {
+                Thread.currentThread().interrupt();
             }
         });
     }
 
-    private void registerDirTree() {
-        myWatchKeys.keySet().forEach(rootPath -> {
-            try {
-                System.out.println("trying to walk: " + rootPath.toFile());
-                Files.walk(rootPath, FileVisitOption.FOLLOW_LINKS).forEach(currentPath -> {
-                    if (!Files.isDirectory(currentPath, LinkOption.NOFOLLOW_LINKS)) {
-                        return;
-                    } else if (myWatchKeys.containsKey(currentPath)) {
-                        return;
-                    }
-                    myWatchKeys.put(currentPath, registerDirectory(currentPath));
-                });
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
+    private void registerPathList() {
+        Instant now = Instant.now();
+        // myPathList.forEach(thePath -> walk(thePath, false));
+        myPathList.forEach(theRoot -> registerDirTree(theRoot, false));
+        System.out.println("Time (s): " + Duration.between(now, Instant.now()).getSeconds());
+    }
+
+    private void walk(Path thePath, boolean theAddFiles) {
+        File root = new File(thePath.toString());
+        File[] list = root.listFiles();
+
+        if (list == null)
+            return;
+
+        for (File file : list) {
+            if (theAddFiles && file.isFile()) {
+                regEvent(StandardWatchEventKinds.ENTRY_CREATE.toString(), file.getName(), thePath);
+            } else if (file.isDirectory()) {
+                registerDirectory(thePath);
+                walk(Path.of(file.toURI()), theAddFiles);
             }
-        });
-        System.out.println("finished registering directory tree");
+        }
+    }
+
+    private void registerDirTree(Path theRoot, boolean theEventSpec) {
+        myPCS.firePropertyChange(ModelProperties.REGISTER_START, null, null); // if gui needs to be held until done
+        try {
+            System.out.println("trying to walk: " + theRoot.toFile());
+            Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
+                // FIXME: Nullpointer when shutting down executor while walking
+                public FileVisitResult preVisitDirectory(Path theCurrentDir, BasicFileAttributes attrs) {
+                    try {
+                        if (Files.isRegularFile(theCurrentDir)) {
+                            regEvent(StandardWatchEventKinds.ENTRY_CREATE.toString(),
+                                    theCurrentDir.getFileName().toString(), theCurrentDir);
+                        }
+                        if (Files.isSymbolicLink(theCurrentDir)) {
+                            return FileVisitResult.SKIP_SUBTREE;
+                        } else if (Files.isDirectory(theCurrentDir)) {
+                            WatchKey wK = registerDirectory(theCurrentDir);
+                            if  (wK == null) {
+                                // FIXME: Error
+                                throw new IllegalStateException("System not watching");
+                            } else {
+                                myWatchKeys.put(theCurrentDir, wK);
+                            }
+                            count++;
+                            return FileVisitResult.CONTINUE;
+                        }
+                    } catch (SecurityException | IllegalStateException theE) {
+                        // TODO Auto-generated catch block
+                        System.err.println("ERRRRRRRRRRRRRRRRRRRRRROR " + theE.getMessage());
+                        ;
+                    }
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                    if (exc instanceof FileSystemLoopException) {
+                        System.err.println("Filesystem loop detected: " + file);
+                    } else {
+                        System.err.println("Error accessing file: " + file + " - " + exc.getMessage());
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException theE) {
+            System.err.println("Could not register " + theE.getMessage());
+            // TODO Auto-generated catch block
+        }
+        System.out.println("Done walking");
+        myPCS.firePropertyChange(ModelProperties.REGISTER_DONE, null, null); // if gui needs to be held until done
+        System.out.println(count);
     }
 
     private WatchKey registerDirectory(final Path thePath) {
@@ -207,11 +286,15 @@ public class SystemWatch {
                     StandardWatchEventKinds.ENTRY_CREATE,
                     StandardWatchEventKinds.ENTRY_DELETE,
                     StandardWatchEventKinds.ENTRY_MODIFY);
-        } catch (IOException e) {
+
+        } catch (IOException | ClosedWatchServiceException theE) {
             System.err.println("Error adding path to WatchService");
             return null;
         }
     }
+
+    // private Event createEvent() {
+    // }
 
     /**
      * Add a PropertyChangeListener to the listener list.

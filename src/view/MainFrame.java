@@ -116,7 +116,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent theEvent) {
-        System.out.println("view pc: " + theEvent.getPropertyName());
+//        System.out.println("view pc: " + theEvent.getPropertyName());
         switch (theEvent.getPropertyName()) {
             case ModelProperties.START:
                 myControlPanel.updateStartStopButt(true);

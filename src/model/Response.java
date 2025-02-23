@@ -1,5 +1,5 @@
 package model;
 
-public class Response {
+class Response {
     
 }

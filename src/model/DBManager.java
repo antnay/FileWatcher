@@ -34,7 +34,7 @@ final class DBManager {
      *
      * @return true if there is a connection to the database, false otherwise.
      */
-    public boolean isConnected() {
+    boolean isConnected() {
         return connection != null;
     }
 
