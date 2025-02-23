@@ -33,14 +33,6 @@ public class FileWatcherController implements PropertyChangeListener {
             case ModelProperties.STOP:
                 System.out.println("model stopped logging");
                 break;
-            case ViewProperties.START_STOP_BUTTON:
-                System.out.println("start stop button pressed");
-                if (mySysWatch.isRunning()) {
-                    mySysWatch.stopWatch();
-                } else {
-                    mySysWatch.startWatch();
-                }
-                break;
             case ViewProperties.SUBMIT_BUTTON:
                 System.out.println("submit button pressed");
                 break;
