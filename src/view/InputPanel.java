@@ -1,5 +1,6 @@
 package view;
 
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -17,9 +18,7 @@ public class InputPanel extends JPanel {
     }
 
     private void initInputFields() {
-        BorderLayout layout = new BorderLayout();
-        layout.setVgap(10);
-        layout.setHgap(10);
+        BorderLayout layout = new BorderLayout(10, 10);
         setLayout(layout);
 
         // label telling the user what to do
@@ -50,7 +49,11 @@ public class InputPanel extends JPanel {
 
         JPanel extensionPanel = new JPanel(new BorderLayout());
         extensionPanel.add(extensionLabel, BorderLayout.NORTH);
-        extensionPanel.add(extensionList, BorderLayout.CENTER);
+
+        // nest a border layout inside extensionPanel to
+        JPanel nestedPanel = new JPanel(new BorderLayout());
+        extensionPanel.add(nestedPanel, BorderLayout.CENTER);
+        nestedPanel.add(extensionList, BorderLayout.NORTH);
 
         return extensionPanel;
     }
@@ -66,8 +69,38 @@ public class InputPanel extends JPanel {
         JPanel directoryPanel = new JPanel(new BorderLayout());
         directoryPanel.add(directoryLabel, BorderLayout.NORTH);
         directoryPanel.add(directoryField, BorderLayout.CENTER);
-
+        directoryPanel.add(initButtons(), BorderLayout.SOUTH);
 
         return directoryPanel;
+    }
+
+    private JPanel initButtons() {
+        JPanel buttonGrid = new JPanel(new GridLayout());
+
+        JButton myStartStopButton = new JButton("Start");
+        myStartStopButton.addActionListener(theEvent -> {
+            myPCS.firePropertyChange(ViewProperties.START_STOP_BUTTON, null, null);
+        });
+        buttonGrid.add(myStartStopButton);
+
+        JButton mySubmitButton = new JButton("Submit");
+        mySubmitButton.addActionListener(theEvent -> {
+            myPCS.firePropertyChange(ViewProperties.SUBMIT_BUTTON, null, null);
+        });
+        buttonGrid.add(mySubmitButton);
+
+        JButton myClearButton = new JButton("Clear");
+        myClearButton.addActionListener(theEvent -> {
+            myPCS.firePropertyChange(ViewProperties.CLEAR_LOG_BUTTON, null, null);
+        });
+        buttonGrid.add(myClearButton);
+
+        JButton mySaveLogButton = new JButton("Save");
+        mySaveLogButton.addActionListener(theEvent -> {
+            myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
+        });
+        buttonGrid.add(mySaveLogButton);
+
+        return buttonGrid;
     }
 }
