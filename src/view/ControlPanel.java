@@ -4,9 +4,7 @@ import java.awt.*;
 import java.beans.PropertyChangeSupport;
 
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 // set file extensions and directories
 class ControlPanel extends JPanel {
@@ -19,39 +17,13 @@ class ControlPanel extends JPanel {
 
     ControlPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
-        setLayout(new GridBagLayout());
-        initInputFields();
+        setLayout(new BorderLayout());
+        this.add(new InputPanel(myPCS), BorderLayout.NORTH);
         initButtons();
     }
 
     void updateStartStopButt(boolean theIsRunning) {
         myStartStopButton.setText((theIsRunning) ? "Stop" : "Start");
-    }
-
-    private void initInputFields() {
-        // label telling the user what to do
-        JLabel instructionLabel = new JLabel("Select a file extension, a directory, and click Start to begin File Watcher.");
-        instructionLabel.setBackground(Color.RED);
-        instructionLabel.setOpaque(true);
-        add(instructionLabel);
-
-        // label for extension field
-        JLabel extensionLabel = new JLabel("Monitor by extension");
-        add(extensionLabel);
-
-        // label for directory field
-        JLabel directoryLabel = new JLabel("Directory to monitor");
-        add(directoryLabel);
-
-        // text field for extension
-        JTextField extensionField = new JTextField();
-        add(extensionField);
-
-        // text field for directory
-        JTextField directoryField = new JTextField();
-        add(directoryField);
-
-        // start and stop buttons
     }
 
     private void initButtons() {
