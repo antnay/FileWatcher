@@ -49,7 +49,7 @@ public class FileWatcherController implements PropertyChangeListener {
                 mySysWatch.clearLog();
                 break;
             case ViewProperties.SAVE_LOG:
-                mySysWatch.saveToLog();
+                mySysWatch.saveToDB();
             default:
                 break;
         }

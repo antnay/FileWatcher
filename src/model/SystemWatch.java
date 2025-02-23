@@ -24,6 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -59,15 +60,15 @@ public class SystemWatch {
         } catch (IOException e) {
             // TODO Auto-generated catch block
         }
-//        myWatchKeys = new ConcurrentHashMap<>();
-//        myWatchKeys.forEach((path, watchKey) -> {
-//            WatchKey res = registerDirectory(path);
-//            if (res == null) {
-//                myWatchKeys.remove(path);
-//                return;
-//            }
-//            watchKey = res;
-//        });
+        myWatchKeys = new TreeMap<>();
+        myWatchKeys.forEach((path, watchKey) -> {
+            WatchKey res = registerDirectory(path);
+            if (res == null) {
+                myWatchKeys.remove(path);
+                return;
+            }
+            watchKey = res;
+        });
         myIsRunning = true;
         myExecutor = Executors.newSingleThreadExecutor();
         runLogger();
@@ -136,7 +137,7 @@ public class SystemWatch {
         myExts.remove(theExtension);
     }
 
-    public void saveToLog() {
+    public void saveToDB() {
         if (!DBManager.getDBManager().isConnected()) {
             throw new IllegalStateException("Not connected to database");
         }
@@ -177,7 +178,7 @@ public class SystemWatch {
             new Thread(this::registerPathList).start();
             WatchKey key;
             try {
-//                while ((key = myWatchService.poll(1, TimeUnit.SECONDS)) != null) {
+                // while ((key = myWatchService.poll(1, TimeUnit.SECONDS)) != null) {
                 while ((key = myWatchService.take()) != null) {
                     for (WatchEvent<?> event : key.pollEvents()) {
                         String fileName = event.context().toString();
@@ -203,10 +204,9 @@ public class SystemWatch {
         });
     }
 
-
     private void registerPathList() {
         Instant now = Instant.now();
-//        myPathList.forEach(thePath -> walk(thePath, false));
+        // myPathList.forEach(thePath -> walk(thePath, false));
         myPathList.forEach(theRoot -> registerDirTree(theRoot, false));
         System.out.println("Time (s): " + Duration.between(now, Instant.now()).getSeconds());
     }
@@ -215,14 +215,13 @@ public class SystemWatch {
         File root = new File(thePath.toString());
         File[] list = root.listFiles();
 
-        if (list == null) return;
+        if (list == null)
+            return;
 
         for (File file : list) {
             if (theAddFiles && file.isFile()) {
-//                System.out.println("File: " + file.getAbsolutePath());
                 regEvent(StandardWatchEventKinds.ENTRY_CREATE.toString(), file.getName(), thePath);
             } else if (file.isDirectory()) {
-                System.out.println(thePath);
                 registerDirectory(thePath);
                 walk(Path.of(file.toURI()), theAddFiles);
             }
@@ -230,7 +229,7 @@ public class SystemWatch {
     }
 
     private void registerDirTree(Path theRoot, boolean theEventSpec) {
-        myPCS.firePropertyChange(ModelProperties.REGISTER_START, null, null); // if gui needs to be held until done registering
+        myPCS.firePropertyChange(ModelProperties.REGISTER_START, null, null); // if gui needs to be held until done
         try {
             System.out.println("trying to walk: " + theRoot.toFile());
             Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
@@ -238,19 +237,26 @@ public class SystemWatch {
                 public FileVisitResult preVisitDirectory(Path theCurrentDir, BasicFileAttributes attrs) {
                     try {
                         if (Files.isRegularFile(theCurrentDir)) {
-                            regEvent(StandardWatchEventKinds.ENTRY_CREATE.toString(), theCurrentDir.getFileName().toString(), theCurrentDir);
+                            regEvent(StandardWatchEventKinds.ENTRY_CREATE.toString(),
+                                    theCurrentDir.getFileName().toString(), theCurrentDir);
                         }
                         if (Files.isSymbolicLink(theCurrentDir)) {
                             return FileVisitResult.SKIP_SUBTREE;
                         } else if (Files.isDirectory(theCurrentDir)) {
-                            if (registerDirectory(theCurrentDir) == null) {
+                            WatchKey wK = registerDirectory(theCurrentDir);
+                            if  (wK == null) {
+                                // FIXME: Error
                                 throw new IllegalStateException("System not watching");
+                            } else {
+                                myWatchKeys.put(theCurrentDir, wK);
                             }
                             count++;
                             return FileVisitResult.CONTINUE;
                         }
-                    } catch (SecurityException theE) {
+                    } catch (SecurityException | IllegalStateException theE) {
                         // TODO Auto-generated catch block
+                        System.err.println("ERRRRRRRRRRRRRRRRRRRRRROR " + theE.getMessage());
+                        ;
                     }
                     return FileVisitResult.SKIP_SUBTREE;
                 }
@@ -265,12 +271,12 @@ public class SystemWatch {
                     return FileVisitResult.CONTINUE;
                 }
             });
-        } catch (IOException e) {
-            System.out.println("Could not register ");
+        } catch (IOException theE) {
+            System.err.println("Could not register " + theE.getMessage());
             // TODO Auto-generated catch block
         }
         System.out.println("Done walking");
-        myPCS.firePropertyChange(ModelProperties.REGISTER_DONE, null, null); // if gui needs to be held until done registering
+        myPCS.firePropertyChange(ModelProperties.REGISTER_DONE, null, null); // if gui needs to be held until done
         System.out.println(count);
     }
 
@@ -287,8 +293,8 @@ public class SystemWatch {
         }
     }
 
-//    private Event createEvent() {
-//    }
+    // private Event createEvent() {
+    // }
 
     /**
      * Add a PropertyChangeListener to the listener list.
