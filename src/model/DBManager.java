@@ -10,6 +10,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import javax.swing.table.DefaultTableModel;
+import java.sql.*;
+
 
 final class DBManager {
 
@@ -58,6 +61,45 @@ final class DBManager {
             //theE.printStackTrace(); (If we want to log what the exact error is)
         }
     }
+
+    //Work on this more, check how to make it better or if it is the right way
+    public DefaultTableModel executeQuery(String query) {
+        DefaultTableModel tableModel = new DefaultTableModel();
+
+        if (!isConnected()) {
+            System.err.println("Database is not connected!");
+            return tableModel; // Return empty model if no connection
+        }
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            // Retrieve column names dynamically
+            ResultSetMetaData metaData = rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            String[] columnNames = new String[columnCount];
+
+            for (int i = 1; i <= columnCount; i++) {
+                columnNames[i - 1] = metaData.getColumnName(i);
+            }
+            tableModel.setColumnIdentifiers(columnNames);
+
+            // Populate table model with query results
+            while (rs.next()) {
+                Object[] rowData = new Object[columnCount];
+                for (int i = 1; i <= columnCount; i++) {
+                    rowData[i - 1] = rs.getObject(i);
+                }
+                tableModel.addRow(rowData);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("SQL Error: " + e.getMessage());
+        }
+
+        return tableModel;
+    }
+
 
     void disconnect() {
         try {

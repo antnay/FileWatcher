@@ -58,7 +58,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         fileItem.add(mySaveLogMItem);
 
         JMenuItem openDBFrameItem = new JMenuItem("SQL Query Executor");
-        openDBFrameItem.addActionListener(e -> new DBFrame().setVisible(true));
+        openDBFrameItem.addActionListener(e -> new DBFrame(myPCS).setVisible(true));
         fileItem.add(openDBFrameItem);
 
         myAboutMItem = new JMenuItem("About");
