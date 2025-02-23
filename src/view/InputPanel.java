@@ -77,29 +77,17 @@ public class InputPanel extends JPanel {
     private JPanel initButtons() {
         JPanel buttonGrid = new JPanel(new GridLayout());
 
-        JButton myStartStopButton = new JButton("Start");
-        myStartStopButton.addActionListener(theEvent -> {
-            myPCS.firePropertyChange(ViewProperties.START_STOP_BUTTON, null, null);
+        JButton startButton = new JButton("Start");
+        startButton.addActionListener(theEvent -> {
+            myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, null);
         });
-        buttonGrid.add(myStartStopButton);
+        buttonGrid.add(startButton);
 
-        JButton mySubmitButton = new JButton("Submit");
-        mySubmitButton.addActionListener(theEvent -> {
-            myPCS.firePropertyChange(ViewProperties.SUBMIT_BUTTON, null, null);
+        JButton stopButton = new JButton("Stop");
+        stopButton.addActionListener(theEvent -> {
+            myPCS.firePropertyChange(ViewProperties.STOP_BUTTON, null, null);
         });
-        buttonGrid.add(mySubmitButton);
-
-        JButton myClearButton = new JButton("Clear");
-        myClearButton.addActionListener(theEvent -> {
-            myPCS.firePropertyChange(ViewProperties.CLEAR_LOG_BUTTON, null, null);
-        });
-        buttonGrid.add(myClearButton);
-
-        JButton mySaveLogButton = new JButton("Save");
-        mySaveLogButton.addActionListener(theEvent -> {
-            myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
-        });
-        buttonGrid.add(mySaveLogButton);
+        buttonGrid.add(stopButton);
 
         return buttonGrid;
     }
