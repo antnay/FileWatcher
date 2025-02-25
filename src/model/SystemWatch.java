@@ -105,9 +105,27 @@ public class SystemWatch {
 
     public void removeDir(final Path theDirectory) {
         String dirString = theDirectory.toString();
+        /**
+         * Maybe, before it removes a directory from being watched, check that WatchService is running
+         *         if (myWatchService == null) {
+         *             System.err.println("WatchService is not running. It cannot remove directory without WatchService running.");
+         *             return;
+         *         }
+         */
         if (!myWatchKeys.containsKey(dirString)) {
             throw new IllegalArgumentException("Directory is not in watch list");
         }
+        // FIXME: get null pointer here if watchservice not running
+        // TODO: need to walk dir and cancel :(
+        /**
+         * //One way that it can remove a directory from being watched (Try to fix the FIXME above)
+         *         WatchKey key = myWatchKeys.get(theDirectory);
+         *         if (key != null) {
+         *             key.cancel();
+         *         }
+         *         myWatchKeys.remove(theDirectory);
+         *         System.out.println("Removed directory from watch list: " + theDirectory);
+         */
         myWatchKeys.get(dirString).cancel();
         myWatchKeys.remove(dirString);
     }
@@ -152,6 +170,23 @@ public class SystemWatch {
                         for (WatchEvent<?> event : key.pollEvents()) {
                             String path = ((Path) key.watchable()).resolve(event.context().toString()).toString();
                             // TODO: Get extension
+                            // FIXME: when deleting directory, path.isdirectory does not work
+                            /**
+                             * //One way that the WatchService can delete a directory from being watched
+                             *                    if (eType == StandardWatchEventKinds.ENTRY_DELETE) {
+                             *                             System.out.println("Directory deleted: " + path);
+                             *                             myWatchKeys.remove(path);
+                             *                             continue;
+                             *                         }
+                             *
+                             *                         if (path.toFile().isDirectory()) {
+                             *                             if (eType == StandardWatchEventKinds.ENTRY_CREATE) {
+                             *                                 registerDirTree(path, true);
+                             *                             }
+                             *                             continue;
+                             *                         }
+                             */
+
                             if (event.context().toString().equals(".DS_Store")) { // ignore ds store changes in macs
                                 continue;
                             }

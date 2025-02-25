@@ -62,29 +62,37 @@ final class DBManager {
         }
     }
 
-    //Work on this more, check how to make it better or if it is the right way
+    /**
+     * Runs an SQL query and returns the results in a table format.
+     *
+     * @param query The SQL command to run.
+     * @return A table with the query results.
+     */
     public DefaultTableModel executeQuery(String query) {
         DefaultTableModel tableModel = new DefaultTableModel();
 
+        //Check to see if the database is connected
         if (!isConnected()) {
             System.err.println("Database is not connected!");
-            return tableModel; // Return empty model if no connection
+            return tableModel; //If there is no connection, it returns an empty table
         }
 
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
+        //This is where it tries to execute the SQL query
+        try (Statement stmt = connection.createStatement(); //Create a statement to send SQL to the database
+             ResultSet rs = stmt.executeQuery(query)) { //It runs the SQL query and store the results
 
-            // Retrieve column names dynamically
+            //Retrieve column names dynamically (Or it gets the column name from the database)
             ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
+            int columnCount = metaData.getColumnCount(); //This finds the number of columns
             String[] columnNames = new String[columnCount];
 
+            //This stores the column names in the table model
             for (int i = 1; i <= columnCount; i++) {
                 columnNames[i - 1] = metaData.getColumnName(i);
             }
             tableModel.setColumnIdentifiers(columnNames);
 
-            // Populate table model with query results
+            //Populate table model with query results
             while (rs.next()) {
                 Object[] rowData = new Object[columnCount];
                 for (int i = 1; i <= columnCount; i++) {
@@ -97,6 +105,7 @@ final class DBManager {
             System.err.println("SQL Error: " + e.getMessage());
         }
 
+        //Returns the table model and displays the results
         return tableModel;
     }
 
