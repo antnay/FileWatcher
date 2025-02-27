@@ -11,6 +11,8 @@ import java.beans.PropertyChangeSupport;
 
 public class InputPanel extends JPanel {
     private PropertyChangeSupport myPCS;
+    private JComboBox<String> myComboBox;
+    private JTextField myTextField;
 
     public InputPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
@@ -44,8 +46,8 @@ public class InputPanel extends JPanel {
                 ".jar"
         };
 
-        JComboBox<String> extensionList = new JComboBox<>(commonExtensions);
-        extensionList.setEditable(true);
+        myComboBox = new JComboBox<>(commonExtensions);
+        myComboBox.setEditable(true);
 
         JPanel extensionPanel = new JPanel(new BorderLayout());
         extensionPanel.add(extensionLabel, BorderLayout.NORTH);
@@ -53,7 +55,7 @@ public class InputPanel extends JPanel {
         // nest a border layout inside extensionPanel to
         JPanel nestedPanel = new JPanel(new BorderLayout());
         extensionPanel.add(nestedPanel, BorderLayout.CENTER);
-        nestedPanel.add(extensionList, BorderLayout.NORTH);
+        nestedPanel.add(myComboBox, BorderLayout.NORTH);
 
         return extensionPanel;
     }
@@ -63,12 +65,12 @@ public class InputPanel extends JPanel {
         JLabel directoryLabel = new JLabel("Directory to monitor");
 
         // text field for directory
-        JTextField directoryField = new JTextField();
-        directoryField.setColumns(40);
+        myTextField = new JTextField();
+        myTextField.setColumns(40);
 
         JPanel directoryPanel = new JPanel(new BorderLayout());
         directoryPanel.add(directoryLabel, BorderLayout.NORTH);
-        directoryPanel.add(directoryField, BorderLayout.CENTER);
+        directoryPanel.add(myTextField, BorderLayout.CENTER);
         directoryPanel.add(initButtons(), BorderLayout.SOUTH);
 
         return directoryPanel;
@@ -79,13 +81,15 @@ public class InputPanel extends JPanel {
 
         JButton startButton = new JButton("Start");
         startButton.addActionListener(theEvent -> {
-            myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, null);
+            String[] inputFields = {(String) myComboBox.getSelectedItem(), myTextField.getText()};
+            myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, inputFields);
         });
         buttonGrid.add(startButton);
 
         JButton stopButton = new JButton("Stop");
         stopButton.addActionListener(theEvent -> {
-            myPCS.firePropertyChange(ViewProperties.STOP_BUTTON, null, null);
+            String[] inputFields = {(String) myComboBox.getSelectedItem(), myTextField.getText()};
+            myPCS.firePropertyChange(ViewProperties.STOP_BUTTON, null, inputFields);
         });
         buttonGrid.add(stopButton);
 
