@@ -29,11 +29,9 @@ public class FileWatcherController implements PropertyChangeListener {
         switch (theEvent.getPropertyName()) {
             case ModelProperties.START:
                 System.out.println("model started logging");
-                String[] startInput = (String[]) theEvent.getNewValue();
                 break;
             case ModelProperties.STOP:
                 System.out.println("model stopped logging");
-                String[] stopInput = (String[]) theEvent.getNewValue();
                 break;
             case ViewProperties.SUBMIT_BUTTON:
                 System.out.println("submit button pressed");
