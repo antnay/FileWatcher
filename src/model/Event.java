@@ -10,13 +10,12 @@ public final class Event {
     private final LocalDateTime myTimeStamp;
 
     public Event(final String theExtension, final String theFileName, final String thePath,
-            final String theEventKind, final LocalDateTime theTimestamp) {
-        // TODO: Clean up fields to prevent malicous attacks
+            final String theEventKind) {
         myExtension = theExtension;
         myFileName = theFileName;
         myPath = thePath;
         myEventKind = theEventKind;
-        myTimeStamp = theTimestamp;
+        myTimeStamp =  LocalDateTime.now();
     }
 
     final String getMyExtension() {

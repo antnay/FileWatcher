@@ -8,11 +8,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import javax.swing.table.DefaultTableModel;
-import java.sql.*;
 
+import javax.swing.table.DefaultTableModel;
 
 final class DBManager {
 
@@ -22,7 +22,6 @@ final class DBManager {
 
     private DBManager() {
         connection = null;
-        // TODO: Maybe call connect() right away?
     }
 
     static DBManager getDBManager() {
@@ -38,15 +37,14 @@ final class DBManager {
         return connection != null;
     }
 
-    void connect() {
+    void connect() throws DatabaseException {
         File dbPath = new File("database/log.sql");
         if (!Files.exists(Path.of(dbPath.getAbsolutePath()))) {
             try {
                 Files.createDirectories(Path.of(dbPath.getParentFile().getCanonicalPath()));
                 Files.createFile(Path.of(dbPath.getAbsolutePath()));
             } catch (IOException theE) {
-                System.err.println("Error creating database " + dbPath);
-                System.exit(1);
+                throw new RuntimeException("Error creating database", theE);
             }
         }
         String dbUrl = "jdbc:sqlite:" + dbPath.getAbsolutePath();
@@ -55,14 +53,10 @@ final class DBManager {
             System.out.println("Connected to database");
             initDB();
         } catch (SQLException theE) {
-            connection = null;
-            System.err.println("Error connecting to database " + theE.getMessage());
-            // TODO: Handle this error
-            //theE.printStackTrace(); (If we want to log what the exact error is)
+            throw new DatabaseException("Error connecting to database", theE);
         }
     }
 
-    //Work on this more, check how to make it better or if it is the right way
     public DefaultTableModel executeQuery(String query) {
         DefaultTableModel tableModel = new DefaultTableModel();
 
@@ -72,7 +66,7 @@ final class DBManager {
         }
 
         try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
+                ResultSet rs = stmt.executeQuery(query)) {
 
             // Retrieve column names dynamically
             ResultSetMetaData metaData = rs.getMetaData();
@@ -100,39 +94,34 @@ final class DBManager {
         return tableModel;
     }
 
-
-    void disconnect() {
+    void disconnect() throws DatabaseException {
         try {
-            if (!isConnected()) {
+            if (isConnected()) {
                 connection.close();
                 connection = null;
             }
             System.out.println("Disconnected from database");
         } catch (SQLException theE) {
-            System.err.println("Error closing database: " + theE.getMessage());
-            // TODO: Handle this error
-            //theE.printStackTrace();
+            throw new DatabaseException("Error disconnecting from database", theE);
         }
     }
 
-    void clearTable() {
+    void clearTable() throws DatabaseException {
         try {
             Statement statement = connection.createStatement();
             statement.execute("DELETE FROM eventlog");
         } catch (SQLException theE) {
-            // TODO: Handle this error
-            System.err.println("Error clearing table: " + theE.getMessage());
-            // theE.printStackTrace();
+            throw new DatabaseException("Error clearing table", theE);
         }
     }
 
-    void addEvent(Event theEvent) {
+    void addEvent(Event theEvent) throws DatabaseException {
         if (!isConnected()) {
             throw new IllegalStateException("Not connected to database");
         }
         try (PreparedStatement statement = connection.prepareStatement("""
                 INSERT INTO
-                eventlog(extension, filename, path, event, timestamp)
+                event_log_temp (extension, filename, path, event, timestamp)
                 VALUES (?, ?, ?, ?, ?)
                 """)) {
             statement.setString(1, theEvent.getMyExtension());
@@ -141,23 +130,39 @@ final class DBManager {
             statement.setString(4, theEvent.geEventKind());
             statement.setString(5, theEvent.getTimeStamp());
             statement.execute();
-        } catch (SQLException e) {
-            // TODO: Handle this error
-            System.err.println("Error adding event to database: " + e.getMessage());
-            //e.printStackTrace();
+        } catch (SQLException theE) {
+            throw new DatabaseException("Error adding event to database", theE);
         }
     }
 
-    void initDB() {
+    void mergeTempEvents() throws DatabaseException {
+        if (!isConnected()) {
+            throw new IllegalStateException("Not connected to database");
+        }
+        try (Statement statement = connection.createStatement()) {
+            statement.executeQuery("""
+                    INSERT INTO
+                    event_log (extension, filename, path, event, timestamp)
+                    SELECT extension, filename, path, event, timestamp
+                    FROM event_log_temp
+                    """);
+            statement.executeQuery("DELETE FROM event_log_temp");
+        } catch (SQLException theE) {
+            throw new DatabaseException("Error adding events to database", theE);
+        }
+
+    }
+
+    void initDB() throws DatabaseException {
         if (!isConnected()) {
             throw new IllegalStateException("Not connected to database");
         }
         try (Statement statement = connection.createStatement()) {
             ResultSet res = statement.executeQuery(
-                    "SELECT * FROM sqlite_master WHERE type='table' AND name='eventlog';");
+                    "SELECT * FROM sqlite_master WHERE type='table' AND name='event_log';");
             if (!res.next()) {
                 statement.executeUpdate("""
-                        CREATE TABLE "eventlog" (
+                        CREATE TABLE "event_log" (
                         \t"id"\tINTEGER NOT NULL UNIQUE,
                         \t"extension"\tTEXT,
                         \t"filename"\tTEXT,
@@ -166,7 +171,18 @@ final class DBManager {
                         \t"timestamp"\tDATETIME,
                         \tPRIMARY KEY("id" AUTOINCREMENT)
                         );""");
-                System.out.println("added table");
+            }
+            res = statement.executeQuery(
+                    "SELECT * FROM sqlite_master WHERE type='table' AND name='event_log_temp';");
+            if (!res.next()) {
+                statement.executeUpdate("""
+                        CREATE TABLE "event_log_temp" (
+                        \t"extension"\tTEXT,
+                        \t"filename"\tTEXT,
+                        \t"path"\tTEXT,
+                        \t"event"\tTEXT,
+                        \t"timestamp"\tDATETIME
+                        );""");
             }
             // res = statement.executeQuery(
             // "SELECT name FROM sqlite_master WHERE type='table' AND name='users';"
@@ -182,11 +198,9 @@ final class DBManager {
             // );""");
             // System.out.println("configured DB");
             // }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-            // TODO: Handle this error
+        } catch (SQLException theE) {
+            throw new RuntimeException("Error initializing database", theE);
         }
     }
-
 
 }

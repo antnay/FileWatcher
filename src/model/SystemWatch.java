@@ -19,20 +19,17 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SystemWatch {
 
     private final List<String> myExts;
-    private final Queue<Event> myEventQueue;
+    // private final Queue<Event> myEventQueue;
     private final List<Path> myPathList;
     private final PropertyChangeSupport myPCS;
     private Map<Path, WatchKey> myWatchKeys;
@@ -43,9 +40,13 @@ public class SystemWatch {
 
     public SystemWatch() {
         myWatchService = null;
-        DBManager.getDBManager().connect();
+        try {
+            DBManager.getDBManager().connect();
+        } catch (DatabaseException e) {
+            // TODO Auto-generated catch block
+        }
         myExts = new LinkedList<>();
-        myEventQueue = new ConcurrentLinkedQueue<>();
+        // myEventQueue = new ConcurrentLinkedQueue<>();
         myPathList = new LinkedList<>();
         myIsRunning = false;
         myPCS = new PropertyChangeSupport(this);
@@ -60,7 +61,7 @@ public class SystemWatch {
         } catch (IOException e) {
             // TODO Auto-generated catch block
         }
-        myWatchKeys = new TreeMap<>();
+        myWatchKeys = new ConcurrentHashMap<>();
         myWatchKeys.forEach((path, watchKey) -> {
             WatchKey res = registerDirectory(path);
             if (res == null) {
@@ -96,7 +97,12 @@ public class SystemWatch {
         if (!DBManager.getDBManager().isConnected()) {
             throw new IllegalStateException("Not connected a database");
         }
-        DBManager.getDBManager().clearTable();
+        try {
+            DBManager.getDBManager().clearTable();
+        } catch (DatabaseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         myPCS.firePropertyChange(ModelProperties.CLEAR_TABLE, null, null);
     }
 
@@ -141,16 +147,21 @@ public class SystemWatch {
         if (!DBManager.getDBManager().isConnected()) {
             throw new IllegalStateException("Not connected to database");
         }
-        int size = myEventQueue.size();
-        if (!myEventQueue.isEmpty()) {
-            DBManager dBInstance = DBManager.getDBManager();
-            Event curEvent = myEventQueue.poll();
-            System.out.println(curEvent.getFileName());
-            for (int i = 0; i < size; i++) {
-                dBInstance.addEvent(curEvent);
-                curEvent = myEventQueue.poll();
-            }
+        try {
+            DBManager.getDBManager().mergeTempEvents();
+        } catch (DatabaseException e) {
+            // TODO Auto-generated catch block
         }
+        // int size = myEventQueue.size();
+        // if (!myEventQueue.isEmpty()) {
+        // DBManager dBInstance = DBManager.getDBManager();
+        // Event curEvent = myEventQueue.poll();
+        // System.out.println(curEvent.getFileName());
+        // for (int i = 0; i < size; i++) {
+        // dBInstance.addEvent(curEvent);
+        // curEvent = myEventQueue.poll();
+        // }
+        // }
     }
 
     private void regEvent(String theEvent, String theFileName, Path thePath) {
@@ -168,9 +179,14 @@ public class SystemWatch {
             i--;
         }
         Event logEvent = new Event(extension, theFileName, thePath.toString(),
-                theEvent, LocalDateTime.now());
-        myEventQueue.add(logEvent);
-        myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
+                theEvent);
+        try {
+            DBManager.getDBManager().addEvent(logEvent);
+            myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
+        } catch (DatabaseException e) {
+            // TODO Auto-generated catch block
+        }
+        // myEventQueue.add(logEvent);
     }
 
     private void runLogger() {
@@ -244,7 +260,7 @@ public class SystemWatch {
                             return FileVisitResult.SKIP_SUBTREE;
                         } else if (Files.isDirectory(theCurrentDir)) {
                             WatchKey wK = registerDirectory(theCurrentDir);
-                            if  (wK == null) {
+                            if (wK == null) {
                                 // FIXME: Error
                                 throw new IllegalStateException("System not watching");
                             } else {
