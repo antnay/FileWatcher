@@ -10,33 +10,35 @@ import java.beans.PropertyChangeListener;
 
 public class FileListController implements PropertyChangeListener {
     private static final FileListModel myFileListModel = new FileListModel();
+    private static final JTable myJTable = new JTable(myFileListModel);
 
     public FileListController(final MainFrame theView) {
         theView.addPropertyChangeListener(this);
+        myFileListModel.addColumn("File Extension");
+        myFileListModel.addColumn("Directory");
+
+        // set File Extension column width
+        myJTable.getColumnModel().getColumn(0).setPreferredWidth(100);
+        // set Directory column width
+        myJTable.getColumnModel().getColumn(1).setPreferredWidth(400);
     }
 
-    public static JTable getFileListModel() {
-        FileListModel model = myFileListModel;
-        JTable fileTable = new JTable();
-        fileTable.setModel(model);
-
-        model.addColumn("File Extension");
-        model.addColumn("Directory");
-
-        return fileTable;
+    public static JTable getFileListTable() {
+        return myJTable;
     }
 
     @Override
     public void propertyChange(final PropertyChangeEvent theEvent) {
         switch (theEvent.getPropertyName()) {
             case ViewProperties.START_BUTTON:
-                System.out.println("start clicked");
                 String[] startInput = (String[]) theEvent.getNewValue();
                 myFileListModel.addRow(startInput);
                 break;
             case ViewProperties.STOP_BUTTON:
-                System.out.println("stop clicked");
-                String[] stopInput = (String[]) theEvent.getNewValue();
+                final int selectedRow = (int) theEvent.getNewValue();
+                if (selectedRow >= 0) {
+                    myFileListModel.removeRow(selectedRow);
+                }
                 break;
             default:
                 break;

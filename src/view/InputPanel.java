@@ -1,11 +1,8 @@
 package view;
 
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
+import controller.FileListController;
+
+import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeSupport;
 
@@ -13,6 +10,7 @@ public class InputPanel extends JPanel {
     private PropertyChangeSupport myPCS;
     private JComboBox<String> myComboBox;
     private JTextField myTextField;
+    private final static JTable myJTable = FileListController.getFileListTable();
 
     public InputPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
@@ -89,7 +87,7 @@ public class InputPanel extends JPanel {
         JButton stopButton = new JButton("Stop");
         stopButton.addActionListener(theEvent -> {
             String[] inputFields = {(String) myComboBox.getSelectedItem(), myTextField.getText()};
-            myPCS.firePropertyChange(ViewProperties.STOP_BUTTON, null, inputFields);
+            myPCS.firePropertyChange(ViewProperties.STOP_BUTTON, null, myJTable.getSelectedRow());
         });
         buttonGrid.add(stopButton);
 

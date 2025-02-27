@@ -18,13 +18,9 @@ public class FileListPanel extends JPanel {
     }
 
     private void initFileList() {
-        JTable fileTable = FileListController.getFileListModel();
+        JTable fileTable = FileListController.getFileListTable();
         JScrollPane listScrollPane = new JScrollPane(fileTable);
         listScrollPane.setPreferredSize(new Dimension(400, 100));
-        // set File Extension column width
-        fileTable.getColumnModel().getColumn(0).setPreferredWidth(100);
-        // set Directory column width
-        fileTable.getColumnModel().getColumn(1).setPreferredWidth(400);
         add(listScrollPane, BorderLayout.CENTER);
     }
 }
