@@ -17,7 +17,7 @@ class ControlPanel extends JPanel {
 
     ControlPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
         this.add(new InputPanel(myPCS), BorderLayout.NORTH);
         this.add(new FileListPanel(myPCS), BorderLayout.CENTER);
     }
