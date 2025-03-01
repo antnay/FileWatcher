@@ -5,12 +5,14 @@ import controller.FileListController;
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
 
 public class InputPanel extends JPanel {
     private PropertyChangeSupport myPCS;
     private JComboBox<String> myComboBox;
     private JTextField myTextField;
     private final static JTable myJTable = FileListController.getFileListTable();
+    private final static JFileChooser myJFileChooser = new JFileChooser();
 
     public InputPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
@@ -91,6 +93,21 @@ public class InputPanel extends JPanel {
         });
         buttonGrid.add(stopButton);
 
+        JButton browseButton = new JButton("Browse Files");
+        browseButton.addActionListener(theEvent -> {
+            setUpBrowseButton();
+        });
+        buttonGrid.add(browseButton);
+
         return buttonGrid;
+    }
+
+    private void setUpBrowseButton() {
+        myJFileChooser.setDialogTitle("Choose Directory");
+        myJFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int returnValue = myJFileChooser.showDialog(this, "Select");
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            myTextField.setText(myJFileChooser.getSelectedFile().toString());
+        }
     }
 }
