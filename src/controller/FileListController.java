@@ -16,6 +16,7 @@ public class FileListController implements PropertyChangeListener {
         theView.addPropertyChangeListener(this);
         myFileListModel.addColumn("File Extension");
         myFileListModel.addColumn("Directory");
+        myJTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         // set File Extension column width
         myJTable.getColumnModel().getColumn(0).setPreferredWidth(100);
