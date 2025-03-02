@@ -7,6 +7,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeSupport;
@@ -59,9 +60,8 @@ public class InputPanel extends JPanel {
         // set the combo box to be empty by default
         myComboBox.setSelectedIndex(-1);
 
-        myComboBox.addActionListener(theEvent -> {
-            checkValidInput();
-        });
+        JTextComponent editorComponent = (JTextComponent) myComboBox.getEditor().getEditorComponent();
+        editorComponent.getDocument().addDocumentListener(new InputDocumentListener());
 
         JPanel extensionPanel = new JPanel(new BorderLayout());
         extensionPanel.add(extensionLabel, BorderLayout.NORTH);
@@ -83,22 +83,7 @@ public class InputPanel extends JPanel {
         myTextField.setColumns(40);
 
         // check input when content of text field changes
-        myTextField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                checkValidInput();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                checkValidInput();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                checkValidInput();
-            }
-        });
+        myTextField.getDocument().addDocumentListener(new InputDocumentListener());
 
         JPanel directoryPanel = new JPanel(new BorderLayout());
         directoryPanel.add(directoryLabel, BorderLayout.NORTH);
@@ -160,7 +145,7 @@ public class InputPanel extends JPanel {
     }
 
     private void checkValidInput() {
-        String extensionInput = (String) myComboBox.getSelectedItem();
+        String extensionInput = (String) myComboBox.getEditor().getItem();
         boolean extensionHasInput = extensionInput != null && !extensionInput.trim().isEmpty();
 
         String directoryInput = myTextField.getText();
@@ -176,6 +161,24 @@ public class InputPanel extends JPanel {
         int returnValue = myJFileChooser.showDialog(this, "Select");
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             myTextField.setText(myJFileChooser.getSelectedFile().toString());
+        }
+    }
+
+    // inner class to reuse document listener properties for both input fields
+    private class InputDocumentListener implements DocumentListener {
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            checkValidInput();
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            checkValidInput();
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            checkValidInput();
         }
     }
 }
