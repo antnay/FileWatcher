@@ -6,6 +6,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeSupport;
 
 public class InputPanel extends JPanel {
@@ -88,12 +89,14 @@ public class InputPanel extends JPanel {
             String[] inputFields = {(String) myComboBox.getSelectedItem(), myTextField.getText()};
             myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, inputFields);
         });
+        myStartButton.setMnemonic(KeyEvent.VK_S);
         buttonGrid.add(myStartButton);
 
         JButton browseButton = new JButton("Browse Files");
         browseButton.addActionListener(theEvent -> {
             setUpBrowseButton();
         });
+        browseButton.setMnemonic(KeyEvent.VK_B);
         buttonGrid.add(browseButton);
 
         return buttonGrid;
@@ -103,16 +106,22 @@ public class InputPanel extends JPanel {
         myJTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                myStopButton.setEnabled(true);
+                /*
+                check selected row so button does not re-enable when
+                adding to the list again, since adding triggers valueChanged
+                 */
+                if (myJTable.getSelectedRow() != -1) {
+                    myStopButton.setEnabled(true);
+                }
             }
         });
 
         myStopButton.addActionListener(theEvent -> {
-            String[] inputFields = {(String) myComboBox.getSelectedItem(), myTextField.getText()};
             myPCS.firePropertyChange(ViewProperties.STOP_BUTTON, null, myJTable.getSelectedRow());
             myStopButton.setEnabled(false);
         });
         myStopButton.setEnabled(false);
+        myStopButton.setMnemonic(KeyEvent.VK_T);
         return myStopButton;
     }
 
