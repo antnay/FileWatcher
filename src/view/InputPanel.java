@@ -3,6 +3,8 @@ package view;
 import controller.FileListController;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -10,13 +12,13 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeSupport;
 
 public class InputPanel extends JPanel {
-    private PropertyChangeSupport myPCS;
-    private JComboBox<String> myComboBox;
-    private JTextField myTextField;
     private final static JButton myStartButton = new JButton("Start");
     private final static JButton myStopButton = new JButton("Stop");
     private final static JTable myJTable = FileListController.getFileListTable();
     private final static JFileChooser myJFileChooser = new JFileChooser();
+    private final PropertyChangeSupport myPCS;
+    private JComboBox<String> myComboBox;
+    private JTextField myTextField;
 
     public InputPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
@@ -54,6 +56,12 @@ public class InputPanel extends JPanel {
 
         myComboBox = new JComboBox<>(commonExtensions);
         myComboBox.setEditable(true);
+        // set the combo box to be empty by default
+        myComboBox.setSelectedIndex(-1);
+
+        myComboBox.addActionListener(theEvent -> {
+            checkValidInput();
+        });
 
         JPanel extensionPanel = new JPanel(new BorderLayout());
         extensionPanel.add(extensionLabel, BorderLayout.NORTH);
@@ -74,6 +82,24 @@ public class InputPanel extends JPanel {
         myTextField = new JTextField();
         myTextField.setColumns(40);
 
+        // check input when content of text field changes
+        myTextField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                checkValidInput();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                checkValidInput();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                checkValidInput();
+            }
+        });
+
         JPanel directoryPanel = new JPanel(new BorderLayout());
         directoryPanel.add(directoryLabel, BorderLayout.NORTH);
         directoryPanel.add(myTextField, BorderLayout.CENTER);
@@ -88,8 +114,10 @@ public class InputPanel extends JPanel {
         myStartButton.addActionListener(theEvent -> {
             String[] inputFields = {(String) myComboBox.getSelectedItem(), myTextField.getText()};
             myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, inputFields);
+            clearInput();
         });
         myStartButton.setMnemonic(KeyEvent.VK_S);
+        myStartButton.setEnabled(false);
         buttonGrid.add(myStartButton);
 
         JButton browseButton = new JButton("Browse Files");
@@ -123,6 +151,23 @@ public class InputPanel extends JPanel {
         myStopButton.setEnabled(false);
         myStopButton.setMnemonic(KeyEvent.VK_T);
         return myStopButton;
+    }
+
+    private void clearInput() {
+        myComboBox.setSelectedIndex(-1);
+        myTextField.setText("");
+        myStartButton.setEnabled(false);
+    }
+
+    private void checkValidInput() {
+        String extensionInput = (String) myComboBox.getSelectedItem();
+        boolean extensionHasInput = extensionInput != null && !extensionInput.trim().isEmpty();
+
+        String directoryInput = myTextField.getText();
+        boolean directoryHasInput = directoryInput != null && !directoryInput.trim().isEmpty();
+
+        // enable start button if extension and directory input are both not empty/null
+        myStartButton.setEnabled(extensionHasInput && directoryHasInput);
     }
 
     private void setUpBrowseButton() {
