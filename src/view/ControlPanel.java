@@ -19,7 +19,6 @@ class ControlPanel extends JPanel {
         myPCS = thePcs;
         setLayout(new BorderLayout(10, 10));
         this.add(new InputPanel(myPCS), BorderLayout.NORTH);
-        this.add(new FileListPanel(myPCS), BorderLayout.CENTER);
     }
 
     void updateStartStopButt(boolean theIsRunning) {

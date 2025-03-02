@@ -3,14 +3,17 @@ package view;
 import controller.FileListController;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.beans.PropertyChangeSupport;
-import java.io.File;
 
 public class InputPanel extends JPanel {
     private PropertyChangeSupport myPCS;
     private JComboBox<String> myComboBox;
     private JTextField myTextField;
+    private final static JButton myStartButton = new JButton("Start");
+    private final static JButton myStopButton = new JButton("Stop");
     private final static JTable myJTable = FileListController.getFileListTable();
     private final static JFileChooser myJFileChooser = new JFileChooser();
 
@@ -32,7 +35,9 @@ public class InputPanel extends JPanel {
         add(createExtensionPanel(), BorderLayout.WEST);
         add(createDirectoryPanel(), BorderLayout.EAST);
 
-        // start and stop buttons
+        JPanel fileList = new FileListPanel();
+        fileList.add(initStopButton(), BorderLayout.SOUTH);
+        add(fileList, BorderLayout.SOUTH);
     }
 
     private JPanel createExtensionPanel() {
@@ -71,27 +76,19 @@ public class InputPanel extends JPanel {
         JPanel directoryPanel = new JPanel(new BorderLayout());
         directoryPanel.add(directoryLabel, BorderLayout.NORTH);
         directoryPanel.add(myTextField, BorderLayout.CENTER);
-        directoryPanel.add(initButtons(), BorderLayout.SOUTH);
+        directoryPanel.add(initInputButtons(), BorderLayout.SOUTH);
 
         return directoryPanel;
     }
 
-    private JPanel initButtons() {
+    private JPanel initInputButtons() {
         JPanel buttonGrid = new JPanel(new GridLayout());
 
-        JButton startButton = new JButton("Start");
-        startButton.addActionListener(theEvent -> {
+        myStartButton.addActionListener(theEvent -> {
             String[] inputFields = {(String) myComboBox.getSelectedItem(), myTextField.getText()};
             myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, inputFields);
         });
-        buttonGrid.add(startButton);
-
-        JButton stopButton = new JButton("Stop");
-        stopButton.addActionListener(theEvent -> {
-            String[] inputFields = {(String) myComboBox.getSelectedItem(), myTextField.getText()};
-            myPCS.firePropertyChange(ViewProperties.STOP_BUTTON, null, myJTable.getSelectedRow());
-        });
-        buttonGrid.add(stopButton);
+        buttonGrid.add(myStartButton);
 
         JButton browseButton = new JButton("Browse Files");
         browseButton.addActionListener(theEvent -> {
@@ -100,6 +97,23 @@ public class InputPanel extends JPanel {
         buttonGrid.add(browseButton);
 
         return buttonGrid;
+    }
+
+    private JButton initStopButton() {
+        myJTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                myStopButton.setEnabled(true);
+            }
+        });
+
+        myStopButton.addActionListener(theEvent -> {
+            String[] inputFields = {(String) myComboBox.getSelectedItem(), myTextField.getText()};
+            myPCS.firePropertyChange(ViewProperties.STOP_BUTTON, null, myJTable.getSelectedRow());
+            myStopButton.setEnabled(false);
+        });
+        myStopButton.setEnabled(false);
+        return myStopButton;
     }
 
     private void setUpBrowseButton() {

@@ -7,10 +7,7 @@ import java.awt.*;
 import java.beans.PropertyChangeSupport;
 
 public class FileListPanel extends JPanel {
-    private PropertyChangeSupport myPCS;
-
-    public FileListPanel(PropertyChangeSupport thePcs) {
-        myPCS = thePcs;
+    public FileListPanel() {
         setLayout(new BorderLayout());
         JLabel fileListLabel = new JLabel("Files and directories being watched");
         add(fileListLabel, BorderLayout.NORTH);
