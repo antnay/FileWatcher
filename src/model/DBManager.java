@@ -1,5 +1,7 @@
 package model;
 
+import javax.swing.table.DefaultTableModel;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,8 +13,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import javax.swing.table.DefaultTableModel;
 
 final class DBManager {
 
@@ -39,10 +39,11 @@ final class DBManager {
 
     void connect() throws DatabaseException {
         File dbPath = new File("database/log.sql");
-        if (!Files.exists(Path.of(dbPath.getAbsolutePath()))) {
+        Path path = Path.of(dbPath.getAbsolutePath());
+        if (!Files.exists(path)) {
             try {
                 Files.createDirectories(Path.of(dbPath.getParentFile().getCanonicalPath()));
-                Files.createFile(Path.of(dbPath.getAbsolutePath()));
+                Files.createFile(path);
             } catch (IOException theE) {
                 throw new RuntimeException("Error creating database", theE);
             }
@@ -66,7 +67,7 @@ final class DBManager {
         }
 
         try (Statement stmt = connection.createStatement();
-                ResultSet rs = stmt.executeQuery(query)) {
+             ResultSet rs = stmt.executeQuery(query)) {
 
             // Retrieve column names dynamically
             ResultSetMetaData metaData = rs.getMetaData();
@@ -94,6 +95,19 @@ final class DBManager {
         return tableModel;
     }
 
+    ResultSet getTable() throws DatabaseException {
+        if (!isConnected()) {
+            throw new IllegalStateException("Not connected to database");
+        }
+        try {
+            return connection.createStatement().executeQuery("""
+                    SELECT * FROM event_log
+                    """);
+        } catch (SQLException theE) {
+            throw new DatabaseException("Error querying database", theE);
+        }
+    }
+
     void disconnect() throws DatabaseException {
         try {
             if (isConnected()) {
@@ -107,6 +121,9 @@ final class DBManager {
     }
 
     void clearTable() throws DatabaseException {
+        if (!isConnected()) {
+            throw new IllegalStateException("Not connected to database");
+        }
         try {
             Statement statement = connection.createStatement();
             statement.execute("DELETE FROM event_log");
@@ -116,6 +133,9 @@ final class DBManager {
     }
 
     void clearTempTable() throws DatabaseException {
+        if (!isConnected()) {
+            throw new IllegalStateException("Not connected to database");
+        }
         try {
             Statement statement = connection.createStatement();
             statement.execute("DELETE FROM event_log_temp");
