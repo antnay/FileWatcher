@@ -45,7 +45,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 
         myStartStopMItem = new JMenuItem("Start Logging");
         myStartStopMItem.addActionListener(theE -> {
-            myPCS.firePropertyChange(ViewProperties.START_STOP_BUTTON, null, null);
+            myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, null);
         });
         myStartStopMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.META_DOWN_MASK));
         fileItem.add(myStartStopMItem);

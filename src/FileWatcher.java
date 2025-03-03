@@ -1,6 +1,7 @@
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+import controller.FileListController;
 import controller.FileWatcherController;
 import model.SystemWatch;
 import view.MainFrame;
@@ -30,6 +31,7 @@ public class FileWatcher {
                 SystemWatch sysWatch = new SystemWatch();
                 MainFrame view = new MainFrame();
                 new FileWatcherController(view, sysWatch);
+                new FileListController(view);
                 view.setVisible(true);
             }
         });

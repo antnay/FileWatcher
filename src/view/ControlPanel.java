@@ -1,5 +1,6 @@
 package view;
 
+import java.awt.*;
 import java.beans.PropertyChangeSupport;
 
 import javax.swing.JButton;
@@ -16,36 +17,11 @@ class ControlPanel extends JPanel {
 
     ControlPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
-        initButtons();
+        setLayout(new BorderLayout(10, 10));
+        this.add(new InputPanel(myPCS), BorderLayout.NORTH);
     }
 
     void updateStartStopButt(boolean theIsRunning) {
         myStartStopButton.setText((theIsRunning) ? "Stop" : "Start");
-    }
-
-    private void initButtons() {
-        myStartStopButton = new JButton("Start");
-        myStartStopButton.addActionListener(theEvent -> {
-            myPCS.firePropertyChange(ViewProperties.START_STOP_BUTTON, null, null);
-        });
-        add(myStartStopButton);
-
-        mySubmitButton = new JButton("Submit");
-        mySubmitButton.addActionListener(theEvent -> {
-            myPCS.firePropertyChange(ViewProperties.SUBMIT_BUTTON, null, null);
-        });
-        add(mySubmitButton);
-
-        myClearButton = new JButton("Clear");
-        myClearButton.addActionListener(theEvent -> {
-            myPCS.firePropertyChange(ViewProperties.CLEAR_LOG_BUTTON, null, null);
-        });
-        add(myClearButton);
-
-        mySaveLogButton = new JButton("Save");
-        mySaveLogButton.addActionListener(theEvent -> {
-            myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
-        });
-        add(mySaveLogButton);
     }
 }
