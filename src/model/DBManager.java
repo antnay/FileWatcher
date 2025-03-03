@@ -109,7 +109,16 @@ final class DBManager {
     void clearTable() throws DatabaseException {
         try {
             Statement statement = connection.createStatement();
-            statement.execute("DELETE FROM eventlog");
+            statement.execute("DELETE FROM event_log");
+        } catch (SQLException theE) {
+            throw new DatabaseException("Error clearing table", theE);
+        }
+    }
+
+    void clearTempTable() throws DatabaseException {
+        try {
+            Statement statement = connection.createStatement();
+            statement.execute("DELETE FROM event_log_temp");
         } catch (SQLException theE) {
             throw new DatabaseException("Error clearing table", theE);
         }
