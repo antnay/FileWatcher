@@ -175,7 +175,9 @@ final class DBManager {
                     SELECT extension, filename, path, event, timestamp
                     FROM event_log_temp
                     """);
-            statement.executeQuery("DELETE FROM event_log_temp");
+            statement.executeQuery("DELETE FROM event_log_temp"); //Check if this is causing the loop
+            //If it is, one possible fix can be:
+            //statement.executeUpdate("DELETE FROM event_log_temp"); //This would allow the deletion to work properly
         } catch (SQLException theE) {
             throw new DatabaseException("Error adding events to database", theE);
         }
