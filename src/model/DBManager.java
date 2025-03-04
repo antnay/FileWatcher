@@ -58,33 +58,30 @@ final class DBManager {
         }
     }
 
+
     public DefaultTableModel executeQuery(String query) {
         DefaultTableModel tableModel = new DefaultTableModel();
 
         if (!isConnected()) {
             System.err.println("Database is not connected!");
-            return tableModel; // Return empty model if no connection
+            return tableModel;
         }
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
 
-            // Retrieve column names dynamically
-            ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
-            String[] columnNames = new String[columnCount];
-
-            for (int i = 1; i <= columnCount; i++) {
-                columnNames[i - 1] = metaData.getColumnName(i);
-            }
+            // Ensure these columns match your database table structure
+            String[] columnNames = {"ID", "Extension", "Filename", "Path", "Event", "Date/Time"};
             tableModel.setColumnIdentifiers(columnNames);
 
-            // Populate table model with query results
             while (rs.next()) {
-                Object[] rowData = new Object[columnCount];
-                for (int i = 1; i <= columnCount; i++) {
-                    rowData[i - 1] = rs.getObject(i);
-                }
+                Object[] rowData = new Object[columnNames.length];
+                rowData[0] = rs.getInt("id");
+                rowData[1] = rs.getString("extension");
+                rowData[2] = rs.getString("filename");
+                rowData[3] = rs.getString("path");
+                rowData[4] = rs.getString("event");
+                rowData[5] = rs.getString("timestamp");
                 tableModel.addRow(rowData);
             }
 

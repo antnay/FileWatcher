@@ -1,5 +1,6 @@
 package model;
 
+import javax.swing.table.DefaultTableModel;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
@@ -176,6 +177,12 @@ public class SystemWatch {
             // TODO Auto-generated catch block
         }
     }
+
+    public void runDatabaseQuery(String query) {
+        DefaultTableModel tableModel = DBManager.getDBManager().executeQuery(query);
+        myPCS.firePropertyChange("Query Results", null, tableModel);
+    }
+
 
     private void regEvent(String theEvent, String theFileName, Path thePath) {
         String extension = "";

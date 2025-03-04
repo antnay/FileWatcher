@@ -9,61 +9,64 @@ import javax.swing.JScrollPane;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeSupport;
+import javax.swing.JLabel;
+import java.awt.FlowLayout;
 
-// query and view db
+
+
 public class DBFrame extends JFrame {
 
-    // Need a JTable to display the results of a query, a text field to put queries in, and a button to run queries
     private JTable databaseRecords;
-    private JTextField enteringQueries;
-    private JButton searchQueryExecuteButton;
+    private JTextField extensionQueryField;
+    private JButton submitButton;
     private final PropertyChangeSupport myPCS;
 
-    public DBFrame (PropertyChangeSupport pcs) {
+    public DBFrame(PropertyChangeSupport pcs) {
         this.myPCS = pcs;
-        setTitle("SQL Query Executor");
-        setSize(900, 600);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); //Close the DBFrame only
+        setTitle("Query Form");
+        setSize(900, 400);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
         setUIComponents();
+
+        myPCS.addPropertyChangeListener("Query Results", evt -> {
+            DefaultTableModel tableModel = (DefaultTableModel) evt.getNewValue();
+            updateTable(tableModel);
+        });
     }
 
-    //This is where we set up and initialize all the UI components for the DBFrame
     private void setUIComponents() {
 
-        //The text field for Queries
-        enteringQueries = new JTextField(40);
-        enteringQueries.setText("Write SQL Queries Here");
+        JPanel queryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-        //The button to execute the Query
-        searchQueryExecuteButton = new JButton("Run Query");
-        searchQueryExecuteButton.addActionListener(e -> runSearchQuery());
+        JLabel queryLabel = new JLabel("Extension Query: (Empty = ALL files in database)");
+        queryPanel.add(queryLabel);
 
-        //The Plane to hold the query text field and the run button
-        JPanel queryPanel = new JPanel();
-        queryPanel.add(enteringQueries);
-        queryPanel.add(searchQueryExecuteButton);
+        extensionQueryField = new JTextField(15);
+        queryPanel.add(extensionQueryField);
+
+        submitButton = new JButton("Submit");
+        submitButton.addActionListener(e -> runSearchQuery());
+        queryPanel.add(submitButton);
+
         add(queryPanel, BorderLayout.NORTH);
 
-        //Table for displaying Query results
         databaseRecords = new JTable(new DefaultTableModel());
-        add(new JScrollPane(databaseRecords), BorderLayout.CENTER); // Allows users to scroll when the table contains more data than can fit in the DBFrame
-    }
-
-    //Gets the SQL query that the user entered
-    public String obtainSearchQuery() {
-        return enteringQueries.getText().trim();
+        JScrollPane tableScrollPane = new JScrollPane(databaseRecords);
+        add(tableScrollPane, BorderLayout.CENTER);
     }
 
     private void runSearchQuery() {
-        String query = obtainSearchQuery();
-        myPCS.firePropertyChange("Query Execute", null, query); // Notify the controller
+        String extension = extensionQueryField.getText().trim();
+        String query = extension.isEmpty() ? "SELECT * FROM event_log" :
+                "SELECT * FROM event_log WHERE extension = '" + extension + "'";
+
+        myPCS.firePropertyChange("Execute Query", null, query);
     }
 
     public void updateTable(DefaultTableModel tableModel) {
         databaseRecords.setModel(tableModel);
     }
-    }
-
+}
