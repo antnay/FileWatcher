@@ -240,6 +240,20 @@ public class SystemWatch {
     }
 
     private void registerPathList() {
+        /**
+         * //To allow the program to monitor directories for changes
+         * if (myWatchKeys == null) {
+         *         myWatchKeys = new ConcurrentHashMap<>();
+         *     }
+         *     Instant now = Instant.now();
+         *
+         *     myPathList.stream()
+         *         .filter(Objects::nonNull)
+         *         .forEach(theRoot -> registerDirTree(theRoot, false));
+         *
+         *     System.out.println("Time taken (s): " + Duration.between(now, Instant.now()).getSeconds());
+         * }
+         */
         Instant now = Instant.now();
         myPathList.forEach(theRoot -> registerDirTree(theRoot, false));
         System.out.println("Time (s): " + Duration.between(now, Instant.now()).getSeconds());
@@ -248,11 +262,25 @@ public class SystemWatch {
     private void registerDirTree(Path theRoot, boolean theEventSpec) {
         myPCS.firePropertyChange(ModelProperties.REGISTER_START, null, null); // if gui needs to be held until done
         try {
+            /**
+             * //Checks if theRoot is null
+             *     if (theRoot == null) {
+             *         System.err.println("theRoot is null in registerDirTree.");
+             *         return;
+             *     }
+             */
             System.out.println("im walking hyeah: " + theRoot.toFile());
             Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
                 // FIXME: Nullpointer when shutting down executor while walking
                 public FileVisitResult preVisitDirectory(Path theCurrentDir, BasicFileAttributes attrs) {
                     try {
+                        /**
+                         * //Checks if theCurrentDir is null before processing
+                         *  if (theCurrentDir == null) {
+                         *                     System.err.println("Encountered a null directory.");
+                         *                     return FileVisitResult.SKIP_SUBTREE;
+                         *                 }
+                         */
                         if (Files.isRegularFile(theCurrentDir)) {
                             regEvent(StandardWatchEventKinds.ENTRY_CREATE.toString(),
                                     theCurrentDir.getFileName().toString(), theCurrentDir);
