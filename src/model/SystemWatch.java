@@ -138,6 +138,32 @@ public class SystemWatch {
         myExts.remove(theExtension);
     }
 
+    /**
+     * One way to understand what is causing the infinite loop in the saveToDB
+     *
+     * public void saveToDB() {
+     *
+     *      //Checks if the database is connected before starting
+     *     if (!DBManager.getDBManager().isConnected()) {
+     *         throw new IllegalStateException("Not connected to database");
+     *     }
+     *     try {
+     *         //Sends a signal to notify that the save process is starting
+     *         myPCS.firePropertyChange("Database Save In Progress", null, true);
+     *
+     *         DBManager.getDBManager().mergeTempEvents();
+     *
+     *         DBManager.getDBManager().clearTempTable();
+     *
+     *         //Sends another signal to notify that the save process is finished (UI updates)
+     *         myPCS.firePropertyChange("Database Save Completed", null, true);
+     *
+     *     } catch (DatabaseException theE) {
+     *         System.err.println("Database error in saveToDB: " + theE.getMessage());
+     *     }
+     * }
+     */
+
     public void saveToDB() {
         if (!DBManager.getDBManager().isConnected()) {
             throw new IllegalStateException("Not connected to database");
