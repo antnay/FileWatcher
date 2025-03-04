@@ -195,8 +195,10 @@ public class SystemWatch {
                         // that directory then the files will be reported as modified instead of deleted
                         // FIXME: deleting watched directory should unregister
                         Path matchKey = myPathMap.keySet().stream().filter(path::startsWith).findFirst().orElse(null);
-//                        System.out.println(Files.isDirectory(path) ? "Directory exists" : "Directory not exists");
-//                        System.out.println(Files.isRegularFile(path) ? "File exists" : "File not exists");
+                        // System.out.println(Files.isDirectory(path) ? "Directory exists" : "Directory
+                        // not exists");
+                        // System.out.println(Files.isRegularFile(path) ? "File exists" : "File not
+                        // exists");
                         if (path.toFile().isDirectory()) {
                             if (eType == StandardWatchEventKinds.ENTRY_CREATE) {
                                 // TODO: background thread
@@ -228,13 +230,13 @@ public class SystemWatch {
             } catch (InterruptedException | ClosedWatchServiceException theEvent) {
                 Thread.currentThread().interrupt();
             }
-//            catch (AccessDeniedException e) {
-//                System.out.println("DEBUG : Runtime exception in runLogger");
-//                throw new RuntimeException(e);
-//            } catch (IOException e) {
-//                System.out.println("DEBUG : IO exception in runLogger");
-//                throw new RuntimeException(e);
-//            }
+            // catch (AccessDeniedException e) {
+            // System.out.println("DEBUG : Runtime exception in runLogger");
+            // throw new RuntimeException(e);
+            // } catch (IOException e) {
+            // System.out.println("DEBUG : IO exception in runLogger");
+            // throw new RuntimeException(e);
+            // }
         });
     }
 
@@ -258,7 +260,7 @@ public class SystemWatch {
 
     private void registerDirTree(Path theRoot, boolean theIsNewEvent, Path theWatchedPath) {
         myPCS.firePropertyChange(ModelProperties.REGISTER_START, null, null); // if gui needs to be held until done
-        final boolean[] fail = {false};
+        final boolean[] fail = { false };
         try {
             System.out.println("im walking hyeah: " + theRoot.toFile());
             Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
@@ -270,7 +272,7 @@ public class SystemWatch {
                             if (list != null) {
                                 for (File file : list) {
                                     if (file.isFile()) {
-//                                        System.out.println(file.getName());
+                                        // System.out.println(file.getName());
                                         regEventRecursive(StandardWatchEventKinds.ENTRY_CREATE.toString(),
                                                 file.getName(), file.toPath(), theWatchedPath);
                                     }
@@ -299,13 +301,14 @@ public class SystemWatch {
                 }
 
                 // TOO SLOW :(
-//                @Override
-//                public FileVisitResult visitFile(Path theCurrentPath, BasicFileAttributes theAttrs) throws IOException {
-//                    if (Files.isRegularFile(theCurrentPath)) {
-//                        DBManager.getDBManager().addToWatch(theCurrentPath.toFile());
-//                    }
-//                    return FileVisitResult.CONTINUE;
-//                }
+                // @Override
+                // public FileVisitResult visitFile(Path theCurrentPath, BasicFileAttributes
+                // theAttrs) throws IOException {
+                // if (Files.isRegularFile(theCurrentPath)) {
+                // DBManager.getDBManager().addToWatch(theCurrentPath.toFile());
+                // }
+                // return FileVisitResult.CONTINUE;
+                // }
 
                 @Override
                 @Nonnull
@@ -335,17 +338,17 @@ public class SystemWatch {
     }
 
     private void registerDirectory(final Path thePath) throws IllegalAccessException {
-//        System.out.println(thePath); // DEBUG
-//        new Thread(() -> {
-//            File[] list = thePath.toFile().listFiles();
-//            if (list != null) {
-//                for (File file : list) {
-//                    if (file.isFile()) {
-//                        DBManager.getDBManager().addToWatch(file);
-//                    }
-//                }
-//            }
-//        }).start();
+        // System.out.println(thePath); // DEBUG
+        // new Thread(() -> {
+        // File[] list = thePath.toFile().listFiles();
+        // if (list != null) {
+        // for (File file : list) {
+        // if (file.isFile()) {
+        // DBManager.getDBManager().addToWatch(file);
+        // }
+        // }
+        // }
+        // }).start();
         if (checkIfSystem(thePath)) {
             System.err.println("cant register directory " + thePath);
         }
@@ -374,12 +377,13 @@ public class SystemWatch {
     // TODO refactor this at some point
     private void regEvent(String theEvent, String theFileName, Path thePath) {
         Path directoryPath = thePath.getParent();
-        if (myPathMap.get(directoryPath).contains(getExtension(theFileName)) || myPathMap.get(directoryPath).contains(".*")) {
+        if (myPathMap.get(directoryPath).contains(getExtension(theFileName))
+                || myPathMap.get(directoryPath).contains(".*")) {
             Event logEvent = getEvent(theEvent, theFileName, thePath);
             try {
                 DBManager.getDBManager().addEvent(logEvent);
                 myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
-//                System.out.println("ModelProperties.EVENT was fired");
+                // System.out.println("ModelProperties.EVENT was fired");
             } catch (DatabaseException theE) {
                 // TODO Auto-generated catch block
             }
@@ -402,7 +406,7 @@ public class SystemWatch {
             try {
                 DBManager.getDBManager().addEvent(logEvent);
                 myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
-//                System.out.println("ModelProperties.EVENT was fired");
+                // System.out.println("ModelProperties.EVENT was fired");
             } catch (DatabaseException theE) {
                 System.err.println(theE.getMessage());
                 // TODO Auto-generated catch block
@@ -477,7 +481,7 @@ public class SystemWatch {
 
     private boolean checkIfSystem(Path thePath) {
         String system = System.getProperty("os.name");
-//        System.err.println("Operating system: " + system);
+        // System.err.println("Operating system: " + system);
         return switch (system) {
             case "Mac OS X" -> (thePath.toString().equals("/System"));
             case "Windows" -> (thePath.toString().matches(".:\\\\Windows"));
