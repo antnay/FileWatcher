@@ -157,4 +157,38 @@ class Email {
         }
 
     }
+
+    /**
+     * //To fix the issue of missing credentials, declare and initialize them inside the sendEmail method before using them
+     *
+     * void sendEmail(Draft theDraft) {
+     *     try {
+     *         // Load the sender’s email address from environment variables (retrieves and stores sender's email address)
+     *         Dotenv dotenv = Dotenv.load();
+     *         String senderEmail = dotenv.get("EMAIL");
+     *
+     *         // Generate CSV file (creates a new file and fills it with data)
+     *         File file = new File("database/log.csv");
+     *         fillCSV(file);
+     *
+     *         // Set up Gmail API credentials (grants permission to create and send drafts)
+     *         GoogleCredentials credentials = GoogleCredentials.getApplicationDefault()
+     *                 .createScoped(GmailScopes.GMAIL_COMPOSE);
+     *         HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
+     *
+     *         // Create Gmail service (connects to Gmail’s API)
+     *         Gmail service = new Gmail.Builder(new NetHttpTransport(),
+     *                 GsonFactory.getDefaultInstance(),
+     *                 requestInitializer)
+     *                 .setApplicationName("Gmail samples")
+     *                 .build();
+     *
+     *         // Create and send the draft
+     *         Draft draft = createDraftMessageWithAttachment(senderEmail, senderEmail, file);
+     *
+     *     } catch (MessagingException | IOException e) {
+     *         throw new RuntimeException("Error sending email", e);
+     *     }
+     * }
+     */
 }
