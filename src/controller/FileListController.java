@@ -1,6 +1,7 @@
 package controller;
 
 import model.FileListModel;
+import view.InputErrorProperties;
 import view.MainFrame;
 import view.ViewProperties;
 
@@ -12,9 +13,11 @@ import java.util.Map;
 public class FileListController implements PropertyChangeListener {
     private static final FileListModel myFileListModel = new FileListModel();
     private static final JTable myJTable = new JTable(myFileListModel);
+    private final MainFrame myMainFrame;
 
     public FileListController(final MainFrame theView) {
-        theView.addPropertyChangeListener(this);
+        myMainFrame = theView;
+        myMainFrame.addPropertyChangeListener(this);
         myFileListModel.addColumn("File Extension");
         myFileListModel.addColumn("Directory");
         myJTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -44,9 +47,12 @@ public class FileListController implements PropertyChangeListener {
                 if (isExtensionValid && isDirectoryValid) {
                     myFileListModel.addRow(startInput);
                 } else if (!isExtensionValid && !isDirectoryValid) {
-
+                    myMainFrame.showErrorWindow(InputErrorProperties.BOTH_INPUTS);
+                } else if (!isExtensionValid) {
+                    myMainFrame.showErrorWindow(InputErrorProperties.EXTENSION);
+                } else {
+                    myMainFrame.showErrorWindow(InputErrorProperties.DIRECTORY);
                 }
-
                 break;
             case ViewProperties.STOP_BUTTON:
                 final int selectedRow = (int) theEvent.getNewValue();

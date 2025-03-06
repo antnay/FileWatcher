@@ -6,11 +6,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 
 import model.ModelProperties;
 import model.Event;
@@ -83,6 +79,17 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         add(myControlPanel);
         myLogPanel = new LogPanel(myPCS);
         add(myLogPanel);
+    }
+
+    public void showErrorWindow(final String theErrorType) {
+        String errorTitle = switch (theErrorType) {
+            case InputErrorProperties.EXTENSION -> "Invalid File Extension";
+            case InputErrorProperties.DIRECTORY -> "Invalid Directory";
+            case InputErrorProperties.BOTH_INPUTS -> "Invalid File Extension and Directory";
+            default -> "No error";
+        };
+
+        JOptionPane.showMessageDialog(this, theErrorType, errorTitle, JOptionPane.ERROR_MESSAGE);
     }
 
     /**
