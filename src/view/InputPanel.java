@@ -11,6 +11,11 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeSupport;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 public class InputPanel extends JPanel {
     private final static JButton myStartButton = new JButton("Start");
@@ -97,9 +102,7 @@ public class InputPanel extends JPanel {
         JPanel buttonGrid = new JPanel(new GridLayout());
 
         myStartButton.addActionListener(theEvent -> {
-            String[] inputFields = {(String) myComboBox.getSelectedItem(), myTextField.getText()};
-            myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, inputFields);
-            clearInput();
+            setUpStartButton();
         });
         myStartButton.setMnemonic(KeyEvent.VK_S);
         myStartButton.setEnabled(false);
@@ -138,13 +141,44 @@ public class InputPanel extends JPanel {
         return myStopButton;
     }
 
+    private void setUpBrowseButton() {
+        myJFileChooser.setDialogTitle("Choose Directory");
+        myJFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int returnValue = myJFileChooser.showDialog(this, "Select");
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            myTextField.setText(myJFileChooser.getSelectedFile().toString());
+        }
+    }
+
+    private void setUpStartButton() {
+        Map<String, String> userInput = new HashMap<>();
+        // get input from user and trim whitespace
+        userInput.put("Extension", (String) myComboBox.getSelectedItem());
+        userInput.put("Directory", myTextField.getText().trim());
+        if (validateInput(userInput)) {
+            myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, userInput);
+            clearInput();
+        }
+    }
+
+    private boolean validateInput(final Map<String, String> theInput) {
+        boolean isExtensionValid = theInput.get("Extension").startsWith(".");
+        System.out.println(isExtensionValid);
+
+        Path directoryPath = Paths.get(theInput.get("Directory"));
+        boolean isDirectoryValid = Files.exists(directoryPath);
+        System.out.println(isDirectoryValid);
+
+        return isExtensionValid && isDirectoryValid;
+    }
+
     private void clearInput() {
         myComboBox.setSelectedIndex(-1);
         myTextField.setText("");
         myStartButton.setEnabled(false);
     }
 
-    private void checkValidInput() {
+    private void checkForInput() {
         String extensionInput = (String) myComboBox.getEditor().getItem();
         boolean extensionHasInput = extensionInput != null && !extensionInput.trim().isEmpty();
 
@@ -155,30 +189,21 @@ public class InputPanel extends JPanel {
         myStartButton.setEnabled(extensionHasInput && directoryHasInput);
     }
 
-    private void setUpBrowseButton() {
-        myJFileChooser.setDialogTitle("Choose Directory");
-        myJFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        int returnValue = myJFileChooser.showDialog(this, "Select");
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            myTextField.setText(myJFileChooser.getSelectedFile().toString());
-        }
-    }
-
     // inner class to reuse document listener properties for both input fields
     private class InputDocumentListener implements DocumentListener {
         @Override
         public void insertUpdate(DocumentEvent e) {
-            checkValidInput();
+            checkForInput();
         }
 
         @Override
         public void removeUpdate(DocumentEvent e) {
-            checkValidInput();
+            checkForInput();
         }
 
         @Override
         public void changedUpdate(DocumentEvent e) {
-            checkValidInput();
+            checkForInput();
         }
     }
 }
