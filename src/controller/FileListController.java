@@ -7,6 +7,7 @@ import view.ViewProperties;
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Map;
 
 public class FileListController implements PropertyChangeListener {
     private static final FileListModel myFileListModel = new FileListModel();
@@ -32,8 +33,20 @@ public class FileListController implements PropertyChangeListener {
     public void propertyChange(final PropertyChangeEvent theEvent) {
         switch (theEvent.getPropertyName()) {
             case ViewProperties.START_BUTTON:
-                String[] startInput = (String[]) theEvent.getNewValue();
-                myFileListModel.addRow(startInput);
+                String[] startInput = new String[] {
+                        ((Map<?, ?>) theEvent.getNewValue()).get("Extension").toString(),
+                        ((Map<?, ?>) theEvent.getNewValue()).get("Directory").toString()
+                };
+
+                boolean isExtensionValid = myFileListModel.validateExtension(startInput[0]);
+                boolean isDirectoryValid = myFileListModel.validateDirectory(startInput[1]);
+
+                if (isExtensionValid && isDirectoryValid) {
+                    myFileListModel.addRow(startInput);
+                } else if (!isExtensionValid && !isDirectoryValid) {
+
+                }
+
                 break;
             case ViewProperties.STOP_BUTTON:
                 final int selectedRow = (int) theEvent.getNewValue();

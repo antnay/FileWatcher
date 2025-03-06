@@ -3,17 +3,11 @@ package view;
 import controller.FileListController;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeSupport;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,6 +23,7 @@ public class InputPanel extends JPanel {
     public InputPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
         initInputFields();
+        initTableListener();
     }
 
     private void initInputFields() {
@@ -47,6 +42,14 @@ public class InputPanel extends JPanel {
         JPanel fileList = new FileListPanel();
         fileList.add(initStopButton(), BorderLayout.SOUTH);
         add(fileList, BorderLayout.SOUTH);
+    }
+
+    private void initTableListener() {
+        myJTable.getModel().addTableModelListener(theEvent -> {
+            if (theEvent.getType() == TableModelEvent.INSERT) {
+                clearInput();
+            }
+        });
     }
 
     private JPanel createExtensionPanel() {
@@ -155,21 +158,7 @@ public class InputPanel extends JPanel {
         // get input from user and trim whitespace
         userInput.put("Extension", (String) myComboBox.getSelectedItem());
         userInput.put("Directory", myTextField.getText().trim());
-        if (validateInput(userInput)) {
-            myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, userInput);
-            clearInput();
-        }
-    }
-
-    private boolean validateInput(final Map<String, String> theInput) {
-        boolean isExtensionValid = theInput.get("Extension").startsWith(".");
-        System.out.println(isExtensionValid);
-
-        Path directoryPath = Paths.get(theInput.get("Directory"));
-        boolean isDirectoryValid = Files.exists(directoryPath);
-        System.out.println(isDirectoryValid);
-
-        return isExtensionValid && isDirectoryValid;
+        myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, userInput);
     }
 
     private void clearInput() {
