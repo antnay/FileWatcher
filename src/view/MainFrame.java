@@ -79,7 +79,10 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private void initToolBar() {
         JToolBar toolBar = new JToolBar();
 
-        toolBar.add(new JButton("hello"));
+        JButton startButtonToolBar = new JButton(new ImageIcon("src/resources/startIcon.png"));
+        startButtonToolBar.addActionListener(theE -> myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, null));
+
+        toolBar.add(startButtonToolBar);
 
         this.add(toolBar, BorderLayout.NORTH);
     }
