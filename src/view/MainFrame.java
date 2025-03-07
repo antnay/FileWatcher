@@ -1,8 +1,6 @@
 package view;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -95,17 +93,17 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         addActionToStopButtons(myStopToolbarButton);
         myStopToolbarButton.setEnabled(false);
 
+        JButton saveToDatabaseButton = new JButton(new ImageIcon("src/resources/saveIcon.png"));
+        saveToDatabaseButton.setToolTipText("Save the current list of watched files to the database.");
+
         JButton openDatabaseWindow = new JButton(new ImageIcon("src/resources/databaseIcon.png"));
         openDatabaseWindow.setToolTipText("Open the database query window.");
         openDatabaseWindow.addActionListener(theE -> new DBFrame(myPCS).setVisible(true));
 
-        JButton saveToDatabaseButton = new JButton(new ImageIcon("src/resources/saveIcon.png"));
-        saveToDatabaseButton.setToolTipText("Save the current list of watched files to the database.");
-
         toolBar.add(myStartToolbarButton);
         toolBar.add(myStopToolbarButton);
-        toolBar.add(openDatabaseWindow);
         toolBar.add(saveToDatabaseButton);
+        toolBar.add(openDatabaseWindow);
 
         this.add(toolBar, BorderLayout.NORTH);
     }
