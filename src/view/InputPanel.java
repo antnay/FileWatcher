@@ -11,6 +11,7 @@ import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class InputPanel extends JPanel {
     private final static JButton myStartButton = new JButton("Start");
@@ -164,8 +165,8 @@ public class InputPanel extends JPanel {
     private void setUpStartButton() {
         Map<String, String> userInput = new HashMap<>();
         // get input from user and trim whitespace
-        userInput.put("Extension", (String) myComboBox.getSelectedItem());
-        userInput.put("Directory", myTextField.getText().trim());
+        userInput.put("Extension", Objects.requireNonNull(myComboBox.getSelectedItem()).toString().strip());
+        userInput.put("Directory", myTextField.getText().strip());
         myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, userInput);
     }
 
@@ -176,11 +177,18 @@ public class InputPanel extends JPanel {
     }
 
     private void checkForInput() {
-        String extensionInput = (String) myComboBox.getEditor().getItem();
-        boolean extensionHasInput = extensionInput != null && !extensionInput.trim().isEmpty();
+        String extensionInput = myComboBox.getEditor().getItem().toString().strip();
+        String fileExtension;
+        try {
+            fileExtension = extensionInput.substring(extensionInput.indexOf('.') + 1).strip(); // remove '.' character and whitespace
+        } catch (IndexOutOfBoundsException e) {
+            System.out.println("There was an error getting the file extension substring after the . character");
+            fileExtension = "";
+        }
+        boolean extensionHasInput = extensionInput.startsWith(".") && !fileExtension.isBlank();
 
         String directoryInput = myTextField.getText();
-        boolean directoryHasInput = directoryInput != null && !directoryInput.trim().isEmpty();
+        boolean directoryHasInput = directoryInput != null && !directoryInput.isBlank();
 
         // enable start button if extension and directory input are both not empty/null
         myStartButton.setEnabled(extensionHasInput && directoryHasInput);
