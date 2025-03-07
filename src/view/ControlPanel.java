@@ -20,8 +20,4 @@ class ControlPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         this.add(new InputPanel(myPCS), BorderLayout.NORTH);
     }
-
-    void updateStartStopButt(boolean theIsRunning) {
-        myStartStopButton.setText((theIsRunning) ? "Stop" : "Start");
-    }
 }

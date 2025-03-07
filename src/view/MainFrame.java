@@ -15,15 +15,15 @@ import model.Event;
 public class MainFrame extends JFrame implements PropertyChangeListener {
 
     private final PropertyChangeSupport myPCS;
-    private ControlPanel myControlPanel;
     private LogPanel myLogPanel;
-    private JMenuItem myStartStopMItem;
-    private JMenuItem mySaveLogMItem;
-    private JMenuItem myAboutMItem;
-    private JMenuItem myShortcutMItem;
+    private JMenuItem myStartMItem;
+    private JMenuItem myStopMItem;
+    private JButton myStartToolbarButton;
+    private JButton myStopToolbarButton;
 
     public MainFrame() {
         myPCS = new PropertyChangeSupport(this);
+        myPCS.addPropertyChangeListener(this);
         setTitle("FileWatcher");
         setSize(500, 600);
         setLocationRelativeTo(null);
@@ -41,37 +41,41 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         JMenu helpItem = new JMenu("Help");
         menuBar.add(helpItem);
 
-        myStartStopMItem = new JMenuItem("Start Logging");
-        myStartStopMItem.addActionListener(theE -> {
-            myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, null);
-        });
-        myStartStopMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.META_DOWN_MASK));
-        fileItem.add(myStartStopMItem);
+        myStartMItem = new JMenuItem("Start Logging");
+        addActionToStartButtons(myStartMItem);
+        myStartMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.META_DOWN_MASK));
+        fileItem.add(myStartMItem);
 
-        mySaveLogMItem = new JMenuItem("Save Log");
-        mySaveLogMItem.addActionListener(theE -> {
+        myStopMItem = new JMenuItem("Stop Logging");
+        addActionToStopButtons(myStopMItem);
+        myStopMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK));
+        myStopMItem.setEnabled(false);
+        fileItem.add(myStopMItem);
+
+        JMenuItem saveLogMItem = new JMenuItem("Save Log");
+        saveLogMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
         });
-        mySaveLogMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.META_DOWN_MASK));
-        fileItem.add(mySaveLogMItem);
+        saveLogMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.META_DOWN_MASK));
+        fileItem.add(saveLogMItem);
 
         JMenuItem openDBFrameItem = new JMenuItem("SQL Query Executor");
         openDBFrameItem.addActionListener(e -> new DBFrame(myPCS).setVisible(true));
         fileItem.add(openDBFrameItem);
 
-        myAboutMItem = new JMenuItem("About");
-        myAboutMItem.addActionListener(theE -> {
+        JMenuItem aboutMItem = new JMenuItem("About");
+        aboutMItem.addActionListener(theE -> {
             JFrame aboutFrame = new HelpFrame();
             myPCS.firePropertyChange(ViewProperties.ABOUT, null, null);
         });
-        helpItem.add(myAboutMItem);
+        helpItem.add(aboutMItem);
 
-        myShortcutMItem = new JMenuItem("Show Shortcuts");
-        myShortcutMItem.addActionListener(theE -> {
+        JMenuItem shortcutMItem = new JMenuItem("Show Shortcuts");
+        shortcutMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SHORTCUTS, null, null);
         });
-        myShortcutMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, KeyEvent.META_DOWN_MASK));
-        helpItem.add(myShortcutMItem);
+        shortcutMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, KeyEvent.META_DOWN_MASK));
+        helpItem.add(shortcutMItem);
 
         setJMenuBar(menuBar);
     }
@@ -79,16 +83,18 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private void initToolBar() {
         JToolBar toolBar = new JToolBar();
 
-        JButton startButtonToolBar = new JButton(new ImageIcon("src/resources/startIcon.png"));
-        startButtonToolBar.setToolTipText("Start file watch system");
-        startButtonToolBar.addActionListener(theE -> myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, null));
 
-        JButton stopButtonToolBar = new JButton(new ImageIcon("src/resources/stopIcon.png"));
-        stopButtonToolBar.setToolTipText("Stop file watch system");
-        stopButtonToolBar.addActionListener(theE -> myPCS.firePropertyChange(ViewProperties.STOP_BUTTON, null, null));
+        myStartToolbarButton = new JButton(new ImageIcon("src/resources/startIcon.png"));
+        myStartToolbarButton.setToolTipText("Start file watch system");
+        addActionToStartButtons(myStartToolbarButton);
 
-        toolBar.add(startButtonToolBar);
-        toolBar.add(stopButtonToolBar);
+        myStopToolbarButton = new JButton(new ImageIcon("src/resources/stopIcon.png"));
+        myStopToolbarButton.setToolTipText("Stop file watch system");
+        addActionToStopButtons(myStopToolbarButton);
+        myStopToolbarButton.setEnabled(false);
+
+        toolBar.add(myStartToolbarButton);
+        toolBar.add(myStopToolbarButton);
 
         this.add(toolBar, BorderLayout.NORTH);
     }
@@ -97,12 +103,38 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         JPanel framePanel = new JPanel(new BorderLayout());
         framePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        myControlPanel = new ControlPanel(myPCS);
-        framePanel.add(myControlPanel, BorderLayout.NORTH);
+        ControlPanel controlPanel = new ControlPanel(myPCS);
+        framePanel.add(controlPanel, BorderLayout.NORTH);
         myLogPanel = new LogPanel(myPCS);
         framePanel.add(myLogPanel, BorderLayout.CENTER);
 
         add(framePanel, BorderLayout.CENTER);
+    }
+
+    private void addActionToStartButtons(final AbstractButton theButton) {
+        theButton.addActionListener(theE -> {
+            myPCS.firePropertyChange(ModelProperties.START, null, null);
+        });
+    }
+
+    private void addActionToStopButtons(final AbstractButton theButton) {
+        theButton.addActionListener(theE -> {
+            myPCS.firePropertyChange(ModelProperties.STOP, null, null);
+        });
+    }
+
+    private void toggleStartStopButtons(final String theProperty) {
+        if (theProperty.equals(ModelProperties.START)) {    // if start was clicked
+            myStartMItem.setEnabled(false);
+            myStartToolbarButton.setEnabled(false);
+            myStopMItem.setEnabled(true);
+            myStopToolbarButton.setEnabled(true);
+        } else {                                            // if stop was clicked
+            myStartMItem.setEnabled(true);
+            myStartToolbarButton.setEnabled(true);
+            myStopMItem.setEnabled(false);
+            myStopToolbarButton.setEnabled(false);
+        }
     }
 
     public void showErrorWindow(final String theErrorType) {
@@ -110,7 +142,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
             case InputErrorProperties.EXTENSION -> "Invalid File Extension";
             case InputErrorProperties.DIRECTORY -> "Invalid Directory";
             case InputErrorProperties.BOTH_INPUTS -> "Invalid File Extension and Directory";
-            default -> "No error";
+            default -> "This should not appear. If it does then we need better input validation.";
         };
 
         JOptionPane.showMessageDialog(this, theErrorType, errorTitle, JOptionPane.ERROR_MESSAGE);
@@ -150,12 +182,10 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 //        System.out.println("view pc: " + theEvent.getPropertyName());
         switch (theEvent.getPropertyName()) {
             case ModelProperties.START:
-                myControlPanel.updateStartStopButt(true);
-                myStartStopMItem.setText("Stop Logging");
+                toggleStartStopButtons(ModelProperties.START);
                 break;
             case ModelProperties.STOP:
-                myControlPanel.updateStartStopButt(false);
-                myStartStopMItem.setText("Start Logging");
+                toggleStartStopButtons(ModelProperties.STOP);
                 break;
             case ModelProperties.EVENT:
                 Object event = theEvent.getNewValue();
