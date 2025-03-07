@@ -94,7 +94,10 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         myStopToolbarButton.setEnabled(false);
 
         JButton saveToDatabaseButton = new JButton(new ImageIcon("src/resources/saveIcon.png"));
-        saveToDatabaseButton.setToolTipText("Save the current list of watched files to the database.");
+        saveToDatabaseButton.setToolTipText("Save the current watched files log to the database.");
+        saveToDatabaseButton.addActionListener(theE -> {
+            myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
+        });
 
         JButton openDatabaseWindow = new JButton(new ImageIcon("src/resources/databaseIcon.png"));
         openDatabaseWindow.setToolTipText("Open the database query window.");
