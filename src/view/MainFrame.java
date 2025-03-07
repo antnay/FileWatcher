@@ -80,9 +80,15 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         JToolBar toolBar = new JToolBar();
 
         JButton startButtonToolBar = new JButton(new ImageIcon("src/resources/startIcon.png"));
+        startButtonToolBar.setToolTipText("Start file watch system");
         startButtonToolBar.addActionListener(theE -> myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, null));
 
+        JButton stopButtonToolBar = new JButton(new ImageIcon("src/resources/stopIcon.png"));
+        stopButtonToolBar.setToolTipText("Stop file watch system");
+        stopButtonToolBar.addActionListener(theE -> myPCS.firePropertyChange(ViewProperties.STOP_BUTTON, null, null));
+
         toolBar.add(startButtonToolBar);
+        toolBar.add(stopButtonToolBar);
 
         this.add(toolBar, BorderLayout.NORTH);
     }
