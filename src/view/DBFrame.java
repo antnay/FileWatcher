@@ -1,17 +1,12 @@
 package view;
 
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.JFrame;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.JButton;
-import javax.swing.JScrollPane;
-import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeSupport;
 
 // query and view db
-public class DBFrame extends JFrame {
+public class DBFrame extends JDialog {
 
     // Need a JTable to display the results of a query, a text field to put queries in, and a button to run queries
     private JTable databaseRecords;
@@ -22,8 +17,9 @@ public class DBFrame extends JFrame {
     public DBFrame (PropertyChangeSupport pcs) {
         this.myPCS = pcs;
         setTitle("SQL Query Executor");
+        setModal(true);  // the window must be closed to interact with MainFrame again
         setSize(900, 600);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); //Close the DBFrame only
+        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); //Close the DBFrame only
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
