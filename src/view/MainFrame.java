@@ -1,12 +1,13 @@
 package view;
 
-import java.awt.FlowLayout;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 import model.ModelProperties;
 import model.Event;
@@ -27,8 +28,9 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         setSize(500, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new FlowLayout());
+        setLayout(new BorderLayout());
         initMenuBar();
+        initToolBar();
         initFrames();
     }
 
@@ -74,11 +76,24 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         setJMenuBar(menuBar);
     }
 
+    private void initToolBar() {
+        JToolBar toolBar = new JToolBar();
+
+        toolBar.add(new JButton("hello"));
+
+        this.add(toolBar, BorderLayout.NORTH);
+    }
+
     private void initFrames() {
+        JPanel framePanel = new JPanel(new BorderLayout());
+        framePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
         myControlPanel = new ControlPanel(myPCS);
-        add(myControlPanel);
+        framePanel.add(myControlPanel, BorderLayout.NORTH);
         myLogPanel = new LogPanel(myPCS);
-        add(myLogPanel);
+        framePanel.add(myLogPanel, BorderLayout.CENTER);
+
+        add(framePanel, BorderLayout.CENTER);
     }
 
     public void showErrorWindow(final String theErrorType) {
