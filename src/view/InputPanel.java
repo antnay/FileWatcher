@@ -18,7 +18,7 @@ public class InputPanel extends JPanel {
     private final static JButton myStopButton = new JButton("Stop");
     private final static JTable myJTable = FileListController.getFileListTable();
     private final static JFileChooser myJFileChooser = new JFileChooser();
-    private final static String myFileExtensionRegex = "(?:.*)(\\.[^\\.\\s]\\S*)";
+    private final static String myFileExtensionRegex = ".*(\\.[^\\.\\s]\\S*)";
     private final PropertyChangeSupport myPCS;
     private JComboBox<String> myComboBox;
     private JTextField myTextField;
@@ -179,8 +179,6 @@ public class InputPanel extends JPanel {
 
     private void checkForInput() {
         boolean extensionHasInput = myComboBox.getEditor().getItem().toString().matches(myFileExtensionRegex);
-        System.out.println(myComboBox.getEditor().getItem().toString());
-        System.out.println(extensionHasInput);
 
         String directoryInput = myTextField.getText();
         boolean directoryHasInput = directoryInput != null && !directoryInput.isBlank();
