@@ -8,6 +8,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -146,10 +147,17 @@ public class InputPanel extends JPanel {
 
     private void setUpBrowseButton() {
         myJFileChooser.setDialogTitle("Choose Directory");
-        myJFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        myJFileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         int returnValue = myJFileChooser.showDialog(this, "Select");
         if (returnValue == JFileChooser.APPROVE_OPTION) {
-            myTextField.setText(myJFileChooser.getSelectedFile().toString());
+            File selectedFile = myJFileChooser.getSelectedFile();
+            if (selectedFile.isDirectory()) {
+                myTextField.setText(selectedFile.toString());
+            } else if (selectedFile.isFile()) {
+                String fileName = selectedFile.getName();
+                myComboBox.setSelectedItem(fileName.substring(fileName.lastIndexOf('.')));
+                myTextField.setText(selectedFile.getParent());
+            }
         }
     }
 
