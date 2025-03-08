@@ -49,8 +49,7 @@ public class FileListController implements PropertyChangeListener {
 
                 if (isExtensionValid && isDirectoryValid) {
                     myFileListModel.addRow(startInput);
-                    Path directoryPath = Paths.get(startInput[1]);
-                    myPCS.firePropertyChange(ViewProperties.ADDED_TO_FILE_LIST_MODEL, null, directoryPath);
+                    myPCS.firePropertyChange(ViewProperties.ADDED_TO_FILE_LIST_MODEL, null, startInput);
                 } else if (!isExtensionValid && !isDirectoryValid) {
                     myMainFrame.showErrorWindow(InputErrorProperties.BOTH_INPUTS);
                 } else if (!isExtensionValid) {
@@ -62,8 +61,8 @@ public class FileListController implements PropertyChangeListener {
             case ViewProperties.STOP_BUTTON:
                 final int selectedRow = (int) theEvent.getNewValue();
                 if (selectedRow >= 0) {
-                    Path directoryPath = myFileListModel.popTableEntry(selectedRow);
-                    myPCS.firePropertyChange(ViewProperties.REMOVED_FROM_FILE_LIST_MODEL, null, directoryPath);
+                    String[] removedValues = myFileListModel.popTableEntry(selectedRow);
+                    myPCS.firePropertyChange(ViewProperties.REMOVED_FROM_FILE_LIST_MODEL, null, removedValues);
                 }
                 break;
             default:

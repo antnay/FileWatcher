@@ -28,9 +28,11 @@ public class FileListModel extends DefaultTableModel {
         return Files.exists(directoryPath) && Files.isDirectory(directoryPath);
     }
 
-    public Path popTableEntry(final int theSelectedRow) {
-        String pathString = getValueAt(theSelectedRow, 1).toString();
+    public String[] popTableEntry(final int theSelectedRow) {
+        String[] poppedValues = new String[2];
+        poppedValues[0] = getValueAt(theSelectedRow, 0).toString();
+        poppedValues[1] = getValueAt(theSelectedRow, 1).toString();
         removeRow(theSelectedRow);
-        return Paths.get(pathString);
+        return poppedValues;
     }
 }
