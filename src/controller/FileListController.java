@@ -8,18 +8,21 @@ import view.ViewProperties;
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 
 public class FileListController implements PropertyChangeListener {
     private static final FileListModel myFileListModel = new FileListModel();
     private static final JTable myJTable = new JTable(myFileListModel);
     private final MainFrame myMainFrame;
+    private final PropertyChangeSupport myPCS;
 
     public FileListController(final MainFrame theView) {
         myMainFrame = theView;
+        myPCS = myMainFrame.getPCS();
         myMainFrame.addPropertyChangeListener(this);
-        myFileListModel.addColumn("File Extension");
-        myFileListModel.addColumn("Directory");
         myJTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         // set File Extension column width
@@ -46,6 +49,8 @@ public class FileListController implements PropertyChangeListener {
 
                 if (isExtensionValid && isDirectoryValid) {
                     myFileListModel.addRow(startInput);
+                    Path directoryPath = Paths.get(startInput[1]);
+                    myPCS.firePropertyChange(ViewProperties.ADDED_TO_FILE_LIST_MODEL, null, directoryPath);
                 } else if (!isExtensionValid && !isDirectoryValid) {
                     myMainFrame.showErrorWindow(InputErrorProperties.BOTH_INPUTS);
                 } else if (!isExtensionValid) {
@@ -57,7 +62,8 @@ public class FileListController implements PropertyChangeListener {
             case ViewProperties.STOP_BUTTON:
                 final int selectedRow = (int) theEvent.getNewValue();
                 if (selectedRow >= 0) {
-                    myFileListModel.removeRow(selectedRow);
+                    Path directoryPath = myFileListModel.popTableEntry(selectedRow);
+                    myPCS.firePropertyChange(ViewProperties.REMOVED_FROM_FILE_LIST_MODEL, null, directoryPath);
                 }
                 break;
             default:

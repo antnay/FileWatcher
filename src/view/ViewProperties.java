@@ -9,4 +9,6 @@ public interface ViewProperties {
     String SHORTCUTS = "shortcutView";
     String ABOUT = "aboutView";
     String START_STOP_BUTTON = "startStopView";
+    String ADDED_TO_FILE_LIST_MODEL = "addedToFileListModel";
+    String REMOVED_FROM_FILE_LIST_MODEL = "removedFromFileListModel";
 }
