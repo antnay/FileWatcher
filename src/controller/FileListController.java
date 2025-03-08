@@ -9,8 +9,6 @@ import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 
 public class FileListController implements PropertyChangeListener {
