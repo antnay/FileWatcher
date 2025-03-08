@@ -181,7 +181,7 @@ public class InputPanel extends JPanel {
         String extensionInput = myComboBox.getEditor().getItem().toString().strip();
         boolean extensionHasInput = extensionInput.matches(FileListModel.VALID_EXTENSION_REGEX);
 
-        String directoryInput = myTextField.getText();
+        String directoryInput = myTextField.getText().strip();
         boolean directoryHasInput = directoryInput.matches(FileListModel.VALID_DIRECTORY_REGEX);
 
         // enable start button if extension and directory input are both not empty/null
