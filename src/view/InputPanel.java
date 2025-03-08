@@ -1,6 +1,7 @@
 package view;
 
 import controller.FileListController;
+import model.FileListModel;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -178,7 +179,7 @@ public class InputPanel extends JPanel {
 
     private void checkForInput() {
         String extensionInput = myComboBox.getEditor().getItem().toString().strip();
-        boolean extensionHasInput = extensionInput.matches("\\.\\S+");
+        boolean extensionHasInput = extensionInput.matches(FileListModel.VALID_EXTENSION_REGEX);
 
         String directoryInput = myTextField.getText();
         boolean directoryHasInput = directoryInput != null && !directoryInput.isBlank();
