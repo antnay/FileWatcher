@@ -33,7 +33,16 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                super.windowClosing(e);
+                String[] responses = {"Yes", "No", "Save Changes"};
+                JOptionPane.showOptionDialog(
+                        null,
+                        "Are you sure you want to exit?",
+                        "Changes Not Saved to Database",
+                        JOptionPane.YES_NO_CANCEL_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null,
+                        responses,
+                        responses[2]);
                 System.exit(0);
             }
         });
