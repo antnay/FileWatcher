@@ -23,9 +23,10 @@ public class FileListModel extends DefaultTableModel {
         return (theExtension.matches(VALID_EXTENSION_REGEX));
     }
 
+    // directory is valid if it exists, is a directory, and is not a root directory
     public boolean validateDirectory(final String theDirectory) {
         Path directoryPath = Paths.get(theDirectory);
-        return Files.exists(directoryPath) && Files.isDirectory(directoryPath);
+        return Files.exists(directoryPath) && Files.isDirectory(directoryPath) && directoryPath.getParent() != null;
     }
 
     public String[] popTableEntry(final int theSelectedRow) {
