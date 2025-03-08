@@ -182,7 +182,7 @@ public class InputPanel extends JPanel {
         boolean extensionHasInput = extensionInput.matches(FileListModel.VALID_EXTENSION_REGEX);
 
         String directoryInput = myTextField.getText();
-        boolean directoryHasInput = directoryInput != null && !directoryInput.isBlank();
+        boolean directoryHasInput = directoryInput.matches(FileListModel.VALID_DIRECTORY_REGEX);
 
         // enable start button if extension and directory input are both not empty/null
         myStartButton.setEnabled(extensionHasInput && directoryHasInput);

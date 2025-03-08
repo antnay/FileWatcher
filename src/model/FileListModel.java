@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 
 public class FileListModel extends DefaultTableModel {
     public final static String VALID_EXTENSION_REGEX = "\\.\\S+";
+    public final static String VALID_DIRECTORY_REGEX = "[a-zA-Z][:][\\\\\\/].*";
 
     @Override
     public boolean isCellEditable(final int theRow, final int theColumn) {
@@ -19,6 +20,6 @@ public class FileListModel extends DefaultTableModel {
 
     public boolean validateDirectory(final String theDirectory) {
         Path directoryPath = Paths.get(theDirectory);
-        return Files.exists(directoryPath);
+        return Files.exists(directoryPath) && Files.isDirectory(directoryPath);
     }
 }
