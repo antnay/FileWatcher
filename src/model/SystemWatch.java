@@ -160,12 +160,12 @@ public class SystemWatch {
                 if (i == 0) {
                     break;
                 }
-                extension = theFileName.substring(i + 1);
+                extension = theFileName.substring(i);
                 break;
             }
             i--;
         }
-        Event logEvent = new Event(extension, theFileName, thePath.toString(), theEvent);
+        Event logEvent = new Event(extension, theFileName, thePath.getParent().toString(), theEvent);
         try {
             DBManager.getDBManager().addEvent(logEvent);
             myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
