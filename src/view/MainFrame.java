@@ -2,6 +2,8 @@ package view;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -27,7 +29,14 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         setTitle("FileWatcher");
         setSize(500, 600);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                super.windowClosing(e);
+                System.exit(0);
+            }
+        });
         setLayout(new BorderLayout());
         initMenuBar();
         initToolBar();
