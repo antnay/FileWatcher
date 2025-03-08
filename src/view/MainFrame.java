@@ -209,4 +209,8 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
                 break;
         }
     }
+
+    public PropertyChangeSupport getPCS() {
+        return myPCS;
+    }
 }
