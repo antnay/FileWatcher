@@ -1,7 +1,7 @@
 package view;
 
 public interface InputErrorProperties {
-    String EXTENSION = "Invalid extension. Valid extensions start with '.'";
+    String EXTENSION = "Invalid extension. Valid extensions start with '.' followed by at least 1 non-whitespace character";
     String DIRECTORY = "Directory does not exist";
     String BOTH_INPUTS = "Invalid extension and directory does not exist. Valid extensions start with '.'";
 }
