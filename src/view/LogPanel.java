@@ -1,5 +1,6 @@
 package view;
 
+import java.awt.*;
 import java.beans.PropertyChangeSupport;
 
 import javax.swing.JPanel;
@@ -23,8 +24,9 @@ class LogPanel extends JPanel {
         myLogTable = new JTable(myTableModel);
         myLogContainer = new JScrollPane(myLogTable);
         myLogTable.setEnabled(false);
+        setLayout(new BorderLayout());
         initTable();
-        add(myLogContainer);
+        add(myLogContainer, BorderLayout.CENTER);
     }
 
     void addEvent(Event theEvent) {
