@@ -36,11 +36,13 @@ public class FileWatcherController implements PropertyChangeListener {
                 mySysWatch.stopWatch();
                 break;
             case ViewProperties.ADDED_TO_FILE_LIST_MODEL:
-                mySysWatch.addDir((Path) theEvent.getNewValue());
+                String[] receivedInputAdd = (String[]) theEvent.getNewValue();
+                mySysWatch.addDir(receivedInputAdd[0], Path.of(receivedInputAdd[1]));
                 break;
             case ViewProperties.REMOVED_FROM_FILE_LIST_MODEL:
                 System.out.println("stop button pressed");
-                mySysWatch.removeDir((Path) theEvent.getNewValue());
+                String[] receivedInputRemove = (String[]) theEvent.getNewValue();
+                mySysWatch.removeDir(receivedInputRemove[0], Path.of(receivedInputRemove[1]));
                 break;
             case ViewProperties.CLEAR_LOG_BUTTON:
                 System.out.println("clearing table");

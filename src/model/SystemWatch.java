@@ -19,6 +19,7 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ public class SystemWatch {
     // private final Queue<Event> myEventQueue;
     private final List<Path> myPathList;
     private final PropertyChangeSupport myPCS;
+    private final Map<Path, List<String>> myWatchedExtensions;
     private Map<Path, WatchKey> myWatchKeys;
     private WatchService myWatchService;
     private ExecutorService myExecutor;
@@ -50,6 +52,7 @@ public class SystemWatch {
         myPathList = new LinkedList<>();
         myIsRunning = false;
         myPCS = new PropertyChangeSupport(this);
+        myWatchedExtensions = new HashMap<>();
     }
 
     public void startWatch() {
@@ -106,22 +109,28 @@ public class SystemWatch {
         return myIsRunning;
     }
 
-    public void addDir(final Path theDirectory) {
+    public void addDir(final String theExtension, final Path theDirectory) {
         if (theDirectory == null) {
             throw new IllegalArgumentException("Directory is null");
+        } else if (theExtension == null) {
+            throw new IllegalArgumentException("Extension is null");
         } else if (Files.notExists(theDirectory, LinkOption.NOFOLLOW_LINKS)) {
             throw new IllegalArgumentException("Directory does not exist");
         }
         myPathList.add(theDirectory);
+        addExt(theExtension);
     }
 
-    public void removeDir(final Path theDirectory) {
+    public void removeDir(final String theExtension, final Path theDirectory) {
         if (!isRunning()) {
             throw new IllegalStateException("System watch is not running");
         } else if (!myWatchKeys.containsKey(theDirectory)) {
             throw new IllegalArgumentException("Directory is not in watch list");
+        } else if (!myExts.contains(theExtension)) {
+            throw new IllegalArgumentException("Extension is not in watch list");
         }
         unregisterDirectory(theDirectory);
+        removeExt(theExtension);
     }
 
     public void addExt(String theExtension) {
