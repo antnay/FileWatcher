@@ -70,7 +70,7 @@ public class SystemWatch {
         myIsRunning = true;
         myExecutor = Executors.newSingleThreadExecutor();
         runLogger();
-        myPCS.firePropertyChange(ModelProperties.START, null, null);
+        //myPCS.firePropertyChange(ModelProperties.START, null, null);
     }
 
     public void stopWatch() {
@@ -86,7 +86,7 @@ public class SystemWatch {
         myWatchService = null;
         myWatchKeys = null;
         myExecutor.shutdownNow();
-        myPCS.firePropertyChange(ModelProperties.STOP, null, null);
+//        myPCS.firePropertyChange(ModelProperties.STOP, null, null);
         System.out.println("shut down executor");
     }
 
