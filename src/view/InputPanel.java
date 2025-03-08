@@ -10,15 +10,13 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 public class InputPanel extends JPanel {
-    private final static JButton myStartButton = new JButton("Start");
-    private final static JButton myStopButton = new JButton("Stop");
+    private final static JButton myStartButton = new JButton("Add");
+    private final static JButton myStopButton = new JButton("Remove");
     private final static JTable myJTable = FileListController.getFileListTable();
     private final static JFileChooser myJFileChooser = new JFileChooser();
     private final PropertyChangeSupport myPCS;
