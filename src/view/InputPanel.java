@@ -10,6 +10,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -182,7 +184,8 @@ public class InputPanel extends JPanel {
         boolean extensionHasInput = extensionInput.matches(FileListModel.VALID_EXTENSION_REGEX);
 
         String directoryInput = myTextField.getText().strip();
-        boolean directoryHasInput = directoryInput.matches(FileListModel.VALID_DIRECTORY_REGEX);
+        // boolean directoryHasInput = directoryInput.matches(FileListModel.VALID_DIRECTORY_REGEX);
+        boolean directoryHasInput = new File(directoryInput).exists();
 
         // enable start button if extension and directory input are both not empty/null
         myStartButton.setEnabled(extensionHasInput && directoryHasInput);
