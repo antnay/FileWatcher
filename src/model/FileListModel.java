@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 
 public class FileListModel extends DefaultTableModel {
     public final static String VALID_EXTENSION_REGEX = "\\.\\S+";
-    public final static String VALID_DIRECTORY_REGEX = "[a-zA-Z][:][\\\\|/].*";
+    public final static String VALID_DIRECTORY_REGEX = "[a-zA-Z][:][\\\\|/].+";
 
     public FileListModel() {
         addColumn("File Extension");
