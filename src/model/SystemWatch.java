@@ -289,33 +289,13 @@ public class SystemWatch {
         }
     }
 
-    private void unregisterDirectory(Path theRoot) {
-        try {
-            Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
-                // FIXME: Nullpointer when shutting down executor while walking
-                public FileVisitResult preVisitDirectory(Path theCurrentDir, BasicFileAttributes attrs) {
-                    try {
-                        if (Files.isSymbolicLink(theCurrentDir)) {
-                            return FileVisitResult.SKIP_SUBTREE;
-                        } else if (Files.isDirectory(theCurrentDir)) {
-                            System.out.println(theCurrentDir);
-                            if (myWatchKeys.containsKey(theCurrentDir)) {
-                                myWatchKeys.get(theCurrentDir).cancel();
-                                myWatchKeys.remove(theCurrentDir);
-                            }
-                            return FileVisitResult.CONTINUE;
-                        }
-                    } catch (SecurityException | IllegalStateException theE) {
-                        // TODO Auto-generated catch block
-                        System.err.println("ERRRRRRRRRRRRRRRRRRRRRROR " + theE.getMessage());
-                        ;
-                    }
-                    return FileVisitResult.SKIP_SUBTREE;
-                }
-            });
-        } catch (IOException theE) {
-            System.err.println("Could not register " + theE.getMessage());
-            // TODO Auto-generated catch block
+    private void unregisterDirectory(Path theDirectory) {
+        if (Files.isDirectory(theDirectory)) {
+            System.out.println(theDirectory);
+            if (myWatchKeys.containsKey(theDirectory)) {
+                myWatchKeys.get(theDirectory).cancel();
+                myWatchKeys.remove(theDirectory);
+            }
         }
     }
 
