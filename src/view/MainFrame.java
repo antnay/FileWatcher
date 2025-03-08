@@ -27,7 +27,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         myPCS = new PropertyChangeSupport(this);
         myPCS.addPropertyChangeListener(this);
         setTitle("FileWatcher");
-        setSize(500, 600);
+        setSize(680, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
