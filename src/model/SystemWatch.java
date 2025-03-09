@@ -107,6 +107,18 @@ public class SystemWatch {
             myPathMap.put(theDirectory, new HashSet<>());
         }
         myPathMap.get(theDirectory).add(theExtension);
+        if (isRunning()) {
+        if (theRecursivelyAdd) {
+            registerDirTree(theDirectory, false);
+        } else {
+            try {
+                registerDirectory(theDirectory);
+            } catch (IOException | SecurityException theE) {
+                System.err.println("Could not add: " + theDirectory);
+                throw new IllegalArgumentException("Could not add directory");
+            }
+        }
+    }
         // myPathList.add(theDirectory);
         // addExt(theExtension);
     }
@@ -189,7 +201,7 @@ public class SystemWatch {
     private void runLogger() {
         // FIXME: add directory while running
         myExecutor.submit(() -> {
-            new Thread(this::registerPathList).start();
+            new Thread(this::registerPathMap).start();
             WatchKey key;
             try {
                 // while ((key = myWatchService.poll(1, TimeUnit.SECONDS)) != null) {
@@ -199,7 +211,8 @@ public class SystemWatch {
                         Path path = ((Path) key.watchable()).resolve(fileName);
                         WatchEvent.Kind<?> eType = event.kind();
                         // FIXME: when deleting directory, path.isdirectory does not work
-                        // FIXME: if you have an extension being watched in a directory, if you delete that directory then the files will be reported as modified instead of deleted
+                        // FIXME: if you have an extension being watched in a directory, if you delete
+                        // that directory then the files will be reported as modified instead of deleted
                         if (path.toFile().isDirectory()) {
                             if (eType == StandardWatchEventKinds.ENTRY_CREATE) {
                                 registerDirTree(path, true);
@@ -220,14 +233,14 @@ public class SystemWatch {
         });
     }
 
-    private void registerPathList() {
+    private void registerPathMap() {
         Instant now = Instant.now();
         // myPathList.forEach(theRoot -> registerDirTree(theRoot, false));
         myPathMap.forEach((theRoot, myExtensions) -> registerDirTree(theRoot, false));
         System.out.println("Time (s): " + Duration.between(now, Instant.now()).getSeconds());
     }
 
-    private void registerDirTree(Path theRoot, boolean theEventSpec) {
+    private void registerDirTree(Path theRoot, boolean theIsNewEvent) {
         myPCS.firePropertyChange(ModelProperties.REGISTER_START, null, null); // if gui needs to be held until done
         final boolean[] fail = { false };
         try {
@@ -310,7 +323,7 @@ public class SystemWatch {
                         if (Files.isSymbolicLink(theCurrentDir)) {
                             return FileVisitResult.SKIP_SUBTREE;
                         } else if (Files.isDirectory(theCurrentDir)) {
-                            System.out.println(theCurrentDir);
+                            // System.out.println(theCurrentDir);
                             if (myWatchKeys.containsKey(theCurrentDir)) {
                                 myWatchKeys.get(theCurrentDir).cancel();
                                 myWatchKeys.remove(theCurrentDir);
