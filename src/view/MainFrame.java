@@ -25,7 +25,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private JMenuItem myStopMItem;
     private JButton myStartToolbarButton;
     private JButton myStopToolbarButton;
-    private int myLogTableRowCount = 1;
+    private int myLogTableRowCount = 0;
 
     public MainFrame() {
         myPCS = new PropertyChangeSupport(this);
@@ -54,25 +54,25 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
                             responses,
                             responses[2]);
                     if (userResponse == -1) { // if the user closes the JOptionPane
-                        userResponse = 1;
+                        userResponse = 1; // set their response to CANCEL_CLOSE_RESPONSE
                     }
                     switch (responses[userResponse]) {
                         case CONFIRM_CLOSE_RESPONSE:
-                            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+                            setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                             //dispatchEvent(new WindowEvent(MainFrame.this, WindowEvent.WINDOW_CLOSED));
                             break;
                         case CANCEL_CLOSE_RESPONSE:
                             break;
                         case SAVE_CLOSE_RESPONSE:
                             System.out.println("TODO: MAKE THE PROGRAM SAVE TO THE DATABASE HERE");
-                            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+                            setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                             break;
                         default:
-                            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+                            setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                             break;
                     }
                 } else {
-                    System.exit(0);
+                    setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                 }
             }
         });
