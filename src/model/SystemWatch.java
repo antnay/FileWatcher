@@ -213,7 +213,7 @@ public class SystemWatch {
         try {
             System.out.println("im walking hyeah: " + theRoot.toFile());
             Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
-                public FileVisitResult preVisitDirectory(Path theCurrentDir) {
+                public FileVisitResult preVisitDirectory(Path theCurrentDir, BasicFileAttributes theAttrs) {
                     try {
                         if (Files.isRegularFile(theCurrentDir)) {
                             regEvent(StandardWatchEventKinds.ENTRY_CREATE.toString(),
@@ -264,6 +264,7 @@ public class SystemWatch {
     }
 
     private WatchKey registerDirectory(final Path thePath) {
+        // System.out.println(thePath);
         try {
             return thePath.register(myWatchService,
                     StandardWatchEventKinds.ENTRY_CREATE,
