@@ -27,13 +27,17 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         myPCS = new PropertyChangeSupport(this);
         myPCS.addPropertyChangeListener(this);
         setTitle("FileWatcher");
-        setSize(680, 600);
+        if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+            setSize(680, 600);
+        } else {
+            setSize(600, 600);
+        }
         setLocationRelativeTo(null);
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                String[] responses = {"Yes", "No", "Save Changes"};
+                String[] responses = { "Yes", "No", "Save Changes" };
                 JOptionPane.showOptionDialog(
                         null,
                         "Are you sure you want to exit?",
@@ -101,7 +105,6 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private void initToolBar() {
         JToolBar toolBar = new JToolBar();
 
-
         myStartToolbarButton = new JButton(new ImageIcon("src/resources/startIcon.png"));
         myStartToolbarButton.setToolTipText("Start the file watch system.");
         addActionToStartButtons(myStartToolbarButton);
@@ -154,12 +157,12 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     }
 
     private void toggleStartStopButtons(final String theProperty) {
-        if (theProperty.equals(ModelProperties.START)) {    // if start was clicked
+        if (theProperty.equals(ModelProperties.START)) { // if start was clicked
             myStartMItem.setEnabled(false);
             myStartToolbarButton.setEnabled(false);
             myStopMItem.setEnabled(true);
             myStopToolbarButton.setEnabled(true);
-        } else {                                            // if stop was clicked
+        } else { // if stop was clicked
             myStartMItem.setEnabled(true);
             myStartToolbarButton.setEnabled(true);
             myStopMItem.setEnabled(false);
@@ -209,7 +212,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent theEvent) {
-//        System.out.println("view pc: " + theEvent.getPropertyName());
+        // System.out.println("view pc: " + theEvent.getPropertyName());
         switch (theEvent.getPropertyName()) {
             case ModelProperties.START:
                 toggleStartStopButtons(ModelProperties.START);
