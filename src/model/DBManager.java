@@ -138,7 +138,7 @@ final class DBManager {
         }
         try {
             Statement statement = connection.createStatement();
-            statement.execute("DELETE FROM event_log_temp");
+            statement.executeUpdate("DELETE FROM event_log_temp");
         } catch (SQLException theE) {
             throw new DatabaseException("Error clearing table", theE);
         }
