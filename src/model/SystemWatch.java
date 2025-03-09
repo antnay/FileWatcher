@@ -199,7 +199,6 @@ public class SystemWatch {
     }
 
     private void runLogger() {
-        // FIXME: add directory while running
         myExecutor.submit(() -> {
             new Thread(this::registerPathMap).start();
             WatchKey key;
