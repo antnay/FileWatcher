@@ -53,9 +53,13 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
                             null,
                             responses,
                             responses[2]);
+                    if (userResponse == -1) { // if the user closes the JOptionPane
+                        userResponse = 1;
+                    }
                     switch (responses[userResponse]) {
                         case CONFIRM_CLOSE_RESPONSE:
                             setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+                            //dispatchEvent(new WindowEvent(MainFrame.this, WindowEvent.WINDOW_CLOSED));
                             break;
                         case CANCEL_CLOSE_RESPONSE:
                             break;
