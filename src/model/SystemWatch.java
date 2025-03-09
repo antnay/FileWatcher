@@ -372,44 +372,46 @@ public class SystemWatch {
         myPCS.removePropertyChangeListener(theListener);
     }
 
-    private class PathObject {
-        private final HashSet<String> myExtensions;
-        private WatchKey myWatchKey;
+    // Probably dont need this
 
-        private PathObject(String theExtension) {
-            myExtensions = new HashSet<>();
-            myExtensions.add(theExtension);
-            myWatchKey = null;
-        }
+    // private class PathObject {
+    //     private final HashSet<String> myExtensions;
+    //     private WatchKey myWatchKey;
 
-        private PathObject(final HashSet<String> theExtensions) {
-            myExtensions = theExtensions;
-            myWatchKey = null;
-        }
+    //     private PathObject(String theExtension) {
+    //         myExtensions = new HashSet<>();
+    //         myExtensions.add(theExtension);
+    //         myWatchKey = null;
+    //     }
 
-        private void addWatchKey(WatchKey theWK) {
-            myWatchKey = theWK;
-        }
+    //     private PathObject(final HashSet<String> theExtensions) {
+    //         myExtensions = theExtensions;
+    //         myWatchKey = null;
+    //     }
 
-        private void removeWatchKey() {
-            myWatchKey = null;
-        }
+    //     private void addWatchKey(WatchKey theWK) {
+    //         myWatchKey = theWK;
+    //     }
 
-        private void addExtension(String theExtension) {
-            myExtensions.add(theExtension);
-        }
+    //     private void removeWatchKey() {
+    //         myWatchKey = null;
+    //     }
 
-        private void removeExtension(String theExtension) {
-            myExtensions.remove(theExtension);
-        }
+    //     private void addExtension(String theExtension) {
+    //         myExtensions.add(theExtension);
+    //     }
 
-        private WatchKey getWatchKey() {
-            return myWatchKey;
-        }
+    //     private void removeExtension(String theExtension) {
+    //         myExtensions.remove(theExtension);
+    //     }
 
-        private HashSet<String> getExtensions() {
-            return myExtensions;
-        }
+    //     private WatchKey getWatchKey() {
+    //         return myWatchKey;
+    //     }
 
-    }
+    //     private HashSet<String> getExtensions() {
+    //         return myExtensions;
+    //     }
+
+    // }
 }
