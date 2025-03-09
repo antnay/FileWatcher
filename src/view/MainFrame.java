@@ -16,12 +16,16 @@ import model.Event;
 
 public class MainFrame extends JFrame implements PropertyChangeListener {
 
+    private final static String CONFIRM_CLOSE_RESPONSE = "Yes";
+    private final static String CANCEL_CLOSE_RESPONSE = "No";
+    private final static String SAVE_CLOSE_RESPONSE = "Save Changes and Close";
     private final PropertyChangeSupport myPCS;
     private LogPanel myLogPanel;
     private JMenuItem myStartMItem;
     private JMenuItem myStopMItem;
     private JButton myStartToolbarButton;
     private JButton myStopToolbarButton;
+    private int myLogTableRowCount = 1;
 
     public MainFrame() {
         myPCS = new PropertyChangeSupport(this);
@@ -37,17 +41,35 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                String[] responses = { "Yes", "No", "Save Changes" };
-                JOptionPane.showOptionDialog(
-                        null,
-                        "Are you sure you want to exit?",
-                        "Changes Not Saved to Database",
-                        JOptionPane.YES_NO_CANCEL_OPTION,
-                        JOptionPane.WARNING_MESSAGE,
-                        null,
-                        responses,
-                        responses[2]);
-                System.exit(0);
+                // if there are rows in the log table
+                if (myLogTableRowCount > 0) {
+                    String[] responses = {CONFIRM_CLOSE_RESPONSE, CANCEL_CLOSE_RESPONSE, SAVE_CLOSE_RESPONSE};
+                    int userResponse = JOptionPane.showOptionDialog(
+                            null,
+                            "Are you sure you want to exit?",
+                            "Changes Not Saved to Database",
+                            JOptionPane.YES_NO_CANCEL_OPTION,
+                            JOptionPane.WARNING_MESSAGE,
+                            null,
+                            responses,
+                            responses[2]);
+                    switch (responses[userResponse]) {
+                        case CONFIRM_CLOSE_RESPONSE:
+                            System.exit(0);
+                            break;
+                        case CANCEL_CLOSE_RESPONSE:
+                            break;
+                        case SAVE_CLOSE_RESPONSE:
+                            System.out.println("TODO: MAKE THE PROGRAM SAVE TO THE DATABASE HERE");
+                            System.exit(0);
+                            break;
+                        default:
+                            System.exit(1); // should never get here, hence 1 exit code
+                            break;
+                    }
+                } else {
+                    System.exit(0);
+                }
             }
         });
         setLayout(new BorderLayout());
