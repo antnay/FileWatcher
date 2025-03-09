@@ -305,7 +305,6 @@ public class SystemWatch {
     private void unregisterDirectoryRecursive(Path theRoot) {
         try {
             Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
-                // FIXME: Nullpointer when shutting down executor while walking
                 public FileVisitResult preVisitDirectory(Path theCurrentDir, BasicFileAttributes attrs) {
                     try {
                         if (Files.isSymbolicLink(theCurrentDir)) {
@@ -318,10 +317,10 @@ public class SystemWatch {
                             }
                             return FileVisitResult.CONTINUE;
                         }
-                    } catch (SecurityException | IllegalStateException theE) {
-                        // TODO Auto-generated catch block
-                        System.err.println("ERRRRRRRRRRRRRRRRRRRRRROR " + theE.getMessage());
-                        ;
+                    } catch (ClosedWatchServiceException theE) {
+                        return FileVisitResult.TERMINATE;
+                    } catch (SecurityException theE) {
+                        return FileVisitResult.SKIP_SUBTREE;
                     }
                     return FileVisitResult.SKIP_SUBTREE;
                 }
