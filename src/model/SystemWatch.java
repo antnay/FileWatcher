@@ -4,18 +4,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.ClosedWatchServiceException;
-import java.nio.file.FileSystemLoopException;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.Instant;
@@ -30,7 +19,6 @@ import java.util.concurrent.Executors;
 public class SystemWatch {
 
     private final List<String> myExts;
-    // private final Queue<Event> myEventQueue;
     private final List<Path> myPathList;
     private final PropertyChangeSupport myPCS;
     private final Map<Path, List<String>> myWatchedExtensions;
@@ -48,7 +36,6 @@ public class SystemWatch {
             // TODO Auto-generated catch block
         }
         myExts = new LinkedList<>();
-        // myEventQueue = new ConcurrentLinkedQueue<>();
         myPathList = new LinkedList<>();
         myIsRunning = false;
         myPCS = new PropertyChangeSupport(this);
@@ -181,7 +168,6 @@ public class SystemWatch {
         } catch (DatabaseException theE) {
             // TODO Auto-generated catch block
         }
-        // myEventQueue.add(logEvent);
     }
 
     private void runLogger() {
@@ -223,11 +209,11 @@ public class SystemWatch {
 
     private void registerDirTree(Path theRoot, boolean theEventSpec) {
         myPCS.firePropertyChange(ModelProperties.REGISTER_START, null, null); // if gui needs to be held until done
+        final boolean[] fail = {false};
         try {
             System.out.println("im walking hyeah: " + theRoot.toFile());
             Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
-                // FIXME: Nullpointer when shutting down executor while walking
-                public FileVisitResult preVisitDirectory(Path theCurrentDir, BasicFileAttributes attrs) {
+                public FileVisitResult preVisitDirectory(Path theCurrentDir) {
                     try {
                         if (Files.isRegularFile(theCurrentDir)) {
                             regEvent(StandardWatchEventKinds.ENTRY_CREATE.toString(),
@@ -237,7 +223,7 @@ public class SystemWatch {
                         } else if (Files.isDirectory(theCurrentDir)) {
                             WatchKey wK = registerDirectory(theCurrentDir);
                             if (wK == null) {
-                                throw new IllegalStateException("System not watching");
+                                throw new IllegalStateException("System not running");
                             } else {
                                 myWatchKeys.put(theCurrentDir, wK);
                             }
@@ -245,33 +231,34 @@ public class SystemWatch {
                             return FileVisitResult.CONTINUE;
                         }
                     } catch (SecurityException | IllegalStateException theE) {
-                        // TODO Auto-generated catch block
-                        System.err.println("ERRRRRRRRRRRRRRRRRRRRRROR " + theE.getMessage());
+                        fail[0] = true;
+                        return  FileVisitResult.TERMINATE;
                     }
                     return FileVisitResult.SKIP_SUBTREE;
                 }
 
                 @Override
                 public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    if (exc instanceof FileSystemLoopException) {
-                        System.err.println("Filesystem loop detected: " + file);
-                    } else {
-                        System.err.println("Error accessing file: " + file + " - " + exc.getMessage());
+                    if (exc instanceof FileSystemLoopException || exc instanceof AccessDeniedException) {
+                        return FileVisitResult.SKIP_SUBTREE;
                     }
                     return FileVisitResult.CONTINUE;
                 }
             });
         } catch (IOException theE) {
-            System.err.println("Could not register " + theE.getMessage());
-            // TODO Auto-generated catch block
+            System.err.println(theE.getMessage());
         }
 
-        Path logDir = Path.of(new File("database").getAbsolutePath());
-        if (myWatchKeys.containsKey(logDir)) {
-            myWatchKeys.get(logDir).cancel();
-            myWatchKeys.remove(logDir);
+        if (fail[0]) {
+            System.out.println("Done walking with errors");
+        } else {
+            Path logDir = Path.of(new File("database").getAbsolutePath());
+            if (myWatchKeys.containsKey(logDir)) {
+                myWatchKeys.get(logDir).cancel();
+                myWatchKeys.remove(logDir);
+            }
+            System.out.println("Done walking");
         }
-        System.out.println("Done walking");
         myPCS.firePropertyChange(ModelProperties.REGISTER_DONE, null, null); // if gui needs to be held until done
         System.out.println(count);
     }

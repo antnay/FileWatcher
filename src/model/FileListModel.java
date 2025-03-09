@@ -26,7 +26,9 @@ public class FileListModel extends DefaultTableModel {
     // directory is valid if it exists, is a directory, and is not a root directory
     public boolean validateDirectory(final String theDirectory) {
         Path directoryPath = Paths.get(theDirectory);
-        return Files.exists(directoryPath) && Files.isDirectory(directoryPath) && directoryPath.getParent() != null;
+//        return Files.exists(directoryPath) && Files.isDirectory(directoryPath) && directoryPath.getParent() != null;
+        return Files.exists(directoryPath) && Files.isDirectory(directoryPath);
+
     }
 
     public String[] popTableEntry(final int theSelectedRow) {
