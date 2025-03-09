@@ -55,16 +55,16 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
                             responses[2]);
                     switch (responses[userResponse]) {
                         case CONFIRM_CLOSE_RESPONSE:
-                            System.exit(0);
+                            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
                             break;
                         case CANCEL_CLOSE_RESPONSE:
                             break;
                         case SAVE_CLOSE_RESPONSE:
                             System.out.println("TODO: MAKE THE PROGRAM SAVE TO THE DATABASE HERE");
-                            System.exit(0);
+                            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
                             break;
                         default:
-                            System.exit(1); // should never get here, hence 1 exit code
+                            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
                             break;
                     }
                 } else {
