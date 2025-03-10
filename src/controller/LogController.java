@@ -1,6 +1,5 @@
 package controller;
 
-import model.Event;
 import model.LogListModel;
 import model.ModelProperties;
 import view.MainFrame;
@@ -14,13 +13,11 @@ import java.beans.PropertyChangeSupport;
 public class LogController implements PropertyChangeListener {
     private static final LogListModel myLogListModel = new LogListModel();
     private static final JTable myJTable = new JTable();
-    private final MainFrame myMainFrame;
     private final PropertyChangeSupport myPCS;
 
-    public LogController(final MainFrame theMainFrame) {
-        myMainFrame = theMainFrame;
-        myPCS = myMainFrame.getPCS();
-        myMainFrame.addPropertyChangeListener(this);
+    public LogController(final PropertyChangeSupport thePCS) {
+        myPCS = thePCS;
+        myPCS.addPropertyChangeListener(this);
 
         initTableListener();
     }

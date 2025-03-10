@@ -34,9 +34,9 @@ public class FileWatcher {
                 PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
                 SystemWatch sysWatch = new SystemWatch(propertyChangeSupport);
                 MainFrame view = new MainFrame(propertyChangeSupport);
-                new FileWatcherController(view, sysWatch);
-                new FileListController(view);
-                new LogController(view);
+                new FileWatcherController(propertyChangeSupport, sysWatch);
+                new FileListController(propertyChangeSupport);
+                new LogController(propertyChangeSupport);
                 view.setVisible(true);
             }
         });

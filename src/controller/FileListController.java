@@ -16,13 +16,11 @@ import java.util.Map;
 public class FileListController implements PropertyChangeListener {
     private static final FileListModel myFileListModel = new FileListModel();
     private static final JTable myJTable = new JTable(myFileListModel);
-    private final MainFrame myMainFrame;
     private final PropertyChangeSupport myPCS;
 
-    public FileListController(final MainFrame theView) {
-        myMainFrame = theView;
-        myPCS = myMainFrame.getPCS();
-        myMainFrame.addPropertyChangeListener(this);
+    public FileListController(final PropertyChangeSupport thePCS) {
+        myPCS = thePCS;
+        myPCS.addPropertyChangeListener(this);
 
         initTableListener();
     }
@@ -51,11 +49,14 @@ public class FileListController implements PropertyChangeListener {
                     myFileListModel.addRow(startInput);
                     myPCS.firePropertyChange(ViewProperties.ADDED_TO_FILE_LIST_MODEL, null, startInput);
                 } else if (!isExtensionValid && !isDirectoryValid) {
-                    myMainFrame.showErrorWindow(InputErrorProperties.BOTH_INPUTS);
+                    myPCS.firePropertyChange(InputErrorProperties.BOTH_INPUTS, null, null);
+//                    myMainFrame.showErrorWindow(InputErrorProperties.BOTH_INPUTS);
                 } else if (!isExtensionValid) {
-                    myMainFrame.showErrorWindow(InputErrorProperties.EXTENSION);
+                    myPCS.firePropertyChange(InputErrorProperties.EXTENSION, null, null);
+//                    myMainFrame.showErrorWindow(InputErrorProperties.EXTENSION);
                 } else {
-                    myMainFrame.showErrorWindow(InputErrorProperties.DIRECTORY);
+                    myPCS.firePropertyChange(InputErrorProperties.DIRECTORY, null, null);
+//                    myMainFrame.showErrorWindow(InputErrorProperties.DIRECTORY);
                 }
                 break;
             case ViewProperties.REMOVE_BUTTON:

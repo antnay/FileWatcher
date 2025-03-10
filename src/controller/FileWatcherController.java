@@ -2,23 +2,23 @@ package controller;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 
 import model.ModelProperties;
 import model.SystemWatch;
-import view.MainFrame;
 import view.ViewProperties;
 
 public class FileWatcherController implements PropertyChangeListener {
 
     private final SystemWatch mySysWatch;
-    private final MainFrame myMainFrame;
+    private final PropertyChangeSupport myPCS;
 
-    public FileWatcherController(MainFrame theView, SystemWatch theSystemWatch) {
-        myMainFrame = theView;
+    public FileWatcherController(final PropertyChangeSupport thePCS, final SystemWatch theSystemWatch) {
+        myPCS = thePCS;
         mySysWatch = theSystemWatch;
-        mySysWatch.addPropertyChangeListener(this);
-        //mySysWatch.addDir(Path.of(System.getProperty("user.home")));
+        myPCS.addPropertyChangeListener(this);
+//        mySysWatch.addDir(Path.of(System.getProperty("user.home")));
     }
 
     @Override
