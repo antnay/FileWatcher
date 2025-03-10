@@ -1,60 +1,36 @@
 package view;
 
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
-import controller.FileListController;
-import model.Event;
+import model.ModelProperties;
 
 // log under config view
-class LogPanel extends JPanel {
+class LogPanel extends JPanel implements PropertyChangeListener {
+    private final PropertyChangeSupport myPCS;
+    private final JTable myJTable;
 
-    // private PropertyChangeSupport myPCS;
-    private final JTable myFileListTableReference;
-    private DefaultTableModel myTableModel;
-    private JTable myLogTable;
-    private JScrollPane myLogContainer;
-
-    LogPanel(PropertyChangeSupport thePcs) {
-        // myPCS = thePcs;
-        myFileListTableReference = FileListController.getFileListTable();
-        myTableModel = new DefaultTableModel();
-        myLogTable = new JTable(myTableModel);
-        myLogContainer = new JScrollPane(myLogTable);
-        myLogTable.setEnabled(false);
+    public LogPanel(PropertyChangeSupport thePcs) {
+        myPCS = thePcs;
+        myJTable = new JTable(new DefaultTableModel());
+        JScrollPane tableContainer = new JScrollPane(myJTable);
+        myJTable.setEnabled(false);
         setLayout(new BorderLayout());
-        initTable();
-        add(myLogContainer, BorderLayout.CENTER);
+        add(tableContainer, BorderLayout.CENTER);
     }
 
-    void addEvent(Event theEvent) {
-        if (isCombinationInTable(theEvent.getMyExtension(), theEvent.getPath(), myFileListTableReference)) {
-            myTableModel.addRow(theEvent.toArray());
+    @Override
+    public void propertyChange(final PropertyChangeEvent theEvent) {
+        if (theEvent.getPropertyName().equals(ViewProperties.ADDED_TO_FILE_LIST_MODEL)) {
+            myJTable.setModel((TableModel) theEvent.getNewValue());
         }
-    }
-
-    public boolean isCombinationInTable(final String theExtension, final String theDirectory, final JTable theTable) {
-        boolean comboIsInTable = false;
-        for (int i = 0; i < theTable.getRowCount(); i++) {
-            String currentExtension = theTable.getValueAt(i, 0).toString();
-            String currentDirectory = theTable.getValueAt(i, 1).toString();
-            if (currentExtension.equals(theExtension) && currentDirectory.equals(theDirectory)) {
-                comboIsInTable = true;
-            }
-        }
-        return comboIsInTable;
-    }
-
-    private void initTable() {
-        myTableModel.addColumn("Extension");
-        myTableModel.addColumn("File Name");
-        myTableModel.addColumn("Path");
-        myTableModel.addColumn("Event");
-        myTableModel.addColumn("Timestamp");
     }
 }
