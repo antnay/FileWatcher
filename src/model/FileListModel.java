@@ -18,12 +18,12 @@ public class FileListModel extends DefaultTableModel {
         }
     }
 
-    public boolean validateExtension(final String theExtension) {
+    public static boolean validateExtension(final String theExtension) {
         return (theExtension.matches(VALID_EXTENSION_REGEX));
     }
 
     // directory is valid if it exists, is a directory, and is not a root directory
-    public boolean validateDirectory(final String theDirectory) {
+    public static boolean validateDirectory(final String theDirectory) {
         Path directoryPath = Paths.get(theDirectory);
 //        return Files.exists(directoryPath) && Files.isDirectory(directoryPath) && directoryPath.getParent() != null;
         return Files.exists(directoryPath) && Files.isDirectory(directoryPath);

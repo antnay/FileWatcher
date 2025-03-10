@@ -44,8 +44,8 @@ public class FileListController implements PropertyChangeListener {
                         ((Map<?, ?>) theEvent.getNewValue()).get("Directory").toString()
                 };
 
-                boolean isExtensionValid = myFileListModel.validateExtension(startInput[0]);
-                boolean isDirectoryValid = myFileListModel.validateDirectory(startInput[1]);
+                boolean isExtensionValid = FileListModel.validateExtension(startInput[0]);
+                boolean isDirectoryValid = FileListModel.validateDirectory(startInput[1]);
 
                 if (isExtensionValid && isDirectoryValid) {
                     myFileListModel.addRow(startInput);
