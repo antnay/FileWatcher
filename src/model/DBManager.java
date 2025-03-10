@@ -157,7 +157,7 @@ final class DBManager {
             statement.setString(2, theEvent.getFileName());
             statement.setString(3, theEvent.getPath());
             statement.setString(4, theEvent.geEventKind());
-            statement.setString(5, theEvent.getTimeStamp());
+            statement.setString(5, theEvent.getTimeStamp().toString());
             statement.execute();
         } catch (SQLException theE) {
             throw new DatabaseException("Error adding event to database", theE);

@@ -34,8 +34,8 @@ public final class Event {
         return myEventKind;
     }
 
-    public final String getTimeStamp() {
-        return myTimeStamp.toString();
+    public final LocalDateTime getTimeStamp() {
+        return myTimeStamp;
     }
 
     public final Object[] toArray() {
