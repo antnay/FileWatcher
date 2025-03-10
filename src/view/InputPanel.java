@@ -129,8 +129,8 @@ public class InputPanel extends JPanel {
         // get input from user and trim whitespace
         userInput.put("Extension", Objects.requireNonNull(myComboBox.getSelectedItem()).toString().strip());
         userInput.put("Directory", myTextField.getText().strip());
-        myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, userInput);
         myPCS.firePropertyChange(ViewProperties.ADD_BUTTON, null, userInput);
+        clearInput();
     }
 
     private void clearInput() {
