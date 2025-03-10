@@ -8,6 +8,7 @@ public interface ModelProperties {
     String REMOVE_DIR = "removeDir";
     String CLEAR_TABLE = "clear";
     String EVENT = "event";
+    String FILE_LIST_MODEL_UPDATED = "fileListModelUpdated";
     String REGISTER_START = "registerStart";
     String REGISTER_DONE = "registerDone";
 }
