@@ -9,11 +9,13 @@ import java.util.Vector;
 
 public class FileListModel extends DefaultTableModel {
     public final static String VALID_EXTENSION_REGEX = "\\.\\S+";
+    public final static String[] COLUMN_HEADER_ARRAY = {"File Extension", "Directory"};
     // public final static String VALID_DIRECTORY_REGEX = "[a-zA-Z][:][\\\\|/].+";
 
     public FileListModel() {
-        addColumn("File Extension");
-        addColumn("Directory");
+        for (String columnHeader : COLUMN_HEADER_ARRAY) {
+            addColumn(columnHeader);
+        }
     }
 
     public boolean validateExtension(final String theExtension) {

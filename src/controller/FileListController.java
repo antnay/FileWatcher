@@ -1,11 +1,13 @@
 package controller;
 
 import model.FileListModel;
+import model.ModelProperties;
 import view.InputErrorProperties;
 import view.MainFrame;
 import view.ViewProperties;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -21,16 +23,16 @@ public class FileListController implements PropertyChangeListener {
         myMainFrame = theView;
         myPCS = myMainFrame.getPCS();
         myMainFrame.addPropertyChangeListener(this);
-        myJTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // set File Extension column width
-        myJTable.getColumnModel().getColumn(0).setPreferredWidth(100);
-        // set Directory column width
-        myJTable.getColumnModel().getColumn(1).setPreferredWidth(400);
+        initTableListener();
     }
 
-    public static JTable getFileListTable() {
-        return myJTable;
+    private void initTableListener() {
+        myJTable.getModel().addTableModelListener(theEvent -> {
+            if (theEvent.getType() == TableModelEvent.INSERT) {
+                myPCS.firePropertyChange(ModelProperties.FILE_LIST_MODEL_UPDATED, null, myJTable.getModel());
+            }
+        });
     }
 
     @Override

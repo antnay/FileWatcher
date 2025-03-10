@@ -16,8 +16,6 @@ import java.util.Objects;
 
 public class InputPanel extends JPanel {
     private final static JButton myStartButton = new JButton("Add");
-    private final static JButton myStopButton = new JButton("Remove");
-    private final static JTable myJTable = FileListController.getFileListTable();
     private final static JFileChooser myJFileChooser = new JFileChooser();
     private final PropertyChangeSupport myPCS;
     private JComboBox<String> myComboBox;
@@ -26,7 +24,6 @@ public class InputPanel extends JPanel {
     public InputPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
         initInputFields();
-        initTableListener();
     }
 
     private void initInputFields() {
@@ -41,18 +38,6 @@ public class InputPanel extends JPanel {
         // add the input fields for file extension and file directory
         add(createExtensionPanel(), BorderLayout.WEST);
         add(createDirectoryPanel(), BorderLayout.EAST);
-
-        JPanel fileList = new FileListPanel();
-        fileList.add(initStopButton(), BorderLayout.SOUTH);
-        add(fileList, BorderLayout.SOUTH);
-    }
-
-    private void initTableListener() {
-        myJTable.getModel().addTableModelListener(theEvent -> {
-            if (theEvent.getType() == TableModelEvent.INSERT) {
-                clearInput();
-            }
-        });
     }
 
     private JPanel createExtensionPanel() {
@@ -122,29 +107,6 @@ public class InputPanel extends JPanel {
         buttonGrid.add(browseButton);
 
         return buttonGrid;
-    }
-
-    private JButton initStopButton() {
-        myJTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                /*
-                check selected row so button does not re-enable when
-                adding to the list again, since adding triggers valueChanged
-                 */
-                if (myJTable.getSelectedRow() != -1) {
-                    myStopButton.setEnabled(true);
-                }
-            }
-        });
-
-        myStopButton.addActionListener(theEvent -> {
-            myPCS.firePropertyChange(ViewProperties.STOP_BUTTON, null, myJTable.getSelectedRow());
-            myStopButton.setEnabled(false);
-        });
-        myStopButton.setEnabled(false);
-        myStopButton.setMnemonic(KeyEvent.VK_T);
-        return myStopButton;
     }
 
     private void setUpBrowseButton() {

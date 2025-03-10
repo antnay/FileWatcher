@@ -20,7 +20,6 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private final static String CANCEL_CLOSE_RESPONSE = "No";
     private final static String SAVE_CLOSE_RESPONSE = "Save Changes and Close";
     private final PropertyChangeSupport myPCS;
-    private LogPanel myLogPanel;
     private JMenuItem myStartMItem;
     private JMenuItem myStopMItem;
     private JButton myStartToolbarButton;
@@ -162,10 +161,19 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         JPanel framePanel = new JPanel(new BorderLayout());
         framePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
+        JPanel userControls = new JPanel(new BorderLayout());
+        userControls.setBorder(new EmptyBorder(0, 0, 20, 0));
+
         ControlPanel controlPanel = new ControlPanel(myPCS);
-        framePanel.add(controlPanel, BorderLayout.NORTH);
-        myLogPanel = new LogPanel(myPCS);
-        framePanel.add(myLogPanel, BorderLayout.CENTER);
+        FileListPanel fileListPanel = new FileListPanel(myPCS);
+        LogPanel logPanel = new LogPanel(myPCS);
+
+
+        userControls.add(controlPanel, BorderLayout.NORTH);
+        userControls.add(fileListPanel, BorderLayout.CENTER);
+
+        framePanel.add(userControls, BorderLayout.NORTH);
+        framePanel.add(logPanel, BorderLayout.CENTER);
 
         add(framePanel, BorderLayout.CENTER);
     }
@@ -249,7 +257,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
             case ModelProperties.EVENT:
                 Object event = theEvent.getNewValue();
                 if (event.getClass().getName().equals("model.Event")) {
-                    myLogPanel.addEvent((Event) event);
+//                    myLogPanel.addEvent((Event) event);
                 }
                 break;
             default:
