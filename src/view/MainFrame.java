@@ -12,7 +12,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import model.ModelProperties;
-import model.Event;
 
 public class MainFrame extends JFrame implements PropertyChangeListener {
 
@@ -26,8 +25,8 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private JButton myStopToolbarButton;
     private int myLogTableRowCount = 0;
 
-    public MainFrame() {
-        myPCS = new PropertyChangeSupport(this);
+    public MainFrame(PropertyChangeSupport propertyChangeSupport) {
+        myPCS = propertyChangeSupport;
         myPCS.addPropertyChangeListener(this);
         setTitle("FileWatcher");
         if (System.getProperty("os.name").toLowerCase().contains("mac")) {
@@ -253,12 +252,6 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
                 break;
             case ModelProperties.STOP:
                 toggleStartStopButtons(ModelProperties.STOP);
-                break;
-            case ModelProperties.EVENT:
-                Object event = theEvent.getNewValue();
-                if (event.getClass().getName().equals("model.Event")) {
-//                    myLogPanel.addEvent((Event) event);
-                }
                 break;
             default:
                 break;

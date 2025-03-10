@@ -16,10 +16,8 @@ public class FileWatcherController implements PropertyChangeListener {
 
     public FileWatcherController(MainFrame theView, SystemWatch theSystemWatch) {
         myMainFrame = theView;
-        myMainFrame.addPropertyChangeListener(this);
         mySysWatch = theSystemWatch;
         mySysWatch.addPropertyChangeListener(this);
-        mySysWatch.addPropertyChangeListener(theView);
         //mySysWatch.addDir(Path.of(System.getProperty("user.home")));
     }
 

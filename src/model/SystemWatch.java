@@ -2,7 +2,6 @@ package model;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -26,7 +25,7 @@ public class SystemWatch {
     private boolean myIsRunning;
     private int count = 0;
 
-    public SystemWatch() {
+    public SystemWatch(PropertyChangeSupport propertyChangeSupport) {
         myWatchService = null;
         try {
             DBManager.getDBManager().connect();
@@ -36,7 +35,7 @@ public class SystemWatch {
         // myExts = new LinkedList<>();
         // myPathList = new LinkedList<>();
         myIsRunning = false;
-        myPCS = new PropertyChangeSupport(this);
+        myPCS = propertyChangeSupport;
         myPathMap = new HashMap<>();
     }
 
@@ -104,9 +103,7 @@ public class SystemWatch {
         } else if (theExtension.isEmpty()) {
             throw new IllegalArgumentException("Cannot add extension: " + theExtension);
         }
-        if (myPathMap.get(theDirectory) == null) {
-            myPathMap.put(theDirectory, new HashSet<>());
-        }
+        myPathMap.computeIfAbsent(theDirectory, k -> new HashSet<>());
         myPathMap.get(theDirectory).add(theExtension);
         if (isRunning()) {
             try {
@@ -173,7 +170,28 @@ public class SystemWatch {
         }
     }
 
+    // TODO refactor this at some point
     private void regEvent(String theEvent, String theFileName, Path thePath) {
+        Path directoryPath = thePath.getParent();
+        if (myPathMap.get(directoryPath).contains(getExtension(theFileName))) {
+            Event logEvent = getEvent(theEvent, theFileName, thePath);
+            try {
+                DBManager.getDBManager().addEvent(logEvent);
+                myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
+                System.out.println("ModelProperties.EVENT was fired");
+            } catch (DatabaseException theE) {
+                // TODO Auto-generated catch block
+            }
+        }
+    }
+
+    private static Event getEvent(String theEvent, String theFileName, Path thePath) {
+        String extension = getExtension(theFileName);
+        Event logEvent = new Event(extension, theFileName, thePath.getParent().toString(), theEvent);
+        return logEvent;
+    }
+
+    private static String getExtension(final String theFileName) {
         String extension = "";
         int i = theFileName.length() - 1;
         while (i >= 0) {
@@ -187,13 +205,7 @@ public class SystemWatch {
             }
             i--;
         }
-        Event logEvent = new Event(extension, theFileName, thePath.getParent().toString(), theEvent);
-        try {
-            DBManager.getDBManager().addEvent(logEvent);
-            myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
-        } catch (DatabaseException theE) {
-            // TODO Auto-generated catch block
-        }
+        return extension;
     }
 
     private void runLogger() {
