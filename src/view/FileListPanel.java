@@ -29,9 +29,9 @@ public class FileListPanel extends JPanel implements PropertyChangeListener {
         JLabel fileListLabel = new JLabel("Files and directories being watched");
         add(fileListLabel, BorderLayout.NORTH);
         initFileList();
-        initStopButton();
+        initRemoveButton();
 
-        add(initStopButton(), BorderLayout.SOUTH);
+        add(initRemoveButton(), BorderLayout.SOUTH);
     }
 
     private void initFileList() {
@@ -40,7 +40,7 @@ public class FileListPanel extends JPanel implements PropertyChangeListener {
         add(listScrollPane, BorderLayout.CENTER);
     }
 
-    private JButton initStopButton() {
+    private JButton initRemoveButton() {
         myJTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
@@ -55,7 +55,7 @@ public class FileListPanel extends JPanel implements PropertyChangeListener {
         });
 
         myRemoveButton.addActionListener(theEvent -> {
-            myPcs.firePropertyChange(ViewProperties.STOP_BUTTON, null, myJTable.getSelectedRow());
+            myPcs.firePropertyChange(ViewProperties.REMOVE_BUTTON, null, myJTable.getSelectedRow());
             myRemoveButton.setEnabled(false);
         });
         myRemoveButton.setEnabled(false);

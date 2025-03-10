@@ -92,7 +92,7 @@ public class InputPanel extends JPanel {
         JPanel buttonGrid = new JPanel(new GridLayout());
 
         myAddButton.addActionListener(theEvent -> {
-            setUpStartButton();
+            setUpAddButton();
         });
         myAddButton.setMnemonic(KeyEvent.VK_S);
         myAddButton.setEnabled(false);
@@ -124,12 +124,13 @@ public class InputPanel extends JPanel {
         }
     }
 
-    private void setUpStartButton() {
+    private void setUpAddButton() {
         Map<String, String> userInput = new HashMap<>();
         // get input from user and trim whitespace
         userInput.put("Extension", Objects.requireNonNull(myComboBox.getSelectedItem()).toString().strip());
         userInput.put("Directory", myTextField.getText().strip());
         myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, userInput);
+        myPCS.firePropertyChange(ViewProperties.ADD_BUTTON, null, userInput);
     }
 
     private void clearInput() {

@@ -38,7 +38,7 @@ public class FileListController implements PropertyChangeListener {
     @Override
     public void propertyChange(final PropertyChangeEvent theEvent) {
         switch (theEvent.getPropertyName()) {
-            case ViewProperties.START_BUTTON:
+            case ViewProperties.ADD_BUTTON:
                 String[] startInput = new String[] {
                         ((Map<?, ?>) theEvent.getNewValue()).get("Extension").toString(),
                         ((Map<?, ?>) theEvent.getNewValue()).get("Directory").toString()
@@ -58,7 +58,7 @@ public class FileListController implements PropertyChangeListener {
                     myMainFrame.showErrorWindow(InputErrorProperties.DIRECTORY);
                 }
                 break;
-            case ViewProperties.STOP_BUTTON:
+            case ViewProperties.REMOVE_BUTTON:
                 final int selectedRow = (int) theEvent.getNewValue();
                 if (selectedRow >= 0) {
                     String[] removedValues = myFileListModel.popTableEntry(selectedRow);
