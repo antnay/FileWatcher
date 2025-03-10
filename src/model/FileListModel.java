@@ -36,31 +36,36 @@ public class FileListModel extends DefaultTableModel {
         return poppedValues;
     }
 
+    private boolean isRowDataValid(final String theExtension, final String theDirectory) {
+        return validateExtension(theExtension) && validateDirectory(theDirectory);
+    }
+
     /**
-     * Adds the given row to the table if the input is valid.
+     * Adds the given Array to the table if the input is a valid row. The Array must have exactly 2 elements,
+     * the file extension followed by the directory.
      * @param theRowData the data of the row being added
      */
     @Override
     public void addRow(@Nonnull final Object[] theRowData) {
-        String[] startInput = (String[]) theRowData;
-        boolean isExtensionValid = false;
-        boolean isDirectoryValid = false;
-
-        try {
-            isExtensionValid = validateExtension(startInput[0]);
-            isDirectoryValid = validateDirectory(startInput[1]);
-        } catch (ArrayIndexOutOfBoundsException theException) {
-            System.err.println("Unexpected row data in FileListModel.addRow()");
-        }
-
-        if (isExtensionValid && isDirectoryValid) {
-            super.addRow(theRowData);
+        if (theRowData.length == 2) {
+            if (isRowDataValid(theRowData[0].toString(), theRowData[1].toString())) {
+                super.addRow(theRowData);
+            }
         }
     }
 
+    /**
+     * Adds the given Vector to the table if the input is a valid row. The Vector must have exactly 2 elements,
+     * the file extension followed by the directory.
+     * @param theRowData the data of the row being added
+     */
     @Override
     public void addRow(final Vector theRowData) {
-        System.out.println("FileListModel.addRow(Vector is not implemented. Please use addRow(Object[])");
+        if (theRowData.size() == 2) {
+            if (isRowDataValid(theRowData.get(0).toString(), theRowData.get(1).toString())) {
+                super.addRow(theRowData);
+            }
+        }
     }
 
     @Override
