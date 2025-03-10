@@ -1,6 +1,5 @@
 package view;
 
-import controller.FileListController;
 import model.FileListModel;
 
 import javax.swing.*;
@@ -15,7 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class InputPanel extends JPanel {
-    private final static JButton myStartButton = new JButton("Add");
+    private final static JButton myAddButton = new JButton("Add");
     private final static JFileChooser myJFileChooser = new JFileChooser();
     private final PropertyChangeSupport myPCS;
     private JComboBox<String> myComboBox;
@@ -92,12 +91,12 @@ public class InputPanel extends JPanel {
     private JPanel initInputButtons() {
         JPanel buttonGrid = new JPanel(new GridLayout());
 
-        myStartButton.addActionListener(theEvent -> {
+        myAddButton.addActionListener(theEvent -> {
             setUpStartButton();
         });
-        myStartButton.setMnemonic(KeyEvent.VK_S);
-        myStartButton.setEnabled(false);
-        buttonGrid.add(myStartButton);
+        myAddButton.setMnemonic(KeyEvent.VK_S);
+        myAddButton.setEnabled(false);
+        buttonGrid.add(myAddButton);
 
         JButton browseButton = new JButton("Browse Files");
         browseButton.addActionListener(theEvent -> {
@@ -136,7 +135,7 @@ public class InputPanel extends JPanel {
     private void clearInput() {
         myComboBox.setSelectedIndex(-1);
         myTextField.setText("");
-        myStartButton.setEnabled(false);
+        myAddButton.setEnabled(false);
     }
 
     private void checkForInput() {
@@ -148,7 +147,7 @@ public class InputPanel extends JPanel {
         boolean directoryHasInput = new File(directoryInput).exists();
 
         // enable start button if extension and directory input are both not empty/null
-        myStartButton.setEnabled(extensionHasInput && directoryHasInput);
+        myAddButton.setEnabled(extensionHasInput && directoryHasInput);
     }
 
     // inner class to reuse document listener properties for both input fields

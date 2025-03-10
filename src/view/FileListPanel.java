@@ -15,14 +15,16 @@ import java.beans.PropertyChangeSupport;
 
 public class FileListPanel extends JPanel implements PropertyChangeListener {
     private final JTable myJTable;
-    private final static JButton myStopButton = new JButton("Remove");
+    private final static JButton myRemoveButton = new JButton("Remove");
+    private final PropertyChangeSupport myPcs;
 
     public FileListPanel(final PropertyChangeSupport thePcs) {
         String[][] empty2DStringArray = new String[0][0];
         myJTable = new JTable(empty2DStringArray, FileListModel.COLUMN_HEADER_ARRAY);
         myJTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        myPcs = thePcs;
+        myPcs.addPropertyChangeListener(this);
 
-        thePcs.addPropertyChangeListener(this);
         setLayout(new BorderLayout());
         JLabel fileListLabel = new JLabel("Files and directories being watched");
         add(fileListLabel, BorderLayout.NORTH);
@@ -47,18 +49,18 @@ public class FileListPanel extends JPanel implements PropertyChangeListener {
                 adding to the list again, since adding triggers valueChanged
                  */
                 if (myJTable.getSelectedRow() != -1) {
-                    myStopButton.setEnabled(true);
+                    myRemoveButton.setEnabled(true);
                 }
             }
         });
 
-        myStopButton.addActionListener(theEvent -> {
-            //myPCS.firePropertyChange(ViewProperties.STOP_BUTTON, null, myJTable.getSelectedRow());
-            myStopButton.setEnabled(false);
+        myRemoveButton.addActionListener(theEvent -> {
+            myPcs.firePropertyChange(ViewProperties.STOP_BUTTON, null, myJTable.getSelectedRow());
+            myRemoveButton.setEnabled(false);
         });
-        myStopButton.setEnabled(false);
-        myStopButton.setMnemonic(KeyEvent.VK_T);
-        return myStopButton;
+        myRemoveButton.setEnabled(false);
+        myRemoveButton.setMnemonic(KeyEvent.VK_T);
+        return myRemoveButton;
     }
 
     @Override
