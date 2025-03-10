@@ -203,7 +203,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         }
     }
 
-    public void showErrorWindow(final String theErrorType) {
+    private void showErrorWindow(final String theErrorType) {
         String errorTitle = switch (theErrorType) {
             case InputErrorProperties.EXTENSION -> "Invalid File Extension";
             case InputErrorProperties.DIRECTORY -> "Invalid Directory";
@@ -252,6 +252,9 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
                 break;
             case ModelProperties.STOP:
                 toggleStartStopButtons(ModelProperties.STOP);
+                break;
+            case InputErrorProperties.BOTH_INPUTS, InputErrorProperties.EXTENSION, InputErrorProperties.DIRECTORY:
+                showErrorWindow(theEvent.getPropertyName());
                 break;
             default:
                 break;
