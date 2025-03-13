@@ -156,6 +156,7 @@ import java.util.Properties;
 
      static File generateCSV() {
 
+         //Creates a new File object
          File logFile = new File("database/file_watcher_log.csv");
 
          try {
@@ -189,6 +190,9 @@ import java.util.Properties;
      void sendEmailWithLogFile(String recipientEmail) {
          try {
 
+             Dotenv dotenv = Dotenv.load();
+             String senderEmail = dotenv.get("EMAIL");
+
              // Load the sender’s email address from environment variables (retrieves and stores sender's email address)
              GoogleCredentials credentials;
              try {
@@ -211,10 +215,10 @@ import java.util.Properties;
              File logFile = generateCSV();
 
              // Create and send the email with attachment
-             Draft draft = createDraftMessageWithAttachment("me", recipientEmail, logFile);
+             Draft draft = createDraftMessageWithAttachment(senderEmail, recipientEmail, logFile);
 
              if (draft != null) {
-                 service.users().messages().send("me", draft.getMessage()).execute();
+                 service.users().messages().send(senderEmail, draft.getMessage()).execute();
                  System.out.println("Email sent successfully.");
              } else {
                  System.err.println("Failed to create the draft.");
