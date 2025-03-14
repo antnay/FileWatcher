@@ -119,7 +119,7 @@ public class SystemWatch {
                 }
             }
         }
-        myPathMap.forEach((key, value) -> System.out.println(key + ":" + value));;
+        // myPathMap.forEach((key, value) -> System.out.println(key + ":" + value));
         // myPathList.add(theDirectory);
         // addExt(theExtension);
     }
@@ -179,7 +179,7 @@ public class SystemWatch {
     // TODO refactor this at some point
     private void regEvent(String theEvent, String theFileName, Path thePath) {
         Path directoryPath = thePath.getParent();
-        if (myPathMap.get(directoryPath).contains(getExtension(theFileName))) {
+        if (myPathMap.get(directoryPath).contains(getExtension(theFileName)) || myPathMap.get(directoryPath).contains(".*")) {
             Event logEvent = getEvent(theEvent, theFileName, thePath);
             try {
                 DBManager.getDBManager().addEvent(logEvent);

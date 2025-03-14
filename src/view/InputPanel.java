@@ -51,7 +51,8 @@ public class InputPanel extends JPanel {
         String[] commonExtensions = {
                 ".txt",
                 ".exe",
-                ".jar"
+                ".jar",
+                ".*"
         };
 
         myComboBox = new JComboBox<>(commonExtensions);
