@@ -20,7 +20,7 @@ public class LogListModel extends DefaultTableModel {
      */
     @Override
     public void addRow(@Nonnull final Object[] theRowData) {
-
+        super.addRow(theRowData);
     }
 
     /**
@@ -30,7 +30,7 @@ public class LogListModel extends DefaultTableModel {
      */
     @Override
     public void addRow(final Vector theRowData) {
-
+        super.addRow(theRowData);
     }
 
 

@@ -20,6 +20,7 @@ class LogPanel extends JPanel implements PropertyChangeListener {
 
     public LogPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
+        myPCS.addPropertyChangeListener(this);
         myJTable = new JTable(new DefaultTableModel());
         JScrollPane tableContainer = new JScrollPane(myJTable);
         myJTable.setEnabled(false);
@@ -29,7 +30,7 @@ class LogPanel extends JPanel implements PropertyChangeListener {
 
     @Override
     public void propertyChange(final PropertyChangeEvent theEvent) {
-        if (theEvent.getPropertyName().equals(ViewProperties.ADDED_TO_FILE_LIST_MODEL)) {
+        if (theEvent.getPropertyName().equals(ModelProperties.LOG_LIST_MODEL_UPDATED)) {
             myJTable.setModel((TableModel) theEvent.getNewValue());
         }
     }

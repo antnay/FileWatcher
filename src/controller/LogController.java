@@ -1,5 +1,6 @@
 package controller;
 
+import model.Event;
 import model.LogListModel;
 import model.ModelProperties;
 import view.MainFrame;
@@ -12,7 +13,7 @@ import java.beans.PropertyChangeSupport;
 
 public class LogController implements PropertyChangeListener {
     private static final LogListModel myLogListModel = new LogListModel();
-    private static final JTable myJTable = new JTable();
+    private static final JTable myJTable = new JTable(myLogListModel);
     private final PropertyChangeSupport myPCS;
 
     public LogController(final PropertyChangeSupport thePCS) {
@@ -25,7 +26,7 @@ public class LogController implements PropertyChangeListener {
     private void initTableListener() {
         myJTable.getModel().addTableModelListener(theEvent -> {
             if (theEvent.getType() == TableModelEvent.INSERT) {
-                myPCS.firePropertyChange(ModelProperties.FILE_LIST_MODEL_UPDATED, null, myJTable.getModel());
+                myPCS.firePropertyChange(ModelProperties.LOG_LIST_MODEL_UPDATED, null, myJTable.getModel());
             }
         });
     }
@@ -42,16 +43,12 @@ public class LogController implements PropertyChangeListener {
         return comboIsInTable;
     }
 
-//    private void addEvent(Event theEvent) {
-//        if (isCombinationInTable(theEvent.getMyExtension(), theEvent.getPath(), myFileListTableReference)) {
-//            myTableModel.addRow(theEvent.toArray());
-//        }
-//    }
-
     @Override
     public void propertyChange(final PropertyChangeEvent theEvent) {
         if (theEvent.getPropertyName().equals(ModelProperties.EVENT)) {
             System.out.println("Event was received in LogController:" + theEvent.getNewValue().toString());
+            Event eventDetails = (Event) theEvent.getNewValue();
+            myLogListModel.addRow(eventDetails.toArray());
         }
     }
 }

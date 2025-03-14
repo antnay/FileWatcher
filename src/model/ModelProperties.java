@@ -11,4 +11,5 @@ public interface ModelProperties {
     String FILE_LIST_MODEL_UPDATED = "fileListModelUpdated";
     String REGISTER_START = "registerStart";
     String REGISTER_DONE = "registerDone";
+    String LOG_LIST_MODEL_UPDATED = "logListModelUpdated";
 }
