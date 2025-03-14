@@ -6,6 +6,7 @@ import model.ModelProperties;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -14,6 +15,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class FileListPanel extends JPanel implements PropertyChangeListener {
+    private static final int SMALL_COLUMN_WIDTH = 95;
     private final JTable myJTable;
     private final static JButton myRemoveButton = new JButton("Remove");
     private final PropertyChangeSupport myPcs;
@@ -22,6 +24,12 @@ public class FileListPanel extends JPanel implements PropertyChangeListener {
         String[][] empty2DStringArray = new String[0][0];
         myJTable = new JTable(empty2DStringArray, FileListModel.COLUMN_HEADER_ARRAY);
         myJTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        // sets width of last column to be smaller but changes back to normal when entry is added idk why
+        // myJTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        // TableColumn column = myJTable.getColumnModel().getColumn(2);
+        // column.setMaxWidth(SMALL_COLUMN_WIDTH);
+
         myPcs = thePcs;
         myPcs.addPropertyChangeListener(this);
 

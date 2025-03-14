@@ -3,7 +3,6 @@ package controller;
 import model.FileListModel;
 import model.ModelProperties;
 import view.InputErrorProperties;
-import view.MainFrame;
 import view.ViewProperties;
 
 import javax.swing.*;
@@ -39,7 +38,8 @@ public class FileListController implements PropertyChangeListener {
             case ViewProperties.ADD_BUTTON:
                 String[] startInput = new String[] {
                         ((Map<?, ?>) theEvent.getNewValue()).get("Extension").toString(),
-                        ((Map<?, ?>) theEvent.getNewValue()).get("Directory").toString()
+                        ((Map<?, ?>) theEvent.getNewValue()).get("Directory").toString(),
+                        ((Map<?, ?>) theEvent.getNewValue()).get("Recursive").toString()
                 };
 
                 boolean isExtensionValid = FileListModel.validateExtension(startInput[0]);
@@ -50,13 +50,13 @@ public class FileListController implements PropertyChangeListener {
                     myPCS.firePropertyChange(ViewProperties.ADDED_TO_FILE_LIST_MODEL, null, startInput);
                 } else if (!isExtensionValid && !isDirectoryValid) {
                     myPCS.firePropertyChange(InputErrorProperties.BOTH_INPUTS, null, null);
-//                    myMainFrame.showErrorWindow(InputErrorProperties.BOTH_INPUTS);
+                    // myMainFrame.showErrorWindow(InputErrorProperties.BOTH_INPUTS);
                 } else if (!isExtensionValid) {
                     myPCS.firePropertyChange(InputErrorProperties.EXTENSION, null, null);
-//                    myMainFrame.showErrorWindow(InputErrorProperties.EXTENSION);
+                    // myMainFrame.showErrorWindow(InputErrorProperties.EXTENSION);
                 } else {
                     myPCS.firePropertyChange(InputErrorProperties.DIRECTORY, null, null);
-//                    myMainFrame.showErrorWindow(InputErrorProperties.DIRECTORY);
+                    // myMainFrame.showErrorWindow(InputErrorProperties.DIRECTORY);
                 }
                 break;
             case ViewProperties.REMOVE_BUTTON:

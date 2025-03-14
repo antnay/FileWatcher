@@ -2,6 +2,7 @@ package model;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -105,15 +106,20 @@ public class SystemWatch {
         }
         myPathMap.computeIfAbsent(theDirectory, k -> new HashSet<>());
         myPathMap.get(theDirectory).add(theExtension);
+        myPathMap.get(theDirectory).add(Boolean.toString(theRecursivelyAdd));
         if (isRunning()) {
-            try {
-                System.out.println("DEBUG : not adding recursively in addDir");
-                registerDirectory(theDirectory);
-            } catch (IOException | SecurityException theE) {
-                System.err.println("Could not add: " + theDirectory);
-                throw new IllegalArgumentException("Could not add directory");
+            if (theRecursivelyAdd) {
+                registerDirTree(theDirectory, false);
+            } else {
+                try {
+                    registerDirectory(theDirectory);
+                } catch (IOException | SecurityException theE) {
+                    System.err.println("Could not add: " + theDirectory);
+                    throw new IllegalArgumentException("Could not add directory");
+                }
             }
         }
+        myPathMap.forEach((key, value) -> System.out.println(key + ":" + value));;
         // myPathList.add(theDirectory);
         // addExt(theExtension);
     }
@@ -251,72 +257,87 @@ public class SystemWatch {
     private void registerPathMap() {
         Instant now = Instant.now();
         // myPathList.forEach(theRoot -> registerDirTree(theRoot, false));
-        myPathMap.forEach((theRoot, myExtensions) -> {
-            try {
-                registerDirectory(theRoot);
-            } catch (IOException e) {
-                System.out.println("DEBUG : Runtime exception in registerPathMap");
-                throw new RuntimeException(e);
+        myPathMap.forEach((theDirectory, myOptions) -> {
+            if (myOptions.contains("true")) {
+                registerDirTree(theDirectory, false);
+            } else {
+                try {
+                    registerDirectory(theDirectory);
+                } catch (IOException | SecurityException theE) {
+                    System.err.println("Could not add: " + theDirectory);
+                    throw new IllegalArgumentException("Could not add directory");
+                }
             }
         });
         System.out.println("Time (s): " + Duration.between(now, Instant.now()).getSeconds());
     }
 
-//    private void registerDirTree(Path theRoot, boolean theIsNewEvent) {
-//        myPCS.firePropertyChange(ModelProperties.REGISTER_START, null, null); // if gui needs to be held until done
-//        final boolean[] fail = { false };
-//        try {
-//            System.out.println("im walking hyeah: " + theRoot.toFile());
-//            Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
-//                public FileVisitResult preVisitDirectory(Path theCurrentDir, BasicFileAttributes theAttrs) {
-//                    try {
-//                        if (Files.isRegularFile(theCurrentDir)) {
-//                            regEvent(StandardWatchEventKinds.ENTRY_CREATE.toString(),
-//                                    theCurrentDir.getFileName().toString(), theCurrentDir);
-//                        } else if (Files.isSymbolicLink(theCurrentDir)) {
-//                            return FileVisitResult.SKIP_SUBTREE;
-//                        } else if (Files.isDirectory(theCurrentDir)) {
-//                            System.out.println("DEBUG : adding recursively in registerDirTree");
-//                            WatchKey wK = registerDirectory(theCurrentDir);
-//                            myWatchKeys.put(theCurrentDir, wK);
-//                            count++;
-//                            return FileVisitResult.CONTINUE;
-//                        }
-//                    } catch (ClosedWatchServiceException theE) {
-//                        fail[0] = true;
-//                        return FileVisitResult.TERMINATE;
-//                    } catch (IOException | SecurityException theE) {
-//                        System.err.println("Could not add: " + theCurrentDir);
-//                        return FileVisitResult.SKIP_SUBTREE;
-//                    }
-//                    return FileVisitResult.SKIP_SUBTREE;
-//                }
-//
-//                @Override
-//                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-//                    if (exc instanceof FileSystemLoopException || exc instanceof AccessDeniedException) {
-//                        return FileVisitResult.SKIP_SUBTREE;
-//                    }
-//                    return FileVisitResult.CONTINUE;
-//                }
-//            });
-//        } catch (IOException theE) {
-//            System.err.println(theE.getMessage());
-//        }
-//
-//        if (fail[0]) {
-//            System.out.println("Done walking with errors");
-//        } else {
-//            Path logDir = Path.of(new File("database").getAbsolutePath());
-//            if (myWatchKeys.containsKey(logDir)) {
-//                myWatchKeys.get(logDir).cancel();
-//                myWatchKeys.remove(logDir);
-//            }
-//            System.out.println("Done walking");
-//        }
-//        myPCS.firePropertyChange(ModelProperties.REGISTER_DONE, null, null); // if gui needs to be held until done
-//        System.out.println(count);
-//    }
+    private void registerDirTree(Path theRoot, boolean theIsNewEvent) {
+        myPCS.firePropertyChange(ModelProperties.REGISTER_START, null, null); // if gui needs to be held until done
+        final boolean[] fail = { false };
+        try {
+            System.out.println("im walking hyeah: " + theRoot.toFile());
+            Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
+                public FileVisitResult preVisitDirectory(Path theCurrentDir, BasicFileAttributes theAttrs) {
+                    try {
+                        if (theIsNewEvent) {
+                            File[] list = theCurrentDir.toFile().listFiles();
+                            for (File file : list) {
+                                if (file.isFile()) {
+                                    System.out.println(file.getName());
+                                    regEvent(StandardWatchEventKinds.ENTRY_CREATE.toString(),
+                                            theCurrentDir.getFileName().toString(), theCurrentDir);
+                                }
+                            }
+                        }
+                        // if (Files.isRegularFile(theCurrentDir)) {
+                        // System.out.println("is file " + theCurrentDir);
+                        // regEvent(StandardWatchEventKinds.ENTRY_CREATE.toString(),
+                        // theCurrentDir.getFileName().toString(), theCurrentDir);
+                        // } else
+                        if (Files.isSymbolicLink(theCurrentDir)) {
+                            return FileVisitResult.SKIP_SUBTREE;
+                        } else if (Files.isDirectory(theCurrentDir)) {
+                            WatchKey wK = registerDirectory(theCurrentDir);
+                            myWatchKeys.put(theCurrentDir, wK);
+                            count++;
+                            return FileVisitResult.CONTINUE;
+                        }
+                    } catch (ClosedWatchServiceException theE) {
+                        fail[0] = true;
+                        return FileVisitResult.TERMINATE;
+                    } catch (IOException | SecurityException theE) {
+                        System.err.println("Could not add: " + theCurrentDir);
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                    if (exc instanceof FileSystemLoopException || exc instanceof AccessDeniedException) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException theE) {
+            System.err.println(theE.getMessage());
+        }
+
+        if (fail[0]) {
+            System.out.println("Done walking with errors");
+        } else {
+            Path logDir = Path.of(new File("database").getAbsolutePath());
+            if (myWatchKeys.containsKey(logDir)) {
+                myWatchKeys.get(logDir).cancel();
+                myWatchKeys.remove(logDir);
+            }
+            System.out.println("Done walking");
+        }
+        myPCS.firePropertyChange(ModelProperties.REGISTER_DONE, null, null); // if gui needs to be held until done
+        System.out.println(count);
+    }
 
     private WatchKey registerDirectory(final Path thePath)
             throws IOException, ClosedWatchServiceException, AccessDeniedException {
@@ -396,46 +417,4 @@ public class SystemWatch {
         myPCS.removePropertyChangeListener(theListener);
     }
 
-    // Probably dont need this
-
-    // private class PathObject {
-    //     private final HashSet<String> myExtensions;
-    //     private WatchKey myWatchKey;
-
-    //     private PathObject(String theExtension) {
-    //         myExtensions = new HashSet<>();
-    //         myExtensions.add(theExtension);
-    //         myWatchKey = null;
-    //     }
-
-    //     private PathObject(final HashSet<String> theExtensions) {
-    //         myExtensions = theExtensions;
-    //         myWatchKey = null;
-    //     }
-
-    //     private void addWatchKey(WatchKey theWK) {
-    //         myWatchKey = theWK;
-    //     }
-
-    //     private void removeWatchKey() {
-    //         myWatchKey = null;
-    //     }
-
-    //     private void addExtension(String theExtension) {
-    //         myExtensions.add(theExtension);
-    //     }
-
-    //     private void removeExtension(String theExtension) {
-    //         myExtensions.remove(theExtension);
-    //     }
-
-    //     private WatchKey getWatchKey() {
-    //         return myWatchKey;
-    //     }
-
-    //     private HashSet<String> getExtensions() {
-    //         return myExtensions;
-    //     }
-
-    // }
 }

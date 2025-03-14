@@ -9,7 +9,7 @@ import java.util.Vector;
 
 public class FileListModel extends DefaultTableModel {
     public final static String VALID_EXTENSION_REGEX = "^[\\.][^\\s\\.]+$";
-    public final static String[] COLUMN_HEADER_ARRAY = {"File Extension", "Directory"};
+    public final static String[] COLUMN_HEADER_ARRAY = {"File Extension", "Directory", "Recursive"};
     // public final static String VALID_DIRECTORY_REGEX = "[a-zA-Z][:][\\\\|/].+";
 
     public FileListModel() {
@@ -31,9 +31,10 @@ public class FileListModel extends DefaultTableModel {
     }
 
     public String[] popTableEntry(final int theSelectedRow) {
-        String[] poppedValues = new String[2];
+        String[] poppedValues = new String[3];
         poppedValues[0] = getValueAt(theSelectedRow, 0).toString();
         poppedValues[1] = getValueAt(theSelectedRow, 1).toString();
+        poppedValues[2] = getValueAt(theSelectedRow, 2).toString();
         removeRow(theSelectedRow);
         return poppedValues;
     }
@@ -49,7 +50,7 @@ public class FileListModel extends DefaultTableModel {
      */
     @Override
     public void addRow(@Nonnull final Object[] theRowData) {
-        if (theRowData.length == 2) {
+        if (theRowData.length == 3) {
             if (isRowDataValid(theRowData[0].toString(), theRowData[1].toString())) {
                 super.addRow(theRowData);
             }
@@ -63,7 +64,7 @@ public class FileListModel extends DefaultTableModel {
      */
     @Override
     public void addRow(final Vector theRowData) {
-        if (theRowData.size() == 2) {
+        if (theRowData.size() == 3) {
             if (isRowDataValid(theRowData.get(0).toString(), theRowData.get(1).toString())) {
                 super.addRow(theRowData);
             }

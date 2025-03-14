@@ -19,6 +19,7 @@ public class InputPanel extends JPanel {
     private final PropertyChangeSupport myPCS;
     private JComboBox<String> myComboBox;
     private JTextField myTextField;
+    private JCheckBox myRecurCheckBox ;
 
     public InputPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
@@ -35,7 +36,10 @@ public class InputPanel extends JPanel {
         add(instructionLabel, BorderLayout.NORTH);
 
         // add the input fields for file extension and file directory
-        add(createExtensionPanel(), BorderLayout.WEST);
+        JPanel subPanel = new JPanel(new BorderLayout());
+        subPanel.add(createExtensionPanel(), BorderLayout.NORTH);
+        subPanel.add(createRecursivePanel(), BorderLayout.SOUTH);
+        add(subPanel, BorderLayout.WEST);
         add(createDirectoryPanel(), BorderLayout.EAST);
     }
 
@@ -67,6 +71,17 @@ public class InputPanel extends JPanel {
         nestedPanel.add(myComboBox, BorderLayout.NORTH);
 
         return extensionPanel;
+    }
+
+    private JPanel createRecursivePanel() {
+        JLabel directoryLabel = new JLabel();
+        myRecurCheckBox = new JCheckBox("Watch recursively");
+
+        JPanel recursivePanel = new JPanel(new BorderLayout());
+        recursivePanel.add(directoryLabel, BorderLayout.NORTH);
+        recursivePanel.add(myRecurCheckBox);
+
+        return recursivePanel;
     }
 
     private JPanel createDirectoryPanel() {
@@ -129,6 +144,7 @@ public class InputPanel extends JPanel {
         // get input from user and trim whitespace
         userInput.put("Extension", Objects.requireNonNull(myComboBox.getSelectedItem()).toString().strip());
         userInput.put("Directory", myTextField.getText().strip());
+        userInput.put("Recursive", Boolean.toString(myRecurCheckBox.isSelected()));
         myPCS.firePropertyChange(ViewProperties.ADD_BUTTON, null, userInput);
         clearInput();
     }
@@ -136,6 +152,7 @@ public class InputPanel extends JPanel {
     private void clearInput() {
         myComboBox.setSelectedIndex(-1);
         myTextField.setText("");
+        myRecurCheckBox.setSelected(false);
         myAddButton.setEnabled(false);
     }
 
