@@ -41,7 +41,8 @@ public class FileWatcherController implements PropertyChangeListener {
             case ViewProperties.REMOVED_FROM_FILE_LIST_MODEL:
                 System.out.println("stop button pressed");
                 String[] receivedInputRemove = (String[]) theEvent.getNewValue();
-                mySysWatch.removeDir(receivedInputRemove[0], Path.of(receivedInputRemove[1]), false);
+                // mySysWatch.removeDir(receivedInputRemove[0], Path.of(receivedInputRemove[1]), false);
+                mySysWatch.removeDir(receivedInputRemove[0], Path.of(receivedInputRemove[1]), Boolean.parseBoolean(receivedInputRemove[2]));
                 break;
             case ViewProperties.CLEAR_LOG_BUTTON:
                 System.out.println("clearing table");
