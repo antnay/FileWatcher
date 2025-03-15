@@ -112,7 +112,7 @@ public class SystemWatch {
         myPathMap.get(theDirectory).add(Boolean.toString(theRecursivelyAdd));
         if (isRunning()) {
             if (theRecursivelyAdd) {
-                registerDirTree(theDirectory, false);
+                registerDirTree(theDirectory, false, null);
             } else {
                 try {
                     registerDirectory(theDirectory);
@@ -179,45 +179,6 @@ public class SystemWatch {
         }
     }
 
-    // TODO refactor this at some point
-    private void regEvent(String theEvent, String theFileName, Path thePath) {
-        Path directoryPath = thePath.getParent();
-        if (myPathMap.get(directoryPath).contains(getExtension(theFileName))
-                || myPathMap.get(directoryPath).contains(".*")) {
-            Event logEvent = getEvent(theEvent, theFileName, thePath);
-            try {
-                DBManager.getDBManager().addEvent(logEvent);
-                myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
-                System.out.println("ModelProperties.EVENT was fired");
-            } catch (DatabaseException theE) {
-                // TODO Auto-generated catch block
-            }
-        }
-    }
-
-    private static Event getEvent(String theEvent, String theFileName, Path thePath) {
-        String extension = getExtension(theFileName);
-        Event logEvent = new Event(extension, theFileName, thePath.getParent().toString(), theEvent);
-        return logEvent;
-    }
-
-    private static String getExtension(final String theFileName) {
-        String extension = "";
-        int i = theFileName.length() - 1;
-        while (i >= 0) {
-            char currentChar = theFileName.charAt(i);
-            if (currentChar == '.') {
-                if (i == 0) {
-                    break;
-                }
-                extension = theFileName.substring(i);
-                break;
-            }
-            i--;
-        }
-        return extension;
-    }
-
     private void runLogger() {
         myExecutor.submit(() -> {
             new Thread(this::registerPathMap).start();
@@ -234,14 +195,25 @@ public class SystemWatch {
                         // that directory then the files will be reported as modified instead of deleted
                         if (path.toFile().isDirectory()) {
                             if (eType == StandardWatchEventKinds.ENTRY_CREATE) {
-                                registerDirectory(path);
+                                // System.out.println(path);
+                                Path matchKey = null;
+                                for (Path pathKey : myPathMap.keySet()) {
+                                    if (path.startsWith(pathKey)) {
+                                        matchKey = pathKey;
+                                        break;
+                                    }
+                                }
+                                if (myPathMap.get(matchKey).contains("true")) {
+                                    registerDirTree(path, true, matchKey);
+                                } else {
+                                    registerDirectory(path);
+                                }
                             } else if (eType == StandardWatchEventKinds.ENTRY_DELETE) {
                                 System.out.println("removing directory from watch");
                                 // TODO: remove directory tree
                             }
                             continue;
                         }
-                        // TODO: specific extension from pathmap
                         regEvent(event.kind().toString(), fileName, path);
                     }
                     key.reset();
@@ -263,7 +235,7 @@ public class SystemWatch {
         // myPathList.forEach(theRoot -> registerDirTree(theRoot, false));
         myPathMap.forEach((theDirectory, myOptions) -> {
             if (myOptions.contains("true")) {
-                registerDirTree(theDirectory, false);
+                registerDirTree(theDirectory, false, null);
             } else {
                 try {
                     registerDirectory(theDirectory);
@@ -276,7 +248,7 @@ public class SystemWatch {
         System.out.println("Time (s): " + Duration.between(now, Instant.now()).getSeconds());
     }
 
-    private void registerDirTree(Path theRoot, boolean theIsNewEvent) {
+    private void registerDirTree(Path theRoot, boolean theIsNewEvent, Path theWatchedPath) {
         myPCS.firePropertyChange(ModelProperties.REGISTER_START, null, null); // if gui needs to be held until done
         final boolean[] fail = { false };
         try {
@@ -289,8 +261,8 @@ public class SystemWatch {
                             for (File file : list) {
                                 if (file.isFile()) {
                                     System.out.println(file.getName());
-                                    regEvent(StandardWatchEventKinds.ENTRY_CREATE.toString(),
-                                            theCurrentDir.getFileName().toString(), theCurrentDir);
+                                    regEventFileExist(StandardWatchEventKinds.ENTRY_CREATE.toString(),
+                                            file.getName(), file.toPath(), theWatchedPath);
                                 }
                             }
                         }
@@ -345,7 +317,7 @@ public class SystemWatch {
 
     private WatchKey registerDirectory(final Path thePath)
             throws IOException, ClosedWatchServiceException, AccessDeniedException {
-        // System.out.println(thePath);
+        System.out.println(thePath);
         myActivePaths.add(thePath);
         // TODO: yes i know sets overwrite previous things and theres issues
         // with deleting a directory thats being watched by another pointer. just give
@@ -357,15 +329,67 @@ public class SystemWatch {
                 StandardWatchEventKinds.ENTRY_MODIFY);
     }
 
-    private void unregisterDirectory(Path theDirectory) {
-        if (Files.isDirectory(theDirectory)) {
-            System.out.println(theDirectory);
-            if (myWatchKeys.containsKey(theDirectory)) {
-                myWatchKeys.get(theDirectory).cancel();
-                myWatchKeys.remove(theDirectory);
-                // TODO: something about pathmap
+    // TODO refactor this at some point
+    private void regEvent(String theEvent, String theFileName, Path thePath) {
+        Path directoryPath = thePath.getParent();
+        if (myPathMap.get(directoryPath).contains(getExtension(theFileName))
+                || myPathMap.get(directoryPath).contains(".*")) {
+            Event logEvent = getEvent(theEvent, theFileName, thePath);
+            try {
+                DBManager.getDBManager().addEvent(logEvent);
+                myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
+                System.out.println("ModelProperties.EVENT was fired");
+            } catch (DatabaseException theE) {
+                // TODO Auto-generated catch block
             }
         }
+    }
+
+    /**
+     * Like regEvent but used when the event is from a file already exists. This
+     * case can occur when dragging and dropping a directory in to a watched
+     * directory.
+     * 
+     * @param theEvent
+     * @param theFileName
+     * @param thePath
+     * @param theRoot is the watched directory in myPathMap
+     */
+    private void regEventFileExist(String theEvent, String theFileName, Path thePath, Path theRoot) {
+        if (myPathMap.get(theRoot).contains(getExtension(theFileName)) || myPathMap.get(theRoot).contains(".*")) {
+            Event logEvent = getEvent(theEvent, theFileName, thePath);
+            try {
+                DBManager.getDBManager().addEvent(logEvent);
+                myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
+                System.out.println("ModelProperties.EVENT was fired");
+            } catch (DatabaseException theE) {
+                // TODO Auto-generated catch block
+            }
+        }
+
+    }
+
+    private static Event getEvent(String theEvent, String theFileName, Path thePath) {
+        String extension = getExtension(theFileName);
+        Event logEvent = new Event(extension, theFileName, thePath.getParent().toString(), theEvent);
+        return logEvent;
+    }
+
+    private static String getExtension(final String theFileName) {
+        String extension = "";
+        int i = theFileName.length() - 1;
+        while (i >= 0) {
+            char currentChar = theFileName.charAt(i);
+            if (currentChar == '.') {
+                if (i == 0) {
+                    break;
+                }
+                extension = theFileName.substring(i);
+                break;
+            }
+            i--;
+        }
+        return extension;
     }
 
     private void unregisterDirectoryRecursive(Path theRoot) {
@@ -394,6 +418,17 @@ public class SystemWatch {
         } catch (IOException theE) {
             System.err.println("Could not register " + theE.getMessage());
             // TODO Auto-generated catch block
+        }
+    }
+
+    private void unregisterDirectory(Path theDirectory) {
+        if (Files.isDirectory(theDirectory)) {
+            System.out.println(theDirectory);
+            if (myWatchKeys.containsKey(theDirectory)) {
+                myWatchKeys.get(theDirectory).cancel();
+                myWatchKeys.remove(theDirectory);
+                // TODO: something about pathmap
+            }
         }
     }
 
