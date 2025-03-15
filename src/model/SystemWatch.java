@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,6 +21,7 @@ public class SystemWatch {
     // private final List<Path> myPathList;
     private final PropertyChangeSupport myPCS;
     private final Map<Path, HashSet<String>> myPathMap;
+    private static Set<Path> myActivePaths;
     private Map<Path, WatchKey> myWatchKeys;
     private WatchService myWatchService;
     private ExecutorService myExecutor;
@@ -55,6 +57,7 @@ public class SystemWatch {
             // TODO Auto-generated catch block
         }
         myWatchKeys = new ConcurrentHashMap<>();
+        myActivePaths = ConcurrentHashMap.newKeySet();
         myIsRunning = true;
         myExecutor = Executors.newSingleThreadExecutor();
         runLogger();
@@ -179,7 +182,8 @@ public class SystemWatch {
     // TODO refactor this at some point
     private void regEvent(String theEvent, String theFileName, Path thePath) {
         Path directoryPath = thePath.getParent();
-        if (myPathMap.get(directoryPath).contains(getExtension(theFileName)) || myPathMap.get(directoryPath).contains(".*")) {
+        if (myPathMap.get(directoryPath).contains(getExtension(theFileName))
+                || myPathMap.get(directoryPath).contains(".*")) {
             Event logEvent = getEvent(theEvent, theFileName, thePath);
             try {
                 DBManager.getDBManager().addEvent(logEvent);
@@ -342,6 +346,11 @@ public class SystemWatch {
     private WatchKey registerDirectory(final Path thePath)
             throws IOException, ClosedWatchServiceException, AccessDeniedException {
         // System.out.println(thePath);
+        myActivePaths.add(thePath);
+        // TODO: yes i know sets overwrite previous things and theres issues
+        // with deleting a directory thats being watched by another pointer. just give
+        // it time.
+        // something about atomic counters :((((((((((((((((
         return thePath.register(myWatchService,
                 StandardWatchEventKinds.ENTRY_CREATE,
                 StandardWatchEventKinds.ENTRY_DELETE,
