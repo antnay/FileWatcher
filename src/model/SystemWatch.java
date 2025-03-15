@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -15,6 +16,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SystemWatch {
     // private final List<String> myExts;
@@ -22,7 +24,8 @@ public class SystemWatch {
     private final PropertyChangeSupport myPCS;
     private final Map<Path, HashSet<String>> myPathMap;
     private static Set<Path> myActivePaths;
-    private Map<Path, WatchKey> myWatchKeys;
+    // private Map<Path, WatchKey> myWatchKeys;
+    private Map<Path, WatchObject> myWatched;
     private WatchService myWatchService;
     private ExecutorService myExecutor;
     private boolean myIsRunning;
@@ -32,8 +35,8 @@ public class SystemWatch {
         myWatchService = null;
         try {
             DBManager.getDBManager().connect();
-        } catch (DatabaseException theE) {
-            // TODO Auto-generated catch block
+        } catch (DatabaseException | SQLException theE) {
+            System.err.println("Cannot connect to database " + theE.getCause());
         }
         // myExts = new LinkedList<>();
         // myPathList = new LinkedList<>();
@@ -56,8 +59,9 @@ public class SystemWatch {
         } catch (IOException theE) {
             // TODO Auto-generated catch block
         }
-        myWatchKeys = new ConcurrentHashMap<>();
-        myActivePaths = ConcurrentHashMap.newKeySet();
+        // myWatchKeys = new ConcurrentHashMap<>();
+        myWatched = new ConcurrentHashMap<>();
+        // myActivePaths = ConcurrentHashMap.newKeySet();
         myIsRunning = true;
         myExecutor = Executors.newSingleThreadExecutor();
         runLogger();
@@ -75,7 +79,8 @@ public class SystemWatch {
             // FIXME: do something??
         }
         myWatchService = null;
-        myWatchKeys = null;
+        // myWatchKeys = null;
+        myWatched = null;
         myExecutor.shutdownNow();
         count = 0;
         System.out.println("shut down executor");
@@ -195,7 +200,6 @@ public class SystemWatch {
                         // that directory then the files will be reported as modified instead of deleted
                         if (path.toFile().isDirectory()) {
                             if (eType == StandardWatchEventKinds.ENTRY_CREATE) {
-                                // System.out.println(path);
                                 Path matchKey = null;
                                 for (Path pathKey : myPathMap.keySet()) {
                                     if (path.startsWith(pathKey)) {
@@ -266,16 +270,10 @@ public class SystemWatch {
                                 }
                             }
                         }
-                        // if (Files.isRegularFile(theCurrentDir)) {
-                        // System.out.println("is file " + theCurrentDir);
-                        // regEvent(StandardWatchEventKinds.ENTRY_CREATE.toString(),
-                        // theCurrentDir.getFileName().toString(), theCurrentDir);
-                        // } else
                         if (Files.isSymbolicLink(theCurrentDir)) {
                             return FileVisitResult.SKIP_SUBTREE;
                         } else if (Files.isDirectory(theCurrentDir)) {
-                            WatchKey wK = registerDirectory(theCurrentDir);
-                            myWatchKeys.put(theCurrentDir, wK);
+                            registerDirectory(theCurrentDir);
                             count++;
                             return FileVisitResult.CONTINUE;
                         }
@@ -305,9 +303,10 @@ public class SystemWatch {
             System.out.println("Done walking with errors");
         } else {
             Path logDir = Path.of(new File("database").getAbsolutePath());
-            if (myWatchKeys.containsKey(logDir)) {
-                myWatchKeys.get(logDir).cancel();
-                myWatchKeys.remove(logDir);
+            if (myWatched.containsKey(logDir)) {
+                myWatched.get(logDir).cancelWatchKey();
+                myWatched.get(logDir).decrementAtomicInt();
+                myWatched.remove(logDir);
             }
             System.out.println("Done walking");
         }
@@ -315,18 +314,20 @@ public class SystemWatch {
         System.out.println(count);
     }
 
-    private WatchKey registerDirectory(final Path thePath)
+    private void registerDirectory(final Path thePath)
             throws IOException, ClosedWatchServiceException, AccessDeniedException {
-        System.out.println(thePath);
-        myActivePaths.add(thePath);
-        // TODO: yes i know sets overwrite previous things and theres issues
-        // with deleting a directory thats being watched by another pointer. just give
-        // it time.
-        // something about atomic counters :((((((((((((((((
-        return thePath.register(myWatchService,
-                StandardWatchEventKinds.ENTRY_CREATE,
-                StandardWatchEventKinds.ENTRY_DELETE,
-                StandardWatchEventKinds.ENTRY_MODIFY);
+        System.out.println(thePath); // DEBUG
+
+        if (myWatched.containsKey(thePath)) {
+            myWatched.get(thePath).incrementAtomicInt();
+        } else {
+            WatchKey wK = thePath.register(myWatchService,
+                    StandardWatchEventKinds.ENTRY_CREATE,
+                    StandardWatchEventKinds.ENTRY_DELETE,
+                    StandardWatchEventKinds.ENTRY_MODIFY);
+            myWatched.put(thePath, new WatchObject(wK, new AtomicInteger(1)));
+        }
+        // TODO: something about pathmap
     }
 
     // TODO refactor this at some point
@@ -347,13 +348,13 @@ public class SystemWatch {
 
     /**
      * Like regEvent but used when the event is from a file already exists. This
-     * case can occur when dragging and dropping a directory in to a watched
+     * case can occur when dragging and dropping a directory into a watched
      * directory.
      * 
      * @param theEvent
      * @param theFileName
      * @param thePath
-     * @param theRoot is the watched directory in myPathMap
+     * @param theRoot     is the watched directory in myPathMap
      */
     private void regEventFileExist(String theEvent, String theFileName, Path thePath, Path theRoot) {
         if (myPathMap.get(theRoot).contains(getExtension(theFileName)) || myPathMap.get(theRoot).contains(".*")) {
@@ -400,11 +401,7 @@ public class SystemWatch {
                         if (Files.isSymbolicLink(theCurrentDir)) {
                             return FileVisitResult.SKIP_SUBTREE;
                         } else if (Files.isDirectory(theCurrentDir)) {
-                            // System.out.println(theCurrentDir);
-                            if (myWatchKeys.containsKey(theCurrentDir)) {
-                                myWatchKeys.get(theCurrentDir).cancel();
-                                myWatchKeys.remove(theCurrentDir);
-                            }
+                            unregisterDirectory(theCurrentDir);
                             return FileVisitResult.CONTINUE;
                         }
                     } catch (ClosedWatchServiceException theE) {
@@ -424,11 +421,25 @@ public class SystemWatch {
     private void unregisterDirectory(Path theDirectory) {
         if (Files.isDirectory(theDirectory)) {
             System.out.println(theDirectory);
-            if (myWatchKeys.containsKey(theDirectory)) {
-                myWatchKeys.get(theDirectory).cancel();
-                myWatchKeys.remove(theDirectory);
-                // TODO: something about pathmap
+            handleUnregister(theDirectory);
+        }
+    }
+
+    private void handleUnregister(Path theDirectory) {
+        /*
+         * TODO:
+         * 1. If the path exists in myPathMap, it is an actively watched root directory.
+         * 2. If the path is in myWatchKeys but not in myPathMap, it is part of a
+         * recursive watch but not actively selected.
+         * 3. Before stopping a WatchKey, check if any parent path in myPathMap is
+         * recursively watched.
+         */
+        if (myWatched.containsKey(theDirectory)) {
+            if (myWatched.get(theDirectory).decrementAtomicInt() == 0) {
+                myWatched.get(theDirectory).cancelWatchKey();
+                myWatched.remove(theDirectory);
             }
+            // TODO: something about pathmap
         }
     }
 
@@ -459,6 +470,47 @@ public class SystemWatch {
      */
     public void removePropertyChangeListener(final PropertyChangeListener theListener) {
         myPCS.removePropertyChangeListener(theListener);
+    }
+
+    private class WatchObject {
+
+        private WatchKey myWatchKey;
+        private AtomicInteger myAtomicInteger;
+        private boolean myWatchKeyActive;
+
+        private WatchObject(WatchKey theWK, AtomicInteger theAtomicInteger) {
+            myWatchKey = theWK;
+            myAtomicInteger = theAtomicInteger;
+            myWatchKeyActive = true;
+        }
+
+        private WatchKey getWatchKey() {
+            return myWatchKey;
+        }
+
+        private AtomicInteger getAtomicInteger() {
+            return myAtomicInteger;
+        }
+
+        private boolean getWatchKeyActive() {
+            return myWatchKeyActive;
+        }
+
+        private void cancelWatchKey() {
+            if (!myWatchKeyActive) {
+                throw new IllegalStateException("Cannot cancel inactive watchkey");
+            }
+            myWatchKeyActive = false;
+            myWatchKey.cancel();
+        }
+
+        private int incrementAtomicInt() {
+            return myAtomicInteger.incrementAndGet();
+        }
+
+        private int decrementAtomicInt() {
+            return myAtomicInteger.decrementAndGet();
+        }
     }
 
 }
