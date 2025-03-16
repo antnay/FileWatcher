@@ -11,4 +11,5 @@ public interface ViewProperties {
     String START_STOP_BUTTON = "startStopView";
     String ADDED_TO_FILE_LIST_MODEL = "addedToFileListModel";
     String REMOVED_FROM_FILE_LIST_MODEL = "removedFromFileListModel";
+    String DB_QUERY = "dbQuery";
 }

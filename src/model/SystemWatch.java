@@ -185,7 +185,6 @@ public class SystemWatch {
             new Thread(this::registerPathMap).start();
             WatchKey key;
             try {
-                // while ((key = myWatchService.poll(1, TimeUnit.SECONDS)) != null) {
                 while ((key = myWatchService.take()) != null) {
                     for (WatchEvent<?> event : key.pollEvents()) {
                         String fileName = event.context().toString();
@@ -194,7 +193,10 @@ public class SystemWatch {
                         // FIXME: when deleting directory, path.isdirectory does not work
                         // FIXME: if you have an extension being watched in a directory, if you delete
                         // that directory then the files will be reported as modified instead of deleted
+                        // FIXME: deleting watched directory should unregister
                         Path matchKey = myPathMap.keySet().stream().filter(path::startsWith).findFirst().orElse(null);
+//                        System.out.println(Files.isDirectory(path) ? "Directory exists" : "Directory not exists");
+//                        System.out.println(Files.isRegularFile(path) ? "File exists" : "File not exists");
                         if (path.toFile().isDirectory()) {
                             if (eType == StandardWatchEventKinds.ENTRY_CREATE) {
                                 // TODO: background thread
@@ -323,7 +325,6 @@ public class SystemWatch {
         } else {
             Path logDir = Path.of(new File("database").getAbsolutePath());
             if (myWatched.containsKey(logDir)) {
-                myWatched.get(logDir).cancelWatchKey();
                 myWatched.get(logDir).decrementAtomicInt();
                 myWatched.remove(logDir);
             }
@@ -466,17 +467,8 @@ public class SystemWatch {
     }
 
     private void handleUnregister(Path theDirectory) {
-        /*
-         * TODO:
-         * 1. If the path exists in myPathMap, it is an actively watched root directory.
-         * 2. If the path is in myWatchKeys but not in myPathMap, it is part of a
-         * recursive watch but not actively selected.
-         * 3. Before stopping a WatchKey, check if any parent path in myPathMap is
-         * recursively watched.
-         */
         if (myWatched.containsKey(theDirectory)) {
             if (myWatched.get(theDirectory).decrementAtomicInt() == 0) {
-                myWatched.get(theDirectory).cancelWatchKey();
                 myWatched.remove(theDirectory);
             }
             // TODO: something about pathmap
@@ -525,7 +517,7 @@ public class SystemWatch {
 
     private static class WatchObject {
 
-        private final WatchKey myWatchKey;
+        private WatchKey myWatchKey;
         private final AtomicInteger myAtomicInteger;
         private boolean myWatchKeyActive;
 
@@ -553,6 +545,7 @@ public class SystemWatch {
             }
             myWatchKeyActive = false;
             myWatchKey.cancel();
+            myWatchKey = null;
         }
 
         private int incrementAtomicInt() {
@@ -560,7 +553,11 @@ public class SystemWatch {
         }
 
         private int decrementAtomicInt() {
-            return myAtomicInteger.decrementAndGet();
+            int val = myAtomicInteger.decrementAndGet();
+            if (val == 0) {
+                cancelWatchKey();
+            }
+            return val;
         }
     }
 
