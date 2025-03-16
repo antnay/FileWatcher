@@ -59,42 +59,21 @@ final class DBManager {
     }
 
 
-    public DefaultTableModel executeQuery(String query) {
-        DefaultTableModel tableModel = new DefaultTableModel();
-
+    public ResultSet executeQuery(String theQuery) throws DatabaseException {
         if (!isConnected()) {
-            System.err.println("Database is not connected!");
-            return tableModel;
+            throw new DatabaseException("Not connected to database");
         }
 
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-
-            // Ensure these columns match your database table structure
-            String[] columnNames = {"ID", "Extension", "Filename", "Path", "Event", "Date/Time"};
-            tableModel.setColumnIdentifiers(columnNames);
-
-            while (rs.next()) {
-                Object[] rowData = new Object[columnNames.length];
-                rowData[0] = rs.getInt("id");
-                rowData[1] = rs.getString("extension");
-                rowData[2] = rs.getString("filename");
-                rowData[3] = rs.getString("path");
-                rowData[4] = rs.getString("event");
-                rowData[5] = rs.getString("timestamp");
-                tableModel.addRow(rowData);
-            }
-
+        try {
+             return connection.createStatement().executeQuery(theQuery.toString());
         } catch (SQLException e) {
-            System.err.println("SQL Error: " + e.getMessage());
+            throw new DatabaseException("Error executing query", e);
         }
-
-        return tableModel;
     }
 
     ResultSet getTable() throws DatabaseException {
         if (!isConnected()) {
-            throw new IllegalStateException("Not connected to database");
+            throw new DatabaseException("Not connected to database");
         }
         try {
             return connection.createStatement().executeQuery("""
@@ -119,7 +98,7 @@ final class DBManager {
 
     void clearTable() throws DatabaseException {
         if (!isConnected()) {
-            throw new IllegalStateException("Not connected to database");
+            throw new DatabaseException("Not connected to database");
         }
         try {
             Statement statement = connection.createStatement();
@@ -131,7 +110,7 @@ final class DBManager {
 
     void clearTempTable() throws DatabaseException {
         if (!isConnected()) {
-            throw new IllegalStateException("Not connected to database");
+            throw new DatabaseException("Not connected to database");
         }
         try {
             Statement statement = connection.createStatement();
@@ -143,7 +122,7 @@ final class DBManager {
 
     void clearWatchTable() throws DatabaseException {
         if (!isConnected()) {
-            throw new IllegalStateException("Not connected to database");
+            throw new DatabaseException("Not connected to database");
         }
         try {
             Statement statement = connection.createStatement();
@@ -153,9 +132,9 @@ final class DBManager {
         }
     }
 
-    void addToWatch(File theFile) {
+    void addToWatch(File theFile) throws DatabaseException {
         if (!isConnected()) {
-            throw new IllegalStateException("Not connected to database");
+            throw new DatabaseException("Not connected to database");
         }
         try (PreparedStatement statement = connection.prepareStatement("""
                 INSERT INTO
@@ -172,18 +151,19 @@ final class DBManager {
 
     void addEvent(Event theEvent) throws DatabaseException {
         if (!isConnected()) {
-            throw new IllegalStateException("Not connected to database");
+            throw new DatabaseException("Not connected to database");
         }
+//        System.out.println("Adding event: " + theEvent);
         try (PreparedStatement statement = connection.prepareStatement("""
                 INSERT INTO
-                event_log_temp (extension, filename, path, event, timestamp)
-                VALUES (?, ?, ?, ?, ?)
+                event_log_temp (extension, filename, path, event)
+                VALUES (?, ?, ?, ?)
                 """)) {
             statement.setString(1, theEvent.getMyExtension());
             statement.setString(2, theEvent.getFileName());
             statement.setString(3, theEvent.getPath());
             statement.setString(4, theEvent.geEventKind());
-            statement.setString(5, theEvent.getTimeStamp().toString());
+//            statement.setString(5, theEvent.getTimeStamp().toString());
             statement.execute();
         } catch (SQLException theE) {
             throw new DatabaseException("Error adding event to database", theE);
@@ -192,7 +172,7 @@ final class DBManager {
 
     void mergeTempEvents() throws DatabaseException {
         if (!isConnected()) {
-            throw new IllegalStateException("Not connected to database");
+            throw new DatabaseException("Not connected to database");
         }
         try (Statement statement = connection.createStatement()) {
             statement.executeUpdate("""
@@ -209,7 +189,7 @@ final class DBManager {
 
     void initDB() throws DatabaseException {
         if (!isConnected()) {
-            throw new IllegalStateException("Not connected to database");
+            throw new DatabaseException("Not connected to database");
         }
         try (Statement statement = connection.createStatement()) {
             ResultSet res = statement.executeQuery(
@@ -222,7 +202,7 @@ final class DBManager {
                         \t"filename"\tTEXT,
                         \t"path"\tTEXT,
                         \t"event"\tTEXT,
-                        \t"timestamp"\tDATETIME,
+                        \t"timestamp"\tDATETIME DEFAULT CURRENT_TIMESTAMP,
                         \tPRIMARY KEY("id" AUTOINCREMENT)
                         );
                         """);
@@ -236,7 +216,7 @@ final class DBManager {
                         \t"filename"\tTEXT,
                         \t"path"\tTEXT,
                         \t"event"\tTEXT,
-                        \t"timestamp"\tDATETIME
+                        \t"timestamp"\tDATETIME DEFAULT CURRENT_TIMESTAMP
                         );
                         """);
             }

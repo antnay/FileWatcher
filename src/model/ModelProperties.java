@@ -12,4 +12,5 @@ public interface ModelProperties {
     String REGISTER_START = "registerStart";
     String REGISTER_DONE = "registerDone";
     String LOG_LIST_MODEL_UPDATED = "logListModelUpdated";
+    String TABLE_MODEL_QUERY = "dbQueryModel";
 }

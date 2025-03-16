@@ -4,8 +4,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
+import java.util.Queue;
 
-import model.DBQuery;
+import model.DBFriend;
 import model.ModelProperties;
 import model.SystemWatch;
 import view.ViewProperties;
@@ -14,12 +15,12 @@ public class FileWatcherController implements PropertyChangeListener {
 
     private final SystemWatch mySysWatch;
     private final PropertyChangeSupport myPCS;
-    private final DBQuery myDBQuery;
+    private final DBFriend myDBFriend;
 
     public FileWatcherController(final PropertyChangeSupport thePCS, final SystemWatch theSystemWatch) {
         myPCS = thePCS;
         mySysWatch = theSystemWatch;
-        myDBQuery = new DBQuery();
+        myDBFriend = new DBFriend(myPCS);
         myPCS.addPropertyChangeListener(this);
 //        mySysWatch.addDir(Path.of(System.getProperty("user.home")));
     }
@@ -55,7 +56,7 @@ public class FileWatcherController implements PropertyChangeListener {
                 mySysWatch.saveToDB();
                 break;
             case ViewProperties.DB_QUERY:
-                myDBQuery.query((String) theEvent.getNewValue());
+                 myDBFriend.getTableModel((String[]) theEvent.getNewValue());
                 break;
             default:
                 break;
