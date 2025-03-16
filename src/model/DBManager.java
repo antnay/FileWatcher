@@ -144,6 +144,35 @@ final class DBManager {
         }
     }
 
+    void clearWatchTable() throws DatabaseException {
+        if (!isConnected()) {
+            throw new IllegalStateException("Not connected to database");
+        }
+        try {
+            Statement statement = connection.createStatement();
+            statement.executeUpdate("DELETE FROM watch_table");
+        } catch (SQLException theE) {
+            throw new DatabaseException("Error clearing table", theE);
+        }
+    }
+
+    void addToWatch(File theFile) {
+        if (!isConnected()) {
+            throw new IllegalStateException("Not connected to database");
+        }
+        try (PreparedStatement statement = connection.prepareStatement("""
+                INSERT INTO
+                watch_table (path)
+                VALUES (?)
+                """)) {
+            statement.setString(1, theFile.getAbsolutePath());
+            statement.execute();
+        } catch (SQLException theE) {
+            System.err.println("SQL Error: " + theE.getMessage());
+        }
+
+    }
+
     void addEvent(Event theEvent) throws DatabaseException {
         if (!isConnected()) {
             throw new IllegalStateException("Not connected to database");
@@ -169,17 +198,16 @@ final class DBManager {
             throw new IllegalStateException("Not connected to database");
         }
         try (Statement statement = connection.createStatement()) {
-            statement.executeQuery("""
+            statement.executeUpdate("""
                     INSERT INTO
                     event_log (extension, filename, path, event, timestamp)
                     SELECT extension, filename, path, event, timestamp
                     FROM event_log_temp
                     """);
-            statement.executeQuery("DELETE FROM event_log_temp");
+            statement.executeUpdate("DELETE FROM event_log_temp");
         } catch (SQLException theE) {
             throw new DatabaseException("Error adding events to database", theE);
         }
-
     }
 
     void initDB() throws DatabaseException {
@@ -199,7 +227,8 @@ final class DBManager {
                         \t"event"\tTEXT,
                         \t"timestamp"\tDATETIME,
                         \tPRIMARY KEY("id" AUTOINCREMENT)
-                        );""");
+                        );
+                        """);
             }
             res = statement.executeQuery(
                     "SELECT * FROM sqlite_master WHERE type='table' AND name='event_log_temp';");
@@ -211,24 +240,21 @@ final class DBManager {
                         \t"path"\tTEXT,
                         \t"event"\tTEXT,
                         \t"timestamp"\tDATETIME
-                        );""");
+                        );
+                        """);
             }
-            // res = statement.executeQuery(
-            // "SELECT name FROM sqlite_master WHERE type='table' AND name='users';"
-            // );
-            // if (!res.next()) {
-            // statement.executeUpdate("""
-            // CREATE TABLE "eventlog" (
-            // \t"id"\tINTEGER NOT NULL UNIQUE,
-            // \t"username"\tTEXT UNIQUE,
-            // \t"password"\tTEXT, // hash me
-            // \t"timestamp"\tDATETIME DEFAULT DATETIME,
-            // \tPRIMARY KEY("id" AUTOINCREMENT)
-            // );""");
-            // System.out.println("configured DB");
-            // }
+            res = statement.executeQuery(
+                    "SELECT * FROM sqlite_master WHERE type='table' AND name='watch_table';");
+            if (!res.next()) {
+                statement.executeUpdate("""
+                         CREATE TABLE "watch_table" (
+                         \t"path"\tTEXT
+                        );
+                        """);
+            }
         } catch (SQLException theE) {
-            throw new RuntimeException("Error initializing database", theE);
+            System.err.println("SQL Error: " + theE.getMessage());
+            throw new DatabaseException("Error initializing database", theE);
         }
     }
 
