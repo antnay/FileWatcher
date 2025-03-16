@@ -210,7 +210,7 @@ public class SystemWatch {
                                     }
                                 }).start();
                             } else if (eType == StandardWatchEventKinds.ENTRY_DELETE) {
-                                System.out.println("removing directory from watch");
+                                System.err.println("removing directory from watch");
                                 // TODO: remove directory tree
                             }
                             continue;
@@ -268,7 +268,7 @@ public class SystemWatch {
                             if (list != null) {
                                 for (File file : list) {
                                     if (file.isFile()) {
-                                        System.out.println(file.getName());
+//                                        System.out.println(file.getName());
                                         regEventRecursive(StandardWatchEventKinds.ENTRY_CREATE.toString(),
                                                 file.getName(), file.toPath(), theWatchedPath);
                                     }
@@ -378,7 +378,7 @@ public class SystemWatch {
             try {
                 DBManager.getDBManager().addEvent(logEvent);
                 myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
-                System.out.println("ModelProperties.EVENT was fired");
+//                System.out.println("ModelProperties.EVENT was fired");
             } catch (DatabaseException theE) {
                 // TODO Auto-generated catch block
             }
@@ -401,7 +401,7 @@ public class SystemWatch {
             try {
                 DBManager.getDBManager().addEvent(logEvent);
                 myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
-                System.out.println("ModelProperties.EVENT was fired");
+//                System.out.println("ModelProperties.EVENT was fired");
             } catch (DatabaseException theE) {
                 System.err.println(theE.getMessage());
                 // TODO Auto-generated catch block
@@ -460,7 +460,7 @@ public class SystemWatch {
 
     private void unregisterDirectory(Path theDirectory) {
         if (Files.isDirectory(theDirectory)) {
-            System.out.println(theDirectory);
+            System.err.println(theDirectory);
             handleUnregister(theDirectory);
         }
     }
@@ -488,7 +488,7 @@ public class SystemWatch {
 //        System.err.println("Operating system: " + system);
         return switch (system) {
             case "Mac OS X" -> (thePath.toString().equals("/System"));
-            case "Windows" -> (thePath.toString().equals("Windows"));
+            case "Windows" -> (thePath.toString().matches(".:\\\\Windows"));
             case "Linux" -> (thePath.toString().equals("/proc"));
             default -> false;
         };

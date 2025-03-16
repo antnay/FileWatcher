@@ -46,7 +46,7 @@ public class LogController implements PropertyChangeListener {
     @Override
     public void propertyChange(final PropertyChangeEvent theEvent) {
         if (theEvent.getPropertyName().equals(ModelProperties.EVENT)) {
-            System.out.println("Event was received in LogController:" + theEvent.getNewValue().toString());
+//            System.out.println("Event was received in LogController:" + theEvent.getNewValue().toString());
             Event eventDetails = (Event) theEvent.getNewValue();
             myLogListModel.addRow(eventDetails.toArray());
         }
