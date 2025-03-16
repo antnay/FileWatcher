@@ -489,7 +489,7 @@ public class SystemWatch {
         return switch (system) {
             case "Mac OS X" -> (thePath.toString().equals("/System"));
             case "Windows" -> (thePath.toString().equals("Windows"));
-//            case "Linux" -> (thePath.toString().equals("system"));
+            case "Linux" -> (thePath.toString().equals("/proc"));
             default -> false;
         };
     }
