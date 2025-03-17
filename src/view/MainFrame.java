@@ -57,16 +57,16 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
                     switch (responses[userResponse]) {
                         case CONFIRM_CLOSE_RESPONSE:
                             setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-                            //dispatchEvent(new WindowEvent(MainFrame.this, WindowEvent.WINDOW_CLOSED));
                             break;
                         case CANCEL_CLOSE_RESPONSE:
                             break;
                         case SAVE_CLOSE_RESPONSE:
-                            System.out.println("TODO: MAKE THE PROGRAM SAVE TO THE DATABASE HERE");
+                            myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
+                            //System.out.println("Changes saved to database before close");
                             setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                             break;
                         default:
-                            setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                            setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
                             break;
                     }
                 } else {
@@ -142,6 +142,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         saveToDatabaseButton.setToolTipText("Save the current watched files log to the database.");
         saveToDatabaseButton.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
+            myLogTableRowCount = 0;
         });
 
         JButton openDatabaseWindow = new JButton(new ImageIcon("src/resources/databaseIcon.png"));
@@ -256,6 +257,8 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
             case InputErrorProperties.BOTH_INPUTS, InputErrorProperties.EXTENSION, InputErrorProperties.DIRECTORY:
                 showErrorWindow(theEvent.getPropertyName());
                 break;
+            case ModelProperties.LOG_LIST_MODEL_UPDATED:
+                myLogTableRowCount++;
             default:
                 break;
         }
