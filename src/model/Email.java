@@ -62,8 +62,15 @@ class Email {
      */
     private static Credential getCredentials(final NetHttpTransport httpTransport, GsonFactory jsonFactory) {
         try {
-            GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(jsonFactory.getDefaultInstance(),
-                    new FileReader("config/client_secret_618985912102-bkms27o6ecti5ku1kjbvskaccc1klhq5.apps.googleusercontent.com.json"));
+            String credentialsPath = Dotenv.load().get("GOOGLE_APPLICATION_CREDENTIALS", "config/credentials.json");
+
+            File credentialsFile = new File(credentialsPath);
+            if (!credentialsFile.exists()) {
+                throw new FileNotFoundException("Error: Credentials file not found at " + credentialsPath);
+            }
+
+            GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(jsonFactory,
+                    new FileReader(credentialsFile));
 
             GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                     httpTransport, jsonFactory, clientSecrets, Set.of(GmailScopes.GMAIL_COMPOSE))
