@@ -3,8 +3,11 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 import controller.FileListController;
 import controller.FileWatcherController;
+import controller.LogController;
 import model.SystemWatch;
 import view.MainFrame;
+
+import java.beans.PropertyChangeSupport;
 
 /**
  * Main class for FileWatcher.
@@ -28,10 +31,12 @@ public class FileWatcher {
 
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                SystemWatch sysWatch = new SystemWatch();
-                MainFrame view = new MainFrame();
-                new FileWatcherController(view, sysWatch);
-                new FileListController(view);
+                PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+                SystemWatch sysWatch = new SystemWatch(propertyChangeSupport);
+                MainFrame view = new MainFrame(propertyChangeSupport);
+                new FileWatcherController(propertyChangeSupport, sysWatch);
+                new FileListController(propertyChangeSupport);
+                new LogController(propertyChangeSupport);
                 view.setVisible(true);
             }
         });

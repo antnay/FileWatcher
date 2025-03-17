@@ -1,25 +1,25 @@
 package view;
 
-import controller.FileListController;
+import model.FileListModel;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class InputPanel extends JPanel {
-    private final static JButton myStartButton = new JButton("Start");
-    private final static JButton myStopButton = new JButton("Stop");
-    private final static JTable myJTable = FileListController.getFileListTable();
+    private final static JButton myAddButton = new JButton("Add");
     private final static JFileChooser myJFileChooser = new JFileChooser();
     private final PropertyChangeSupport myPCS;
     private JComboBox<String> myComboBox;
     private JTextField myTextField;
+    private JCheckBox myRecurCheckBox ;
 
     public InputPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
@@ -36,12 +36,11 @@ public class InputPanel extends JPanel {
         add(instructionLabel, BorderLayout.NORTH);
 
         // add the input fields for file extension and file directory
-        add(createExtensionPanel(), BorderLayout.WEST);
+        JPanel subPanel = new JPanel(new BorderLayout());
+        subPanel.add(createExtensionPanel(), BorderLayout.NORTH);
+        subPanel.add(createRecursivePanel(), BorderLayout.SOUTH);
+        add(subPanel, BorderLayout.WEST);
         add(createDirectoryPanel(), BorderLayout.EAST);
-
-        JPanel fileList = new FileListPanel();
-        fileList.add(initStopButton(), BorderLayout.SOUTH);
-        add(fileList, BorderLayout.SOUTH);
     }
 
     private JPanel createExtensionPanel() {
@@ -52,7 +51,8 @@ public class InputPanel extends JPanel {
         String[] commonExtensions = {
                 ".txt",
                 ".exe",
-                ".jar"
+                ".jar",
+                ".*"
         };
 
         myComboBox = new JComboBox<>(commonExtensions);
@@ -72,6 +72,17 @@ public class InputPanel extends JPanel {
         nestedPanel.add(myComboBox, BorderLayout.NORTH);
 
         return extensionPanel;
+    }
+
+    private JPanel createRecursivePanel() {
+        JLabel directoryLabel = new JLabel();
+        myRecurCheckBox = new JCheckBox("Watch recursively");
+
+        JPanel recursivePanel = new JPanel(new BorderLayout());
+        recursivePanel.add(directoryLabel, BorderLayout.NORTH);
+        recursivePanel.add(myRecurCheckBox);
+
+        return recursivePanel;
     }
 
     private JPanel createDirectoryPanel() {
@@ -96,14 +107,12 @@ public class InputPanel extends JPanel {
     private JPanel initInputButtons() {
         JPanel buttonGrid = new JPanel(new GridLayout());
 
-        myStartButton.addActionListener(theEvent -> {
-            String[] inputFields = {(String) myComboBox.getSelectedItem(), myTextField.getText()};
-            myPCS.firePropertyChange(ViewProperties.START_BUTTON, null, inputFields);
-            clearInput();
+        myAddButton.addActionListener(theEvent -> {
+            setUpAddButton();
         });
-        myStartButton.setMnemonic(KeyEvent.VK_S);
-        myStartButton.setEnabled(false);
-        buttonGrid.add(myStartButton);
+        myAddButton.setMnemonic(KeyEvent.VK_S);
+        myAddButton.setEnabled(false);
+        buttonGrid.add(myAddButton);
 
         JButton browseButton = new JButton("Browse Files");
         browseButton.addActionListener(theEvent -> {
@@ -115,70 +124,66 @@ public class InputPanel extends JPanel {
         return buttonGrid;
     }
 
-    private JButton initStopButton() {
-        myJTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                /*
-                check selected row so button does not re-enable when
-                adding to the list again, since adding triggers valueChanged
-                 */
-                if (myJTable.getSelectedRow() != -1) {
-                    myStopButton.setEnabled(true);
-                }
+    private void setUpBrowseButton() {
+        myJFileChooser.setDialogTitle("Choose Directory");
+        myJFileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        int returnValue = myJFileChooser.showDialog(this, "Select");
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = myJFileChooser.getSelectedFile();
+            if (selectedFile.isDirectory()) {
+                myTextField.setText(selectedFile.toString());
+            } else if (selectedFile.isFile()) {
+                String fileName = selectedFile.getName();
+                myComboBox.setSelectedItem(fileName.substring(fileName.lastIndexOf('.')));
+                myTextField.setText(selectedFile.getParent());
             }
-        });
+        }
+    }
 
-        myStopButton.addActionListener(theEvent -> {
-            myPCS.firePropertyChange(ViewProperties.STOP_BUTTON, null, myJTable.getSelectedRow());
-            myStopButton.setEnabled(false);
-        });
-        myStopButton.setEnabled(false);
-        myStopButton.setMnemonic(KeyEvent.VK_T);
-        return myStopButton;
+    private void setUpAddButton() {
+        Map<String, String> userInput = new HashMap<>();
+        // get input from user and trim whitespace
+        userInput.put("Extension", Objects.requireNonNull(myComboBox.getSelectedItem()).toString().strip());
+        userInput.put("Directory", myTextField.getText().strip());
+        userInput.put("Recursive", Boolean.toString(myRecurCheckBox.isSelected()));
+        myPCS.firePropertyChange(ViewProperties.ADD_BUTTON, null, userInput);
+        clearInput();
     }
 
     private void clearInput() {
         myComboBox.setSelectedIndex(-1);
         myTextField.setText("");
-        myStartButton.setEnabled(false);
+        myRecurCheckBox.setSelected(false);
+        myAddButton.setEnabled(false);
     }
 
-    private void checkValidInput() {
-        String extensionInput = (String) myComboBox.getEditor().getItem();
-        boolean extensionHasInput = extensionInput != null && !extensionInput.trim().isEmpty();
+    private void checkForInput() {
+        String extensionInput = myComboBox.getEditor().getItem().toString().strip();
+        boolean extensionHasInput = extensionInput.matches(FileListModel.VALID_EXTENSION_REGEX);
 
-        String directoryInput = myTextField.getText();
-        boolean directoryHasInput = directoryInput != null && !directoryInput.trim().isEmpty();
+        String directoryInput = myTextField.getText().strip();
+        // boolean directoryHasInput = directoryInput.matches(FileListModel.VALID_DIRECTORY_REGEX);
+        boolean directoryHasInput = new File(directoryInput).exists();
 
         // enable start button if extension and directory input are both not empty/null
-        myStartButton.setEnabled(extensionHasInput && directoryHasInput);
-    }
-
-    private void setUpBrowseButton() {
-        myJFileChooser.setDialogTitle("Choose Directory");
-        myJFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        int returnValue = myJFileChooser.showDialog(this, "Select");
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            myTextField.setText(myJFileChooser.getSelectedFile().toString());
-        }
+        myAddButton.setEnabled(extensionHasInput && directoryHasInput);
     }
 
     // inner class to reuse document listener properties for both input fields
     private class InputDocumentListener implements DocumentListener {
         @Override
         public void insertUpdate(DocumentEvent e) {
-            checkValidInput();
+            checkForInput();
         }
 
         @Override
         public void removeUpdate(DocumentEvent e) {
-            checkValidInput();
+            checkForInput();
         }
 
         @Override
         public void changedUpdate(DocumentEvent e) {
-            checkValidInput();
+            checkForInput();
         }
     }
 }

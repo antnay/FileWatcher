@@ -18,24 +18,24 @@ public final class Event {
         myTimeStamp =  LocalDateTime.now();
     }
 
-    final String getMyExtension() {
+    public final String getExtension() {
         return myExtension;
     }
 
-    final String getFileName() {
+    public final String getFileName() {
         return myFileName;
     }
 
-    final String getPath() {
+    public final String getPath() {
         return myPath;
     }
 
-    final String geEventKind() {
+    public final String geEventKind() {
         return myEventKind;
     }
 
-    final String getTimeStamp() {
-        return myTimeStamp.toString();
+    public final LocalDateTime getTimeStamp() {
+        return myTimeStamp;
     }
 
     public final Object[] toArray() {

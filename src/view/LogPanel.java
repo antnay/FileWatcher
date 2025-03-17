@@ -1,41 +1,37 @@
 package view;
 
+import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
-import model.Event;
+import model.ModelProperties;
 
 // log under config view
-class LogPanel extends JPanel {
+class LogPanel extends JPanel implements PropertyChangeListener {
+    private final PropertyChangeSupport myPCS;
+    private final JTable myJTable;
 
-    // private PropertyChangeSupport myPCS;
-    private DefaultTableModel myTableModel;
-    private JTable myLogTable;
-    private JScrollPane myLogContainer;
-
-    LogPanel(PropertyChangeSupport thePcs) {
-        // myPCS = thePcs;
-        myTableModel = new DefaultTableModel();
-        myLogTable = new JTable(myTableModel);
-        myLogContainer = new JScrollPane(myLogTable);
-        myLogTable.setEnabled(false);
-        initTable();
-        add(myLogContainer);
+    public LogPanel(PropertyChangeSupport thePcs) {
+        myPCS = thePcs;
+        myPCS.addPropertyChangeListener(this);
+        myJTable = new JTable(new DefaultTableModel());
+        JScrollPane tableContainer = new JScrollPane(myJTable);
+        myJTable.setEnabled(false);
+        setLayout(new BorderLayout());
+        add(tableContainer, BorderLayout.CENTER);
     }
 
-    void addEvent(Event theEvent) {
-        myTableModel.addRow(theEvent.toArray());
-    }
-
-    private void initTable() {
-        myTableModel.addColumn("Extension");
-        myTableModel.addColumn("File Name");
-        myTableModel.addColumn("Path");
-        myTableModel.addColumn("Event");
-        myTableModel.addColumn("Timestamp");
+    @Override
+    public void propertyChange(final PropertyChangeEvent theEvent) {
+        if (theEvent.getPropertyName().equals(ModelProperties.LOG_LIST_MODEL_UPDATED)) {
+            myJTable.setModel((TableModel) theEvent.getNewValue());
+        }
     }
 }

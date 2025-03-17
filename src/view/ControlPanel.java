@@ -10,18 +10,14 @@ import javax.swing.JPanel;
 class ControlPanel extends JPanel {
 
     private PropertyChangeSupport myPCS;
-    private JButton myStartStopButton;
-    private JButton mySubmitButton;
-    private JButton myClearButton; // temp
-    private JButton mySaveLogButton;
+//    private JButton myStartStopButton;
+//    private JButton mySubmitButton;
+//    private JButton myClearButton; // temp
+//    private JButton mySaveLogButton;
 
     ControlPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
         setLayout(new BorderLayout(10, 10));
         this.add(new InputPanel(myPCS), BorderLayout.NORTH);
-    }
-
-    void updateStartStopButt(boolean theIsRunning) {
-        myStartStopButton.setText((theIsRunning) ? "Stop" : "Start");
     }
 }
