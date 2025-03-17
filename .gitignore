@@ -36,4 +36,5 @@ testfold/
 todo.md
 credentials.json
 
-config/client_secret_*.json
+config/credentials.json
+
