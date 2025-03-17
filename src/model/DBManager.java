@@ -1,7 +1,5 @@
 package model;
 
-import javax.swing.table.DefaultTableModel;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,7 +8,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 

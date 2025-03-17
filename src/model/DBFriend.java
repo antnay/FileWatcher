@@ -3,19 +3,25 @@ package model;
 import javax.swing.table.DefaultTableModel;
 
 import java.beans.PropertyChangeSupport;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 
 public class DBFriend {
     private final PropertyChangeSupport myPCS;
+    private String currentQuery;
 
     public DBFriend(PropertyChangeSupport thePCS) {
         myPCS = thePCS;
+        currentQuery = "SELECT * FROM event_log";
     }
 
     public void getTableModel(String[] theQuery) {
-
         DefaultTableModel tableModel = new DefaultTableModel();
         String[] columnNames = {"Filename", "Extension", "Path", "Event", "Timestamp"};
         tableModel.setColumnIdentifiers(columnNames);
@@ -38,9 +44,32 @@ public class DBFriend {
         }
     }
 
+    public File generateCSV() {
+        File logFile = new File("database/file_watcher_log.csv");
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(logFile));
+            ResultSet resSet = DBManager.getDBManager().executeQuery(currentQuery);
+            ResultSetMetaData metaData = resSet.getMetaData();
+            int colNum = metaData.getColumnCount();
+            for (int i = 1; i < colNum; i++) {
+                writer.append('"').append(metaData.getColumnName(i)).write("\",");
+            }
+            writer.append('"').append(metaData.getColumnName(colNum)).append("\"\n");
+            while (resSet.next()) {
+                for (int i = 1; i < colNum; i++) {
+                    writer.append('"').append(resSet.getString(i)).write("\",");
+                }
+                writer.append('"').append(resSet.getString(colNum)).write("\"\n");
+            }
+            writer.close();
+        } catch (DatabaseException | SQLException | IOException theE) {
+            System.err.println("Error writing CSV: " + theE.getMessage());
+        }
+        return logFile;
+    }
+
     private String process(String[] theQ) {
         StringBuilder sB = new StringBuilder("SELECT filename, extension, path, event, timestamp FROM event_log WHERE 1=1 ");
-
         if (!theQ[0].isEmpty()) {
             sB.append("AND filename LIKE '%").append(theQ[0]).append("%'");
         }
@@ -62,10 +91,8 @@ public class DBFriend {
         } else if (!theQ[5].isEmpty()) {
             sB.append("AND timestamp <= '").append(theQ[5]).append("'");
         }
-
-
         System.out.println(sB.toString());
-
+        currentQuery = sB.toString();
         return sB.toString();
     }
 
@@ -77,4 +104,6 @@ public class DBFriend {
             return null;
         }
     }
+
+
 }

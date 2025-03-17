@@ -12,4 +12,5 @@ public interface ViewProperties {
     String ADDED_TO_FILE_LIST_MODEL = "addedToFileListModel";
     String REMOVED_FROM_FILE_LIST_MODEL = "removedFromFileListModel";
     String DB_QUERY = "dbQueryView";
+    String TABLE_UPDATE = "tableUpdateView";
 }

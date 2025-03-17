@@ -9,7 +9,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import model.FileListModel;
 import model.ModelProperties;
 
 import java.awt.BorderLayout;
@@ -23,6 +26,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
@@ -33,10 +37,12 @@ public class DBFrame extends JFrame {
     private JTable mySearchTable;
     private JTextField myExtensionField;
     private JButton mySubmitButton;
+    private JButton myExportButton;
     private JTextField myPathField;
     private JTextField myFileField;
     private JTextField myDateStartField;
     private JTextField myDateEndField;
+    private JTextField myEmailField;
     private JComboBox<String> myEventField;
 
     public DBFrame(PropertyChangeSupport pcs) {
@@ -136,14 +142,18 @@ public class DBFrame extends JFrame {
         JLabel emailLabel = new JLabel("Email:");
         exportPanel.add(emailLabel, gbcExport);
         gbcExport.gridy++;
-        JTextField emailField = new JTextField(15);
-        exportPanel.add(emailField, gbcExport);
+        myEmailField = new JTextField(15);
+        myEmailField.getDocument().addDocumentListener(new InputDocumentListener());
+        exportPanel.add(myEmailField, gbcExport);
 //        gbcExport.gridx++;
         gbcExport.gridy++;
-        JButton exportButton = new JButton("Export");
-        exportButton.addActionListener(_ -> export());
-        emailField.addKeyListener(addListeners(exportButton));
-        exportPanel.add(exportButton, gbcExport);
+        myExportButton = new JButton("Export");
+        myExportButton.setEnabled(false);
+        myExportButton.addActionListener(_ -> {
+            export();
+        });
+        myEmailField.addKeyListener(addListeners(myExportButton));
+        exportPanel.add(myExportButton, gbcExport);
 
 
         JPanel containerPanel = new JPanel(new BorderLayout());
@@ -184,6 +194,7 @@ public class DBFrame extends JFrame {
 
     public void updateTable(DefaultTableModel tableModel) {
         mySearchTable.setModel(tableModel);
+        checkForInput();
     }
 
     private void addPlaceholder(JTextField textField) {
@@ -224,7 +235,7 @@ public class DBFrame extends JFrame {
     }
 
     private void export() {
-
+        // TODO: fire new property change for email
     }
 
     private KeyAdapter addListeners(JButton theButton) {
@@ -236,5 +247,27 @@ public class DBFrame extends JFrame {
                 }
             }
         };
+    }
+
+    private void checkForInput() {
+        String email = myEmailField.getText().strip();
+        myExportButton.setEnabled(!email.isEmpty() && mySearchTable.getRowCount() != 0);
+    }
+
+    private class InputDocumentListener implements DocumentListener {
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            checkForInput();
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            checkForInput();
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            checkForInput();
+        }
     }
 }
