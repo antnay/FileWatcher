@@ -58,6 +58,9 @@ public class FileWatcherController implements PropertyChangeListener {
             case ViewProperties.DB_QUERY:
                  myDBFriend.getTableModel((String[]) theEvent.getNewValue());
                 break;
+            case ViewProperties.EMAIL:
+                myDBFriend.sendEmail((String) theEvent.getNewValue());
+                break;
             default:
                 break;
         }

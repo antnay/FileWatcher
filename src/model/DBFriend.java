@@ -14,11 +14,13 @@ import java.sql.SQLException;
 
 public class DBFriend {
     private final PropertyChangeSupport myPCS;
+    private final Email myEmail;
     private String currentQuery;
 
     public DBFriend(PropertyChangeSupport thePCS) {
         myPCS = thePCS;
         currentQuery = "SELECT * FROM event_log";
+        myEmail = new Email();
     }
 
     public void getTableModel(String[] theQuery) {
@@ -44,7 +46,13 @@ public class DBFriend {
         }
     }
 
-    public File generateCSV() {
+    public void sendEmail(String theEmail) {
+        File csv = generateCSV();
+        System.out.println("oh man were sending email");
+        myEmail.sendEmailWithLogFile(theEmail, csv);
+    }
+
+    private File generateCSV() {
         File logFile = new File("database/file_watcher_log.csv");
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(logFile));

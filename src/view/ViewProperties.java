@@ -13,4 +13,5 @@ public interface ViewProperties {
     String REMOVED_FROM_FILE_LIST_MODEL = "removedFromFileListModel";
     String DB_QUERY = "dbQueryView";
     String TABLE_UPDATE = "tableUpdateView";
+    String EMAIL = "emailView";
 }

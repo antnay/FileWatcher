@@ -235,7 +235,7 @@ public class DBFrame extends JFrame {
     }
 
     private void export() {
-        // TODO: fire new property change for email
+        myPCS.firePropertyChange(ViewProperties.EMAIL, null, myEmailField.getText().strip());
     }
 
     private KeyAdapter addListeners(JButton theButton) {
