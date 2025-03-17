@@ -1,9 +1,7 @@
 package view;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -21,9 +19,13 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private final PropertyChangeSupport myPCS;
     private JMenuItem myStartMItem;
     private JMenuItem myStopMItem;
+    private JMenuItem mySaveMItem;
+    private JMenuItem myClearMItem;
     private JButton myStartToolbarButton;
     private JButton myStopToolbarButton;
-    private int myLogTableRowCount = 0;
+    private JButton mySaveToolbarButton;
+    private JButton myClearToolbarButton;
+    private static int myLogTableRowCount = 0;
 
     public MainFrame(PropertyChangeSupport propertyChangeSupport) {
         myPCS = propertyChangeSupport;
@@ -57,16 +59,16 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
                     switch (responses[userResponse]) {
                         case CONFIRM_CLOSE_RESPONSE:
                             setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-                            //dispatchEvent(new WindowEvent(MainFrame.this, WindowEvent.WINDOW_CLOSED));
                             break;
                         case CANCEL_CLOSE_RESPONSE:
                             break;
                         case SAVE_CLOSE_RESPONSE:
-                            System.out.println("TODO: MAKE THE PROGRAM SAVE TO THE DATABASE HERE");
+                            myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
+                            //System.out.println("Changes saved to database before close");
                             setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                             break;
                         default:
-                            setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                            setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
                             break;
                     }
                 } else {
@@ -83,13 +85,15 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private void initMenuBar() {
         JMenuBar menuBar = new JMenuBar();
         JMenu fileItem = new JMenu("File");
+        fileItem.setMnemonic(KeyEvent.VK_F);
         menuBar.add(fileItem);
         JMenu helpItem = new JMenu("Help");
+        helpItem.setMnemonic(KeyEvent.VK_H);
         menuBar.add(helpItem);
 
         myStartMItem = new JMenuItem("Start Logging");
         addActionToStartButtons(myStartMItem);
-        myStartMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.META_DOWN_MASK));
+        myStartMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK));
         fileItem.add(myStartMItem);
 
         myStopMItem = new JMenuItem("Stop Logging");
@@ -98,30 +102,38 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         myStopMItem.setEnabled(false);
         fileItem.add(myStopMItem);
 
-        JMenuItem saveLogMItem = new JMenuItem("Save Log");
-        saveLogMItem.addActionListener(theE -> {
+        fileItem.addSeparator();
+
+        mySaveMItem = new JMenuItem("Save Log");
+        mySaveMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
+            myLogTableRowCount = 0;
         });
-        saveLogMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.META_DOWN_MASK));
-        fileItem.add(saveLogMItem);
+        mySaveMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
+        fileItem.add(mySaveMItem);
+
+        myClearMItem = new JMenuItem("Clear Log");
+        myClearMItem.addActionListener(theE -> {
+            myPCS.firePropertyChange(ViewProperties.CLEAR_LOG, null, null);
+            myLogTableRowCount = 0;
+        });
+        myClearMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
+        fileItem.add(myClearMItem);
+
+        fileItem.addSeparator();
 
         JMenuItem openDBFrameItem = new JMenuItem("Query Database (File Extension)");
         openDBFrameItem.addActionListener(e -> new DBFrame(myPCS).setVisible(true));
+        openDBFrameItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, KeyEvent.CTRL_DOWN_MASK));
         fileItem.add(openDBFrameItem);
 
         JMenuItem aboutMItem = new JMenuItem("About");
         aboutMItem.addActionListener(theE -> {
-            JFrame aboutFrame = new HelpFrame();
+            new HelpFrame();
             myPCS.firePropertyChange(ViewProperties.ABOUT, null, null);
         });
+        aboutMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK));
         helpItem.add(aboutMItem);
-
-        JMenuItem shortcutMItem = new JMenuItem("Show Shortcuts");
-        shortcutMItem.addActionListener(theE -> {
-            myPCS.firePropertyChange(ViewProperties.SHORTCUTS, null, null);
-        });
-        shortcutMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, KeyEvent.META_DOWN_MASK));
-        helpItem.add(shortcutMItem);
 
         setJMenuBar(menuBar);
     }
@@ -138,10 +150,18 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         addActionToStopButtons(myStopToolbarButton);
         myStopToolbarButton.setEnabled(false);
 
-        JButton saveToDatabaseButton = new JButton(new ImageIcon("src/resources/saveIcon.png"));
-        saveToDatabaseButton.setToolTipText("Save the current watched files log to the database.");
-        saveToDatabaseButton.addActionListener(theE -> {
+        mySaveToolbarButton = new JButton(new ImageIcon("src/resources/saveIcon.png"));
+        mySaveToolbarButton.setToolTipText("Save the current watched files log to the database.");
+        mySaveToolbarButton.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
+            myLogTableRowCount = 0;
+        });
+
+        myClearToolbarButton = new JButton(new ImageIcon("src/resources/clearIcon.png"));
+        myClearToolbarButton.setToolTipText("Clear the current watched files log without saving to the database.");
+        myClearToolbarButton.addActionListener(theE -> {
+            myPCS.firePropertyChange(ViewProperties.CLEAR_LOG, null, null);
+            myLogTableRowCount = 0;
         });
 
         JButton openDatabaseWindow = new JButton(new ImageIcon("src/resources/databaseIcon.png"));
@@ -150,7 +170,8 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 
         toolBar.add(myStartToolbarButton);
         toolBar.add(myStopToolbarButton);
-        toolBar.add(saveToDatabaseButton);
+        toolBar.add(mySaveToolbarButton);
+        toolBar.add(myClearToolbarButton);
         toolBar.add(openDatabaseWindow);
 
         this.add(toolBar, BorderLayout.NORTH);
@@ -256,6 +277,8 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
             case InputErrorProperties.BOTH_INPUTS, InputErrorProperties.EXTENSION, InputErrorProperties.DIRECTORY:
                 showErrorWindow(theEvent.getPropertyName());
                 break;
+            case ModelProperties.LOG_LIST_MODEL_UPDATED:
+                myLogTableRowCount++;
             default:
                 break;
         }

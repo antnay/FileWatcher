@@ -3,6 +3,7 @@ package controller;
 import model.Event;
 import model.LogListModel;
 import model.ModelProperties;
+import view.ViewProperties;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -44,10 +45,16 @@ public class LogController implements PropertyChangeListener {
 
     @Override
     public void propertyChange(final PropertyChangeEvent theEvent) {
-        if (theEvent.getPropertyName().equals(ModelProperties.EVENT)) {
-//            System.out.println("Event was received in LogController:" + theEvent.getNewValue().toString());
-            Event eventDetails = (Event) theEvent.getNewValue();
-            myLogListModel.addRow(eventDetails.toArray());
+        switch (theEvent.getPropertyName()) {
+            case ModelProperties.EVENT:
+                Event eventDetails = (Event) theEvent.getNewValue();
+                myLogListModel.addRow(eventDetails.toArray());
+                break;
+            case ViewProperties.SAVE_LOG, ViewProperties.CLEAR_LOG:
+                myLogListModel.clearTable();
+                break;
+            default:
+                break;
         }
     }
 }
