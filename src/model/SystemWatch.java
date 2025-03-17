@@ -101,7 +101,7 @@ public class SystemWatch {
             throw new IllegalStateException("Not connected a database");
         }
         try {
-            DBManager.getDBManager().clearTable();
+            DBManager.getDBManager().clearTempTable();
         } catch (DatabaseException theE) {
             // TODO Auto-generated catch block
         }

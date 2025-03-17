@@ -4,7 +4,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
-import java.util.Queue;
 
 import model.DBFriend;
 import model.ModelProperties;
@@ -48,7 +47,7 @@ public class FileWatcherController implements PropertyChangeListener {
                 // mySysWatch.removeDir(receivedInputRemove[0], Path.of(receivedInputRemove[1]), false);
                 mySysWatch.removeDir(receivedInputRemove[0], Path.of(receivedInputRemove[1]), Boolean.parseBoolean(receivedInputRemove[2]));
                 break;
-            case ViewProperties.CLEAR_LOG_BUTTON:
+            case ViewProperties.CLEAR_LOG:
                 System.out.println("clearing table");
                 mySysWatch.clearLog();
                 break;

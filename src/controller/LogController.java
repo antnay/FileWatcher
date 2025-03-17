@@ -50,7 +50,7 @@ public class LogController implements PropertyChangeListener {
                 Event eventDetails = (Event) theEvent.getNewValue();
                 myLogListModel.addRow(eventDetails.toArray());
                 break;
-            case ViewProperties.SAVE_LOG:
+            case ViewProperties.SAVE_LOG, ViewProperties.CLEAR_LOG:
                 myLogListModel.clearTable();
                 break;
             default:

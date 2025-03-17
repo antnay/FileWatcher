@@ -19,9 +19,11 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private final PropertyChangeSupport myPCS;
     private JMenuItem myStartMItem;
     private JMenuItem myStopMItem;
-    private JMenuItem myClearButton;
+    private JMenuItem mySaveMItem;
+    private JMenuItem myClearMItem;
     private JButton myStartToolbarButton;
     private JButton myStopToolbarButton;
+    private JButton mySaveToolbarButton;
     private JButton myClearToolbarButton;
     private static int myLogTableRowCount = 0;
 
@@ -102,21 +104,21 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 
         fileItem.addSeparator();
 
-        JMenuItem saveLogMItem = new JMenuItem("Save Log");
-        saveLogMItem.addActionListener(theE -> {
+        mySaveMItem = new JMenuItem("Save Log");
+        mySaveMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
             myLogTableRowCount = 0;
         });
-        saveLogMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
-        fileItem.add(saveLogMItem);
+        mySaveMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
+        fileItem.add(mySaveMItem);
 
-        JMenuItem clearLogMItem = new JMenuItem("Clear Log");
-        clearLogMItem.addActionListener(theE -> {
+        myClearMItem = new JMenuItem("Clear Log");
+        myClearMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.CLEAR_LOG, null, null);
             myLogTableRowCount = 0;
         });
-        clearLogMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
-        fileItem.add(clearLogMItem);
+        myClearMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
+        fileItem.add(myClearMItem);
 
         fileItem.addSeparator();
 
@@ -147,10 +149,17 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         addActionToStopButtons(myStopToolbarButton);
         myStopToolbarButton.setEnabled(false);
 
-        JButton saveToDatabaseButton = new JButton(new ImageIcon("src/resources/saveIcon.png"));
-        saveToDatabaseButton.setToolTipText("Save the current watched files log to the database.");
-        saveToDatabaseButton.addActionListener(theE -> {
+        mySaveToolbarButton = new JButton(new ImageIcon("src/resources/saveIcon.png"));
+        mySaveToolbarButton.setToolTipText("Save the current watched files log to the database.");
+        mySaveToolbarButton.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
+            myLogTableRowCount = 0;
+        });
+
+        myClearToolbarButton = new JButton(new ImageIcon("src/resources/clearIcon.png"));
+        myClearToolbarButton.setToolTipText("Clear the current watched files log without saving to the database.");
+        myClearToolbarButton.addActionListener(theE -> {
+            myPCS.firePropertyChange(ViewProperties.CLEAR_LOG, null, null);
             myLogTableRowCount = 0;
         });
 
@@ -160,7 +169,8 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 
         toolBar.add(myStartToolbarButton);
         toolBar.add(myStopToolbarButton);
-        toolBar.add(saveToDatabaseButton);
+        toolBar.add(mySaveToolbarButton);
+        toolBar.add(myClearToolbarButton);
         toolBar.add(openDatabaseWindow);
 
         this.add(toolBar, BorderLayout.NORTH);
