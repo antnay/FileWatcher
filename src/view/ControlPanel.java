@@ -10,10 +10,10 @@ import javax.swing.JPanel;
 class ControlPanel extends JPanel {
 
     private PropertyChangeSupport myPCS;
-    private JButton myStartStopButton;
-    private JButton mySubmitButton;
-    private JButton myClearButton; // temp
-    private JButton mySaveLogButton;
+//    private JButton myStartStopButton;
+//    private JButton mySubmitButton;
+//    private JButton myClearButton; // temp
+//    private JButton mySaveLogButton;
 
     ControlPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;

@@ -65,7 +65,7 @@ final class DBManager {
         }
 
         try {
-             return connection.createStatement().executeQuery(theQuery.toString());
+             return connection.createStatement().executeQuery(theQuery);
         } catch (SQLException e) {
             throw new DatabaseException("Error executing query", e);
         }
@@ -202,7 +202,7 @@ final class DBManager {
                         \t"filename"\tTEXT,
                         \t"path"\tTEXT,
                         \t"event"\tTEXT,
-                        \t"timestamp"\tDATETIME DEFAULT CURRENT_TIMESTAMP,
+                        \t"timestamp"\tDATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
                         \tPRIMARY KEY("id" AUTOINCREMENT)
                         );
                         """);
@@ -216,7 +216,7 @@ final class DBManager {
                         \t"filename"\tTEXT,
                         \t"path"\tTEXT,
                         \t"event"\tTEXT,
-                        \t"timestamp"\tDATETIME DEFAULT CURRENT_TIMESTAMP
+                        \t"timestamp"\tDATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
                         );
                         """);
             }
