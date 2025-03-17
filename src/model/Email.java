@@ -16,6 +16,8 @@ import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.Draft;
 import com.google.api.services.gmail.model.Message;
 import io.github.cdimascio.dotenv.Dotenv;
+import io.github.cdimascio.dotenv.DotenvException;
+
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
@@ -65,7 +67,13 @@ class Email {
     }
 
     static boolean gCheck() {
-        String credentialsPath = Dotenv.load().get("GOOGLE_APPLICATION_CREDENTIALS", "config/credentials.json");
+        String credentialsPath = "";
+        try {
+            credentialsPath = Dotenv.load().get("GOOGLE_APPLICATION_CREDENTIALS", "config/credentials.json");
+        } catch (DotenvException theE) {
+            System.err.println("No env found");
+            credentialsPath = "config/credentials.json";
+        }
         File credentialsFile = new File(credentialsPath);
         if (!credentialsFile.exists()) {
             return false;
@@ -77,7 +85,13 @@ class Email {
      * Gets authorized Gmail credentials.
      */
     private Credential getCredentials(final NetHttpTransport httpTransport, GsonFactory jsonFactory) {
-        String credentialsPath = Dotenv.load().get("GOOGLE_APPLICATION_CREDENTIALS", "config/credentials.json");
+        String credentialsPath = "";
+        try {
+            credentialsPath = Dotenv.load().get("GOOGLE_APPLICATION_CREDENTIALS", "config/credentials.json");
+        } catch (DotenvException theE) {
+            System.err.println("No env found");
+            credentialsPath = "config/credentials.json";
+        }
         try {
             File credentialsFile = new File(credentialsPath);
             if (!credentialsFile.exists()) {
