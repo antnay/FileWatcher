@@ -48,7 +48,7 @@ public class DBFriend {
 
     public void sendEmail(String theEmail) {
         File csv = generateCSV();
-        System.out.println("oh man were sending email");
+        System.out.println("oh man we're sending email");
         myEmail.sendEmailWithLogFile(theEmail, csv);
     }
 
