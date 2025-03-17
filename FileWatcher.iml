@@ -34,5 +34,6 @@
     </orderEntry>
     <orderEntry type="library" name="io.github.cdimascio.dotenv.java" level="project" />
     <orderEntry type="library" name="opencsv" level="project" />
+    <orderEntry type="library" name="google.oauth.client.jetty" level="project" />
   </component>
 </module>

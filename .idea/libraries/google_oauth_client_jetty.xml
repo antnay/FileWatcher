@@ -1,0 +1,29 @@
+<component name="libraryTable">
+  <library name="google.oauth.client.jetty" type="repository">
+    <properties maven-id="com.google.oauth-client:google-oauth-client-jetty:1.36.0" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/resources/google-oauth-client-jetty-1.36.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/google-oauth-client-java6-1.36.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/google-oauth-client-1.36.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/google-http-client-gson-1.43.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/gson-2.10.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/google-http-client-1.43.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/httpclient-4.5.14.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/commons-logging-1.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/commons-codec-1.11.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/httpcore-4.4.16.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/jsr305-3.0.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/error_prone_annotations-2.18.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/guava-30.1.1-android.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/failureaccess-1.0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/checker-compat-qual-2.5.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/j2objc-annotations-2.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/opencensus-api-0.31.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/grpc-context-1.27.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/resources/opencensus-contrib-http-util-0.31.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

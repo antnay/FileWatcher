@@ -34,3 +34,4 @@ src/.env
 database/*
 testfold/
 todo.md
+credentials.json
