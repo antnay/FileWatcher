@@ -1,9 +1,7 @@
 package view;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -21,8 +19,10 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private final PropertyChangeSupport myPCS;
     private JMenuItem myStartMItem;
     private JMenuItem myStopMItem;
+    private JMenuItem myClearButton;
     private JButton myStartToolbarButton;
     private JButton myStopToolbarButton;
+    private JButton myClearToolbarButton;
     private static int myLogTableRowCount = 0;
 
     public MainFrame(PropertyChangeSupport propertyChangeSupport) {
@@ -83,13 +83,15 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private void initMenuBar() {
         JMenuBar menuBar = new JMenuBar();
         JMenu fileItem = new JMenu("File");
+        fileItem.setMnemonic(KeyEvent.VK_F);
         menuBar.add(fileItem);
         JMenu helpItem = new JMenu("Help");
+        helpItem.setMnemonic(KeyEvent.VK_H);
         menuBar.add(helpItem);
 
         myStartMItem = new JMenuItem("Start Logging");
         addActionToStartButtons(myStartMItem);
-        myStartMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.META_DOWN_MASK));
+        myStartMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK));
         fileItem.add(myStartMItem);
 
         myStopMItem = new JMenuItem("Stop Logging");
@@ -98,13 +100,25 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         myStopMItem.setEnabled(false);
         fileItem.add(myStopMItem);
 
+        fileItem.addSeparator();
+
         JMenuItem saveLogMItem = new JMenuItem("Save Log");
         saveLogMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
             myLogTableRowCount = 0;
         });
-        saveLogMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.META_DOWN_MASK));
+        saveLogMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
         fileItem.add(saveLogMItem);
+
+        JMenuItem clearLogMItem = new JMenuItem("Clear Log");
+        clearLogMItem.addActionListener(theE -> {
+            myPCS.firePropertyChange(ViewProperties.CLEAR_LOG, null, null);
+            myLogTableRowCount = 0;
+        });
+        clearLogMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
+        fileItem.add(clearLogMItem);
+
+        fileItem.addSeparator();
 
         JMenuItem openDBFrameItem = new JMenuItem("Query Database (File Extension)");
         openDBFrameItem.addActionListener(e -> new DBFrame(myPCS).setVisible(true));
@@ -115,14 +129,8 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
             new HelpFrame();
             myPCS.firePropertyChange(ViewProperties.ABOUT, null, null);
         });
+        aboutMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK));
         helpItem.add(aboutMItem);
-
-        JMenuItem shortcutMItem = new JMenuItem("Show Shortcuts");
-        shortcutMItem.addActionListener(theE -> {
-            myPCS.firePropertyChange(ViewProperties.SHORTCUTS, null, null);
-        });
-        shortcutMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, KeyEvent.META_DOWN_MASK));
-        helpItem.add(shortcutMItem);
 
         setJMenuBar(menuBar);
     }
