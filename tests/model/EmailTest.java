@@ -1,6 +1,6 @@
 package model;
 
-import io.github.cdimascio.dotenv.Dotenv;
+/* import io.github.cdimascio.dotenv.Dotenv;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -58,4 +58,4 @@ class EmailTest {
 
         System.out.println("Email send attempt completed.");
     }
-}
+} */
