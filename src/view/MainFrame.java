@@ -124,6 +124,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 
         JMenuItem openDBFrameItem = new JMenuItem("Query Database (File Extension)");
         openDBFrameItem.addActionListener(e -> new DBFrame(myPCS).setVisible(true));
+        openDBFrameItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, KeyEvent.CTRL_DOWN_MASK));
         fileItem.add(openDBFrameItem);
 
         JMenuItem aboutMItem = new JMenuItem("About");
