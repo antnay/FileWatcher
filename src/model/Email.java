@@ -64,6 +64,15 @@ class Email {
         }
     }
 
+    static boolean gCheck() {
+        String credentialsPath = Dotenv.load().get("GOOGLE_APPLICATION_CREDENTIALS", "config/credentials.json");
+        File credentialsFile = new File(credentialsPath);
+        if (!credentialsFile.exists()) {
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Gets authorized Gmail credentials.
      */
@@ -72,7 +81,6 @@ class Email {
         try {
             File credentialsFile = new File(credentialsPath);
             if (!credentialsFile.exists()) {
-                System.err.println("Cannot find credentials at " + credentialsPath);
                 throw new FileNotFoundException("Error: Credentials file not found at " + credentialsPath);
             }
 
@@ -88,8 +96,8 @@ class Email {
             LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
             return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
         } catch (IOException e) {
-            System.err.println("Error loading credentials: " + e.getMessage());
-            System.err.println(e.getCause());
+            System.err.println("Error loading credentials email will NOT function");
+            // System.err.println(e.getCause());
             return null;
         }
     }

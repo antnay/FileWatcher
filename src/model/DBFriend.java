@@ -47,6 +47,10 @@ public class DBFriend {
     }
 
     public void sendEmail(String theEmail) {
+        if (!Email.gCheck()) {
+            System.err.println("Unable to send email, credentials are not setup.");
+            return;
+        }
         File csv = generateCSV();
         System.out.println("oh man we're sending email");
         myEmail.sendEmailWithLogFile(theEmail, csv);

@@ -36,6 +36,6 @@ testfold/
 todo.md
 credentials.json
 
-config/credentials.json
+config/*
 token/*
 
