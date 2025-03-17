@@ -3,7 +3,6 @@ package controller;
 import model.Event;
 import model.LogListModel;
 import model.ModelProperties;
-import view.MainFrame;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;

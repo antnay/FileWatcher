@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SystemWatch {
     private final PropertyChangeSupport myPCS;
     private final Map<Path, HashSet<String>> myPathMap;
-    // private Map<Path, WatchKey> myWatchKeys;
     private Map<Path, WatchObject> myWatched;
     private WatchService myWatchService;
     private ExecutorService myExecutor;
@@ -195,10 +194,6 @@ public class SystemWatch {
                         // that directory then the files will be reported as modified instead of deleted
                         // FIXME: deleting watched directory should unregister
                         Path matchKey = myPathMap.keySet().stream().filter(path::startsWith).findFirst().orElse(null);
-                        // System.out.println(Files.isDirectory(path) ? "Directory exists" : "Directory
-                        // not exists");
-                        // System.out.println(Files.isRegularFile(path) ? "File exists" : "File not
-                        // exists");
                         if (path.toFile().isDirectory()) {
                             if (eType == StandardWatchEventKinds.ENTRY_CREATE) {
                                 // TODO: background thread
@@ -391,10 +386,8 @@ public class SystemWatch {
     }
 
     /**
-     * Like regEvent but used when the event is from a file already exists. This
-     * case can occur when dragging and dropping a directory into a watched
-     * directory.
-     *
+     * Like regEvent but used when watch is recursive.
+     * 
      * @param theEvent
      * @param theFileName
      * @param thePath

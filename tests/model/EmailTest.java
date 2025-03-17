@@ -26,7 +26,7 @@ class EmailTest {
         System.out.println(dotenv.get("EMAIL"));
 
         // This creates a CSV file with the database data
-        File logFile = Email.generateCSV();
+//        File logFile = Email.generateCSV();
 
         // Email.createDraftMessageWithAttachment(dotenv.get("EMAIL"),
         // dotenv.get("EMAIL"));

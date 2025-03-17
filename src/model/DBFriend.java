@@ -27,7 +27,7 @@ public class DBFriend {
         DefaultTableModel tableModel = new DefaultTableModel();
         String[] columnNames = {"Filename", "Extension", "Path", "Event", "Timestamp"};
         tableModel.setColumnIdentifiers(columnNames);
-        String query = process(theQuery);
+        String query = processQuery(theQuery);
         try (ResultSet resultSet = query(query)) {
             if (resultSet != null) {
                 while (resultSet.next()) {
@@ -76,7 +76,7 @@ public class DBFriend {
         return logFile;
     }
 
-    private String process(String[] theQ) {
+    private String processQuery(String[] theQ) {
         StringBuilder sB = new StringBuilder("SELECT filename, extension, path, event, timestamp FROM event_log WHERE 1=1 ");
         if (!theQ[0].isEmpty()) {
             sB.append("AND filename LIKE '%").append(theQ[0]).append("%'");

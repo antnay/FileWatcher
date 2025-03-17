@@ -18,7 +18,7 @@ public final class Event {
         myTimeStamp =  LocalDateTime.now();
     }
 
-    public final String getMyExtension() {
+    public final String getExtension() {
         return myExtension;
     }
 

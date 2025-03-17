@@ -14,7 +14,6 @@ import java.sql.Statement;
 final class DBManager {
 
     private static final DBManager DB_INSTANCE = new DBManager();
-
     private Connection connection;
 
     private DBManager() {
@@ -55,32 +54,6 @@ final class DBManager {
         }
     }
 
-
-    public ResultSet executeQuery(String theQuery) throws DatabaseException {
-        if (!isConnected()) {
-            throw new DatabaseException("Not connected to database");
-        }
-
-        try {
-             return connection.createStatement().executeQuery(theQuery);
-        } catch (SQLException e) {
-            throw new DatabaseException("Error executing query", e);
-        }
-    }
-
-    ResultSet getTable() throws DatabaseException {
-        if (!isConnected()) {
-            throw new DatabaseException("Not connected to database");
-        }
-        try {
-            return connection.createStatement().executeQuery("""
-                    SELECT * FROM event_log
-                    """);
-        } catch (SQLException theE) {
-            throw new DatabaseException("Error querying database", theE);
-        }
-    }
-
     void disconnect() throws DatabaseException {
         try {
             if (isConnected()) {
@@ -92,6 +65,31 @@ final class DBManager {
             throw new DatabaseException("Error disconnecting from database", theE);
         }
     }
+
+    public ResultSet executeQuery(String theQuery) throws DatabaseException {
+        if (!isConnected()) {
+            throw new DatabaseException("Not connected to database");
+        }
+
+        try {
+            return connection.createStatement().executeQuery(theQuery);
+        } catch (SQLException e) {
+            throw new DatabaseException("Error executing query", e);
+        }
+    }
+
+    // ResultSet getTable() throws DatabaseException {
+    //     if (!isConnected()) {
+    //         throw new DatabaseException("Not connected to database");
+    //     }
+    //     try {
+    //         return connection.createStatement().executeQuery("""
+    //                 SELECT * FROM event_log
+    //                 """);
+    //     } catch (SQLException theE) {
+    //         throw new DatabaseException("Error querying database", theE);
+    //     }
+    // }
 
     void clearTable() throws DatabaseException {
         if (!isConnected()) {
@@ -150,17 +148,17 @@ final class DBManager {
         if (!isConnected()) {
             throw new DatabaseException("Not connected to database");
         }
-//        System.out.println("Adding event: " + theEvent);
+        // System.out.println("Adding event: " + theEvent);
         try (PreparedStatement statement = connection.prepareStatement("""
                 INSERT INTO
                 event_log_temp (extension, filename, path, event)
                 VALUES (?, ?, ?, ?)
                 """)) {
-            statement.setString(1, theEvent.getMyExtension());
+            statement.setString(1, theEvent.getExtension());
             statement.setString(2, theEvent.getFileName());
             statement.setString(3, theEvent.getPath());
             statement.setString(4, theEvent.geEventKind());
-//            statement.setString(5, theEvent.getTimeStamp().toString());
+            // statement.setString(5, theEvent.getTimeStamp().toString());
             statement.execute();
         } catch (SQLException theE) {
             throw new DatabaseException("Error adding event to database", theE);
