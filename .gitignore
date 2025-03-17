@@ -37,4 +37,5 @@ todo.md
 credentials.json
 
 config/credentials.json
+token/*
 

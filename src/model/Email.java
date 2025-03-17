@@ -15,8 +15,7 @@ import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.Draft;
 import com.google.api.services.gmail.model.Message;
-import org.apache.commons.codec.binary.Base64;
-
+import io.github.cdimascio.dotenv.Dotenv;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
@@ -27,11 +26,19 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+import org.apache.commons.codec.binary.Base64;
+
 import java.awt.Desktop;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 import java.util.Set;
 
@@ -60,12 +67,12 @@ class Email {
     /**
      * Gets authorized Gmail credentials.
      */
-    private static Credential getCredentials(final NetHttpTransport httpTransport, GsonFactory jsonFactory) {
+    private Credential getCredentials(final NetHttpTransport httpTransport, GsonFactory jsonFactory) {
+        String credentialsPath = Dotenv.load().get("GOOGLE_APPLICATION_CREDENTIALS", "config/credentials.json");
         try {
-            String credentialsPath = Dotenv.load().get("GOOGLE_APPLICATION_CREDENTIALS", "config/credentials.json");
-
             File credentialsFile = new File(credentialsPath);
             if (!credentialsFile.exists()) {
+                System.err.println("Cannot find credentials at " + credentialsPath);
                 throw new FileNotFoundException("Error: Credentials file not found at " + credentialsPath);
             }
 
@@ -82,6 +89,7 @@ class Email {
             return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
         } catch (IOException e) {
             System.err.println("Error loading credentials: " + e.getMessage());
+            System.err.println(e.getCause());
             return null;
         }
     }
@@ -126,8 +134,12 @@ class Email {
     private MimeMessage createMimeMessage(String fromEmail, String toEmail, File file)
             throws MessagingException, IOException {
 
-        String subject = "Your File Watcher Log";
-        String bodyText = "Find the attached log file.";
+        String subject = "File Watcher Log";
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedDateTime = now.format(formatter);
+        // System.out.println("Formatted DateTime: " + formattedDateTime);
+        String bodyText = "Log file from " + formattedDateTime;
 
         Properties props = new Properties();
         Session session = Session.getDefaultInstance(props, null);
@@ -171,7 +183,7 @@ class Email {
 
         try {
             draft = service.users().drafts().create("me", draft).execute();
-            System.out.println("Draft created with ID: " + draft.getId());
+            // System.out.println("Draft created with ID: " + draft.getId());
             return draft.getMessage();
         } catch (GoogleJsonResponseException e) {
             GoogleJsonError error = e.getDetails();
@@ -187,7 +199,7 @@ class Email {
         try {
             String url = "https://mail.google.com/mail/u/0/#drafts?compose=" + draftId;
             Desktop.getDesktop().browse(new URI(url));
-            System.out.println("Opened Gmail with draft.");
+            // System.out.println("Opened Gmail with draft.");
         } catch (Exception e) {
             System.err.println("Error opening Gmail: " + e.getMessage());
         }
