@@ -13,6 +13,10 @@ public class LogListModel extends DefaultTableModel {
         }
     }
 
+    public void clearTable() {
+        setRowCount(0);
+    }
+
     /**
      * Adds the given Array to the table if the input is a valid row. The Array must have exactly 2 elements,
      * the file extension followed by the directory.

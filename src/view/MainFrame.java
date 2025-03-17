@@ -23,7 +23,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private JMenuItem myStopMItem;
     private JButton myStartToolbarButton;
     private JButton myStopToolbarButton;
-    private int myLogTableRowCount = 0;
+    private static int myLogTableRowCount = 0;
 
     public MainFrame(PropertyChangeSupport propertyChangeSupport) {
         myPCS = propertyChangeSupport;
@@ -101,6 +101,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         JMenuItem saveLogMItem = new JMenuItem("Save Log");
         saveLogMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
+            myLogTableRowCount = 0;
         });
         saveLogMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.META_DOWN_MASK));
         fileItem.add(saveLogMItem);
@@ -111,7 +112,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 
         JMenuItem aboutMItem = new JMenuItem("About");
         aboutMItem.addActionListener(theE -> {
-            JFrame aboutFrame = new HelpFrame();
+            new HelpFrame();
             myPCS.firePropertyChange(ViewProperties.ABOUT, null, null);
         });
         helpItem.add(aboutMItem);
