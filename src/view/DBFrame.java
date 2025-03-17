@@ -117,8 +117,7 @@ public class DBFrame extends JFrame {
         gbc.gridy++;
 
         mySubmitButton = new JButton("Submit");
-        mySubmitButton.addActionListener(_ -> runSearchQuery());
-        setFocusable(true);
+        mySubmitButton.addActionListener(theE -> runSearchQuery());
         queryPanel.add(mySubmitButton, gbc);
         gbc.gridy++;
 
