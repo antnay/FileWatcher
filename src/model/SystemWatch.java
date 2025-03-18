@@ -22,22 +22,24 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 public class SystemWatch {
+
+    private static Path LOG_DIR = Path.of(new File("database").getAbsolutePath());
+
     private final PropertyChangeSupport myPCS;
-    private final Map<Path, HashSet<String>> myPathMap;
+    private final ConcurrentHashMap<Path, PathObject> myPathMap;
     private Map<Path, WatchObject> myWatched;
     private WatchService myWatchService;
     private ExecutorService myExecutor;
     private boolean myIsRunning;
-    private int count = 0;
 
     public SystemWatch(PropertyChangeSupport propertyChangeSupport) {
         myWatchService = null;
@@ -46,11 +48,9 @@ public class SystemWatch {
         } catch (DatabaseException theE) {
             System.err.println("Cannot connect to database " + theE.getCause());
         }
-        // myExts = new LinkedList<>();
-        // myPathList = new LinkedList<>();
         myIsRunning = false;
         myPCS = propertyChangeSupport;
-        myPathMap = new HashMap<>();
+        myPathMap = new ConcurrentHashMap<>();
     }
 
     public void startWatch() {
@@ -66,9 +66,7 @@ public class SystemWatch {
         } catch (DatabaseException theE) {
             throw new IllegalStateException(theE.getCause());
         }
-        // myWatchKeys = new ConcurrentHashMap<>();
         myWatched = new ConcurrentHashMap<>();
-        // myActivePaths = ConcurrentHashMap.newKeySet();
         myIsRunning = true;
         myExecutor = Executors.newSingleThreadExecutor();
         runLogger();
@@ -81,18 +79,12 @@ public class SystemWatch {
         myIsRunning = false;
         try {
             myWatchService.close();
-            DBManager.getDBManager().clearWatchTable();
         } catch (IOException theE) {
             System.err.println("Error closing systemWatch: " + theE.getMessage());
-            // FIXME: do something??
-        } catch (DatabaseException e) {
-            // TODO:
-            throw new RuntimeException(e);
         }
         myWatchService = null;
         myWatched = null;
         myExecutor.shutdownNow();
-        count = 0;
         System.out.println("shut down executor");
     }
 
@@ -122,9 +114,16 @@ public class SystemWatch {
         } else if (theExtension.isEmpty()) {
             throw new IllegalArgumentException("Cannot add extension: " + theExtension);
         }
-        myPathMap.computeIfAbsent(theDirectory, k -> new HashSet<>());
-        myPathMap.get(theDirectory).add(theExtension);
-        myPathMap.get(theDirectory).add(Boolean.toString(theRecursivelyAdd));
+
+        PathObject pO = myPathMap.get(theDirectory);
+        if (pO == null) {
+            myPathMap.put(theDirectory, new PathObject(new HashSet<>(), new AtomicInteger(1), theRecursivelyAdd));
+        } else {
+            pO.incrementAtomicInt();
+        }
+        if (!theExtension.equals(".*")) {
+            myPathMap.get(theDirectory).addExt(theExtension);
+        }
         if (isRunning()) {
             if (theRecursivelyAdd) {
                 registerDirTree(theDirectory, false, null);
@@ -136,27 +135,20 @@ public class SystemWatch {
                 }
             }
         }
-        // myPathMap.forEach((key, value) -> System.out.println(key + ":" + value));
-        // myPathList.add(theDirectory);
-        // addExt(theExtension);
     }
 
     public void removeDir(final String theExtension, final Path theDirectory, final boolean theRecursivelyRemove) {
-        // TODO: empty extset means watch all
-        HashSet<String> extSet = myPathMap.get(theDirectory);
-        // if (isRunning() && !myWatchKeys.containsKey(theDirectory)) {
-        // throw new IllegalArgumentException("Directory is not in watch list");
-        // } else
+        HashSet<String> extSet = myPathMap.get(theDirectory).getExts();
         if (!myPathMap.containsKey(theDirectory)) {
             throw new IllegalArgumentException("Directory is not in path table");
         } else if (!extSet.isEmpty() && !extSet.contains(theExtension)) {
             throw new IllegalArgumentException("Extension is not in watch list");
         }
-        // } else if (!myExts.contains(theExtension)) {
-        // throw new IllegalArgumentException("Extension is not in watch list");
-        // }
-
-        myPathMap.remove(theDirectory);
+        if (myPathMap.get(theDirectory).decrementAtomicInt() == 0) {
+            myPathMap.remove(theDirectory);
+        } else {
+            myPathMap.get(theDirectory).getExts().remove(theExtension);
+        }
         if (isRunning()) {
             if (theRecursivelyRemove) {
                 unregisterDirectoryRecursive(theDirectory);
@@ -164,7 +156,6 @@ public class SystemWatch {
                 unregisterDirectory(theDirectory);
             }
         }
-        // removeExt(theExtension);
     }
 
     public void saveToDB() {
@@ -182,6 +173,8 @@ public class SystemWatch {
     private void runLogger() {
         myExecutor.submit(() -> {
             new Thread(this::registerPathMap).start();
+        });
+        myExecutor.submit(() -> {
             WatchKey key;
             try {
                 while ((key = myWatchService.take()) != null) {
@@ -196,9 +189,8 @@ public class SystemWatch {
                         Path matchKey = myPathMap.keySet().stream().filter(path::startsWith).findFirst().orElse(null);
                         if (path.toFile().isDirectory()) {
                             if (eType == StandardWatchEventKinds.ENTRY_CREATE) {
-                                // TODO: background thread
                                 new Thread(() -> {
-                                    if (myPathMap.get(matchKey).contains("true")) {
+                                    if (myPathMap.get(matchKey).isRecursive()) {
                                         registerDirTree(path, true, matchKey);
                                     } else {
                                         try {
@@ -210,11 +202,17 @@ public class SystemWatch {
                                 }).start();
                             } else if (eType == StandardWatchEventKinds.ENTRY_DELETE) {
                                 System.err.println("removing directory from watch");
-                                // TODO: remove directory tree
+                                new Thread(() -> {
+                                    if (myPathMap.get(matchKey).isRecursive()) {
+                                        unregisterDirectoryRecursive(matchKey);
+                                    } else {
+                                        unregisterDirectory(matchKey);
+                                    }
+                                }).start();
                             }
                             continue;
                         }
-                        if (myPathMap.get(matchKey).contains("true")) {
+                        if (myPathMap.get(matchKey).isRecursive()) {
                             regEventRecursive(event.kind().toString(), fileName, path, matchKey);
                         } else {
                             regEvent(event.kind().toString(), fileName, path);
@@ -225,134 +223,114 @@ public class SystemWatch {
             } catch (InterruptedException | ClosedWatchServiceException theEvent) {
                 Thread.currentThread().interrupt();
             }
-            // catch (AccessDeniedException e) {
-            // System.out.println("DEBUG : Runtime exception in runLogger");
-            // throw new RuntimeException(e);
-            // } catch (IOException e) {
-            // System.out.println("DEBUG : IO exception in runLogger");
-            // throw new RuntimeException(e);
-            // }
         });
     }
 
     private void registerPathMap() {
         Instant now = Instant.now();
         // myPathList.forEach(theRoot -> registerDirTree(theRoot, false));
-        myPathMap.forEach((theDirectory, myOptions) -> {
-            if (myOptions.contains("true")) {
-                registerDirTree(theDirectory, false, null);
-            } else {
+        try (ExecutorService regExecutor = Executors.newCachedThreadPool()) {
+            myPathMap.forEach((theDirectory, myOptions) -> {
                 try {
                     registerDirectory(theDirectory);
                 } catch (Exception theE) {
                     System.err.println("Could not add: " + theDirectory);
                     throw new IllegalArgumentException("Could not add directory");
                 }
-            }
-        });
+                if (myOptions.isRecursive()) {
+                    try (Stream<Path> stream = Files.list(theDirectory)) {
+                        stream.filter(Files::isDirectory)
+                                .filter(this::checkIfSystem)
+                                .forEach(path -> regExecutor.submit(() -> {
+                                    System.out.println(path);
+                                    registerDirTree(path, false, null);
+                                }));
+                    } catch (IOException e) {
+                        System.err.println("Error listing directories: " + e.getMessage());
+                    }
+                    regExecutor.shutdown();
+                }
+
+            });
+        }
         System.out.println("Time (s): " + Duration.between(now, Instant.now()).getSeconds());
+        System.out.println();
+
     }
 
     private void registerDirTree(Path theRoot, boolean theIsNewEvent, Path theWatchedPath) {
         myPCS.firePropertyChange(ModelProperties.REGISTER_START, null, null); // if gui needs to be held until done
-        final boolean[] fail = { false };
         try {
-            System.out.println("im walking hyeah: " + theRoot.toFile());
             Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
-                @Nonnull
-                public FileVisitResult preVisitDirectory(Path theCurrentDir, BasicFileAttributes theAttrs) {
-                    try {
-                        if (theIsNewEvent) {
-                            File[] list = theCurrentDir.toFile().listFiles();
-                            if (list != null) {
-                                for (File file : list) {
-                                    if (file.isFile()) {
-                                        // System.out.println(file.getName());
-                                        regEventRecursive(StandardWatchEventKinds.ENTRY_CREATE.toString(),
-                                                file.getName(), file.toPath(), theWatchedPath);
-                                    }
-                                }
-                            }
-                        }
-                        if (Files.isSymbolicLink(theCurrentDir)) {
-                            return FileVisitResult.SKIP_SUBTREE;
-                        } else if (Files.isDirectory(theCurrentDir)) {
-                            if (checkIfSystem(theCurrentDir)) {
-                                System.err.println("cant register directory " + theCurrentDir);
-                                return FileVisitResult.SKIP_SUBTREE;
-                            }
-                            handleRegisterDirectory(theCurrentDir);
-                            count++;
-                            return FileVisitResult.CONTINUE;
-                        }
-                    } catch (ClosedWatchServiceException theE) {
-                        fail[0] = true;
-                        return FileVisitResult.TERMINATE;
-                    } catch (SecurityException theE) {
-                        System.err.println("Could not add: " + theCurrentDir);
-                        return FileVisitResult.SKIP_SUBTREE;
-                    }
-                    return FileVisitResult.SKIP_SUBTREE;
-                }
-
-                // TOO SLOW :(
-                // @Override
-                // public FileVisitResult visitFile(Path theCurrentPath, BasicFileAttributes
-                // theAttrs) throws IOException {
-                // if (Files.isRegularFile(theCurrentPath)) {
-                // DBManager.getDBManager().addToWatch(theCurrentPath.toFile());
-                // }
-                // return FileVisitResult.CONTINUE;
-                // }
+                // // TOO SLOW :(
+                // // @Override
+                // // public FileVisitResult visitFile(Path theCurrentPath, BasicFileAttributes
+                // // theAttrs) throws IOException {
+                // // if (Files.isRegularFile(theCurrentPath)) {
+                // // DBManager.getDBManager().addToWatch(theCurrentPath.toFile());
+                // // }
+                // // return FileVisitResult.CONTINUE;
+                // // }
 
                 @Override
-                @Nonnull
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    if (exc instanceof FileSystemLoopException || exc instanceof AccessDeniedException) {
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                    // System.out.println(dir);
+                    if (theIsNewEvent) {
+                        try (Stream<Path> stream = Files.list(dir)) {
+                            stream.filter(Files::isRegularFile)
+                                    .forEach(file ->
+                                            regEventRecursive(StandardWatchEventKinds.ENTRY_CREATE.toString(),
+                                                    file.getFileName().toString(), file.toAbsolutePath(), dir));
+
+                        } catch (IOException e) {
+                            System.err.println("Error listing directories: " + e.getMessage());
+                        }
+                    }
+
+                    if (Files.isSymbolicLink(dir)) {
                         return FileVisitResult.SKIP_SUBTREE;
+                    } else {
+                        handleRegisterDirectory(dir);
                     }
                     return FileVisitResult.CONTINUE;
                 }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                    if (exc instanceof FileSystemLoopException || exc instanceof AccessDeniedException) {
+                        System.err.println("Access denied: " + file);
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    return FileVisitResult.SKIP_SUBTREE;
+
+                }
             });
-        } catch (IOException theE) {
-            System.err.println(theE.getMessage());
+        } catch (IOException e) {
+            System.err.println("Error walking directory: " + e.getMessage());
         }
 
-        if (fail[0]) {
-            System.out.println("Done walking with errors");
-        } else {
-            Path logDir = Path.of(new File("database").getAbsolutePath());
-            if (myWatched.containsKey(logDir)) {
-                myWatched.get(logDir).decrementAtomicInt();
-                myWatched.remove(logDir);
-            }
-            System.out.println("Done walking");
+        if (myWatched.containsKey(LOG_DIR)) {
+            myWatched.get(LOG_DIR).decrementAtomicInt();
+            myWatched.remove(LOG_DIR);
         }
-        myPCS.firePropertyChange(ModelProperties.REGISTER_DONE, null, null); // if gui needs to be held until done
-        System.out.println(count);
+        // }
+        myPCS.firePropertyChange(ModelProperties.REGISTER_DONE, null, null); // if gui needs to be
+        // held until done
+
     }
 
     private void registerDirectory(final Path thePath) throws IllegalAccessException {
-        // System.out.println(thePath); // DEBUG
-        // new Thread(() -> {
-        // File[] list = thePath.toFile().listFiles();
-        // if (list != null) {
-        // for (File file : list) {
-        // if (file.isFile()) {
-        // DBManager.getDBManager().addToWatch(file);
-        // }
-        // }
-        // }
-        // }).start();
-        if (checkIfSystem(thePath)) {
-            System.err.println("cant register directory " + thePath);
-        }
         handleRegisterDirectory(thePath);
+        if (myWatched.containsKey(LOG_DIR)) {
+            myWatched.get(LOG_DIR).decrementAtomicInt();
+            myWatched.remove(LOG_DIR);
+        }
     }
 
     private void handleRegisterDirectory(final Path thePath) {
-        if (myWatched.containsKey(thePath)) {
-            myWatched.get(thePath).incrementAtomicInt();
+        if (myWatched.get(thePath) != null) {
+            WatchObject wO = myWatched.get(thePath);
+            wO.incrementAtomicInt();
         } else {
             WatchKey wK = null;
             try {
@@ -366,19 +344,17 @@ public class SystemWatch {
             }
             myWatched.put(thePath, new WatchObject(wK, new AtomicInteger(1)));
         }
-        // TODO: something about pathmap
     }
 
     // TODO refactor this at some point
     private void regEvent(String theEvent, String theFileName, Path thePath) {
         Path directoryPath = thePath.getParent();
-        if (myPathMap.get(directoryPath).contains(getExtension(theFileName))
-                || myPathMap.get(directoryPath).contains(".*")) {
+        if (myPathMap.get(directoryPath).getExts().contains(getExtension(theFileName))
+                || myPathMap.get(directoryPath).getExts().isEmpty()) {
             Event logEvent = getEvent(theEvent, theFileName, thePath);
             try {
                 DBManager.getDBManager().addEvent(logEvent);
                 myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
-                // System.out.println("ModelProperties.EVENT was fired");
             } catch (DatabaseException theE) {
                 // TODO Auto-generated catch block
             }
@@ -387,19 +363,20 @@ public class SystemWatch {
 
     /**
      * Like regEvent but used when watch is recursive.
-     * 
+     *
      * @param theEvent
      * @param theFileName
      * @param thePath
      * @param theRoot     is the watched directory in myPathMap
      */
     private void regEventRecursive(String theEvent, String theFileName, Path thePath, Path theRoot) {
-        if (myPathMap.get(theRoot).contains(getExtension(theFileName)) || myPathMap.get(theRoot).contains(".*")) {
+        PathObject pO = myPathMap.get(theRoot);
+        if (pO != null && (pO.getExts().contains(getExtension(theFileName))
+                || pO.getExts().isEmpty())) {
             Event logEvent = getEvent(theEvent, theFileName, thePath);
             try {
                 DBManager.getDBManager().addEvent(logEvent);
                 myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
-                // System.out.println("ModelProperties.EVENT was fired");
             } catch (DatabaseException theE) {
                 System.err.println(theE.getMessage());
                 // TODO Auto-generated catch block
@@ -465,7 +442,9 @@ public class SystemWatch {
 
     private void handleUnregister(Path theDirectory) {
         if (myWatched.containsKey(theDirectory)) {
-            if (myWatched.get(theDirectory).decrementAtomicInt() == 0) {
+            WatchObject wO = myWatched.get(theDirectory);
+            if (wO.decrementAtomicInt() == 0) {
+                System.out.println(wO + " " + wO.getAtomicInteger().get());
                 myWatched.remove(theDirectory);
             }
             // TODO: something about pathmap
@@ -475,11 +454,14 @@ public class SystemWatch {
     private boolean checkIfSystem(Path thePath) {
         String system = System.getProperty("os.name");
         // System.err.println("Operating system: " + system);
+        if (thePath.toString().contains("/System")) {
+            System.out.println("OOOOOOOW WE SKIPPONG");
+        }
         return switch (system) {
-            case "Mac OS X" -> (thePath.toString().equals("/System"));
-            case "Windows" -> (thePath.toString().matches(".:\\\\Windows"));
-            case "Linux" -> (thePath.toString().equals("/proc"));
-            default -> false;
+            case "Mac OS X" -> !(thePath.toString().contains("/System"));
+            case "Windows" -> !(thePath.toString().matches(".:\\\\Windows\\."));
+            case "Linux" -> !(thePath.toString().contains("/proc"));
+            default -> true;
         };
     }
 
@@ -512,10 +494,49 @@ public class SystemWatch {
         myPCS.removePropertyChangeListener(theListener);
     }
 
-    private static class WatchObject {
-
-        private WatchKey myWatchKey;
+    private static class PathObject {
         private final AtomicInteger myAtomicInteger;
+        private HashSet<String> myExts;
+        private boolean myRecursive;
+
+        private PathObject(HashSet<String> theSet, AtomicInteger theAtomicInteger, boolean theIsRecursive) {
+            myExts = theSet;
+            myAtomicInteger = theAtomicInteger;
+            myRecursive = true;
+        }
+
+        private HashSet<String> getExts() {
+            return myExts;
+        }
+
+        private AtomicInteger getAtomicInteger() {
+            return myAtomicInteger;
+        }
+
+        private void addExt(String theExt) {
+            myExts.add(theExt);
+        }
+
+        private void removeExt(String theExt) {
+            myExts.remove(theExt);
+        }
+
+        private int incrementAtomicInt() {
+            return myAtomicInteger.incrementAndGet();
+        }
+
+        private int decrementAtomicInt() {
+            return myAtomicInteger.decrementAndGet();
+        }
+
+        private boolean isRecursive() {
+            return myRecursive;
+        }
+    }
+
+    private static class WatchObject {
+        private final AtomicInteger myAtomicInteger;
+        private WatchKey myWatchKey;
         private boolean myWatchKeyActive;
 
         private WatchObject(WatchKey theWK, AtomicInteger theAtomicInteger) {
