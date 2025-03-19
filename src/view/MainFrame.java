@@ -25,7 +25,6 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private JButton myStopToolbarButton;
     private JButton mySaveToolbarButton;
     private JButton myClearToolbarButton;
-    private static int myLogTableRowCount = 0;
 
     public MainFrame(PropertyChangeSupport propertyChangeSupport) {
         myPCS = propertyChangeSupport;
@@ -42,7 +41,10 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
             @Override
             public void windowClosing(WindowEvent e) {
                 // if there are rows in the log table
-                if (myLogTableRowCount > 0) {
+                if (mySaveMItem.isEnabled()
+                        && myClearMItem.isEnabled()
+                        && mySaveToolbarButton.isEnabled()
+                        && myClearToolbarButton.isEnabled()) {
                     String[] responses = {CONFIRM_CLOSE_RESPONSE, CANCEL_CLOSE_RESPONSE, SAVE_CLOSE_RESPONSE};
                     int userResponse = JOptionPane.showOptionDialog(
                             null,
@@ -107,17 +109,19 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         mySaveMItem = new JMenuItem("Save Log");
         mySaveMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
-            myLogTableRowCount = 0;
+            disableSaveClearButtons();
         });
         mySaveMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
+        mySaveMItem.setEnabled(false);
         fileItem.add(mySaveMItem);
 
         myClearMItem = new JMenuItem("Clear Log");
         myClearMItem.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.CLEAR_LOG, null, null);
-            myLogTableRowCount = 0;
+            disableSaveClearButtons();
         });
         myClearMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
+        myClearMItem.setEnabled(false);
         fileItem.add(myClearMItem);
 
         fileItem.addSeparator();
@@ -154,15 +158,17 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         mySaveToolbarButton.setToolTipText("Save the current watched files log to the database.");
         mySaveToolbarButton.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
-            myLogTableRowCount = 0;
+            disableSaveClearButtons();
         });
+        mySaveToolbarButton.setEnabled(false);
 
         myClearToolbarButton = new JButton(new ImageIcon("src/resources/clearIcon.png"));
         myClearToolbarButton.setToolTipText("Clear the current watched files log without saving to the database.");
         myClearToolbarButton.addActionListener(theE -> {
             myPCS.firePropertyChange(ViewProperties.CLEAR_LOG, null, null);
-            myLogTableRowCount = 0;
+            disableSaveClearButtons();
         });
+        myClearToolbarButton.setEnabled(false);
 
         JButton openDatabaseWindow = new JButton(new ImageIcon("src/resources/databaseIcon.png"));
         openDatabaseWindow.setToolTipText("Open the database query window.");
@@ -224,6 +230,13 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         }
     }
 
+    private void disableSaveClearButtons() {
+        mySaveMItem.setEnabled(false);
+        mySaveToolbarButton.setEnabled(false);
+        myClearMItem.setEnabled(false);
+        myClearToolbarButton.setEnabled(false);
+    }
+
     private void showErrorWindow(final String theErrorType) {
         String errorTitle = switch (theErrorType) {
             case InputErrorProperties.EXTENSION -> "Invalid File Extension";
@@ -278,7 +291,10 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
                 showErrorWindow(theEvent.getPropertyName());
                 break;
             case ModelProperties.LOG_LIST_MODEL_UPDATED:
-                myLogTableRowCount++;
+                mySaveMItem.setEnabled(true);
+                mySaveToolbarButton.setEnabled(true);
+                myClearMItem.setEnabled(true);
+                myClearToolbarButton.setEnabled(true);
             default:
                 break;
         }
