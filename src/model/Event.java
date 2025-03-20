@@ -2,6 +2,9 @@ package model;
 
 import java.time.LocalDateTime;
 
+/**
+ * Represents a file event with details about the file and what happened to it.
+ */
 public final class Event {
     private final String myExtension;
     private final String myFileName;
@@ -9,6 +12,14 @@ public final class Event {
     private final String myEventKind;
     private final LocalDateTime myTimeStamp;
 
+    /**
+     * Creates an Event with file details and the type of change.
+     *
+     * @param theExtension The file extension.
+     * @param theFileName The name of the file.
+     * @param thePath The file's location.
+     * @param theEventKind The type of event (e.g., "created", "modified").
+     */
     public Event(final String theExtension, final String theFileName, final String thePath,
             final String theEventKind) {
         myExtension = theExtension;
@@ -42,6 +53,11 @@ public final class Event {
         return new Object[] { myExtension, myFileName, myPath, myEventKind, myTimeStamp };
     }
 
+    /**
+     * Returns a formatted string with event details.
+     *
+     * @return A string representation of the event.
+     */
     @Override
     public final String toString() {
         StringBuilder sB = new StringBuilder();
