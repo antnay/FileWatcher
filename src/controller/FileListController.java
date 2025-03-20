@@ -48,8 +48,7 @@ public class FileListController implements PropertyChangeListener {
     /**
      * Handles property change events and performs actions based on user interactions.
      *
-     * @param theEvent A PropertyChangeEvent object describing the event source
-     *          and the property that has changed.
+     * @param theEvent The event triggered when a user removes a file from the list.
      */
     @Override
     public void propertyChange(final PropertyChangeEvent theEvent) {

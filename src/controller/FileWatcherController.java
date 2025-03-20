@@ -10,12 +10,21 @@ import model.ModelProperties;
 import model.SystemWatch;
 import view.ViewProperties;
 
+/**
+ * This class manages file watching, updates the database, and handles UI interactions.
+ */
 public class FileWatcherController implements PropertyChangeListener {
 
     private final SystemWatch mySysWatch;
     private final PropertyChangeSupport myPCS;
     private final DBFriend myDBFriend;
 
+    /**
+     * Initializes the file watcher controller and sets up event listeners.
+     *
+     * @param thePCS Notifies other components about changes.
+     * @param theSystemWatch Monitors file changes in specified directories.
+     */
     public FileWatcherController(final PropertyChangeSupport thePCS, final SystemWatch theSystemWatch) {
         myPCS = thePCS;
         mySysWatch = theSystemWatch;
@@ -24,6 +33,11 @@ public class FileWatcherController implements PropertyChangeListener {
 //        mySysWatch.addDir(Path.of(System.getProperty("user.home")));
     }
 
+    /**
+     * Handles actions like starting/stopping file watching, updating directories, managing logs, and working with the database.
+     *
+     * @param theEvent The event containing information about the change.
+     */
     @Override
     public void propertyChange(PropertyChangeEvent theEvent) {
 //        System.out.println("controller pc: " + theEvent.getPropertyName());
