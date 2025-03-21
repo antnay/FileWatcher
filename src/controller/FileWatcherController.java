@@ -16,7 +16,6 @@ import view.ViewProperties;
 public class FileWatcherController implements PropertyChangeListener {
 
     private final SystemWatch mySysWatch;
-    private final PropertyChangeSupport myPCS;
     private final DBFriend myDBFriend;
 
     /**
@@ -26,11 +25,9 @@ public class FileWatcherController implements PropertyChangeListener {
      * @param theSystemWatch Monitors file changes in specified directories.
      */
     public FileWatcherController(final PropertyChangeSupport thePCS, final SystemWatch theSystemWatch) {
-        myPCS = thePCS;
         mySysWatch = theSystemWatch;
-        myDBFriend = new DBFriend(myPCS);
-        myPCS.addPropertyChangeListener(this);
-//        mySysWatch.addDir(Path.of(System.getProperty("user.home")));
+        myDBFriend = new DBFriend(thePCS);
+        thePCS.addPropertyChangeListener(this);
     }
 
     /**
