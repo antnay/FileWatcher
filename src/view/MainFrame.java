@@ -11,6 +11,10 @@ import javax.swing.border.EmptyBorder;
 
 import model.ModelProperties;
 
+/**
+ * The main window that the program is displayed in. When this frame is closed, the program will stop running.
+ * Contains a menu bar and toolbar that allows users to interact with the program.
+ */
 public class MainFrame extends JFrame implements PropertyChangeListener {
 
     private final static String CONFIRM_CLOSE_RESPONSE = "Yes";
@@ -26,8 +30,15 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private JButton mySaveToolbarButton;
     private JButton myClearToolbarButton;
 
-    public MainFrame(PropertyChangeSupport propertyChangeSupport) {
-        myPCS = propertyChangeSupport;
+    /**
+     * Constructor for the main GUI of the program. Displays a window that users can use to control the program.
+     * If the window is closed while there are unsaved changes to the database, a confirmation window will appear
+     * asking the user if they want to close without saving, cancel closing the program, or save the unsaved changes
+     * and then close.
+     * @param thePcs The property change support that action listeners should be added to.
+     */
+    public MainFrame(final PropertyChangeSupport thePcs) {
+        myPCS = thePcs;
         myPCS.addPropertyChangeListener(this);
         setTitle("FileWatcher");
         if (System.getProperty("os.name").toLowerCase().contains("mac")) {
@@ -36,6 +47,8 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
             setSize(600, 600);
         }
         setLocationRelativeTo(null);
+
+        //<editor-fold desc="Code that controls what happens when the user tries closing the window with unsaved changes">
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
             @Override
@@ -78,6 +91,8 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
                 }
             }
         });
+        //</editor-fold>
+
         setLayout(new BorderLayout());
         initMenuBar();
         initToolBar();
