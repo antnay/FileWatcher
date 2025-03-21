@@ -123,8 +123,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 
         mySaveMItem = new JMenuItem("Save Log");
         mySaveMItem.addActionListener(theE -> {
-            myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
-            disableSaveClearButtons();
+            setUpSaveDatabase();
         });
         mySaveMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
         mySaveMItem.setEnabled(false);
@@ -164,6 +163,11 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         setJMenuBar(menuBar);
     }
 
+    private void setUpSaveDatabase() {
+        myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
+        disableSaveClearButtons();
+    }
+
     private void setUpClearDatabase() {
         myPCS.firePropertyChange(ViewProperties.CLEAR_DATABASE, null, null);
         JOptionPane.showMessageDialog(this, "Database cleared");
@@ -184,8 +188,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         mySaveToolbarButton = new JButton(new ImageIcon("src/resources/saveIcon.png"));
         mySaveToolbarButton.setToolTipText("Save the current watched files log to the database.");
         mySaveToolbarButton.addActionListener(theE -> {
-            myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
-            disableSaveClearButtons();
+            setUpSaveDatabase();
         });
         mySaveToolbarButton.setEnabled(false);
 
