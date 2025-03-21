@@ -79,16 +79,16 @@ final class DBManager {
     }
 
     // ResultSet getTable() throws DatabaseException {
-    //     if (!isConnected()) {
-    //         throw new DatabaseException("Not connected to database");
-    //     }
-    //     try {
-    //         return connection.createStatement().executeQuery("""
-    //                 SELECT * FROM event_log
-    //                 """);
-    //     } catch (SQLException theE) {
-    //         throw new DatabaseException("Error querying database", theE);
-    //     }
+    // if (!isConnected()) {
+    // throw new DatabaseException("Not connected to database");
+    // }
+    // try {
+    // return connection.createStatement().executeQuery("""
+    // SELECT * FROM event_log
+    // """);
+    // } catch (SQLException theE) {
+    // throw new DatabaseException("Error querying database", theE);
+    // }
     // }
 
     void clearTable() throws DatabaseException {
@@ -115,6 +115,22 @@ final class DBManager {
         }
     }
 
+    ResultSet getWatchFiles(Path thePath) {
+        ResultSet res = null;
+        try {
+            String path = thePath.toAbsolutePath().toString();
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT filename, path FROM watch_table WHERE path = ?");
+            preparedStatement.setString(1, path);
+            res = preparedStatement.executeQuery();
+            preparedStatement = connection.prepareStatement("DELETE FROM watch_table WHERE path = ?");
+            preparedStatement.setString(1, path);
+            preparedStatement.executeUpdate();
+        } catch (SQLException theE) {
+            System.err.println("Could not query watch table " + theE.getMessage());
+        }
+        return res;
+    }
+
     void clearWatchTable() throws DatabaseException {
         if (!isConnected()) {
             throw new DatabaseException("Not connected to database");
@@ -133,10 +149,11 @@ final class DBManager {
         }
         try (PreparedStatement statement = connection.prepareStatement("""
                 INSERT INTO
-                watch_table (path)
-                VALUES (?)
+                watch_table (filename, path)
+                VALUES (?, ?)
                 """)) {
-            statement.setString(1, theFile.getAbsolutePath());
+            statement.setString(1, theFile.getName());
+            statement.setString(2, theFile.getParent());
             statement.execute();
         } catch (SQLException theE) {
             System.err.println("SQL Error: " + theE.getMessage());
@@ -220,7 +237,8 @@ final class DBManager {
             if (!res.next()) {
                 statement.executeUpdate("""
                          CREATE TABLE "watch_table" (
-                         \t"path"\tTEXT
+                        \t"filename"\tTEXT,
+                        \t"path"\tTEXT
                         );
                         """);
             }
