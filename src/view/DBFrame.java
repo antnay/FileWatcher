@@ -29,13 +29,14 @@ import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Objects;
 
 public class DBFrame extends JFrame {
 
-    private static String DATE_PLACE_HOLDER = "yyyy-mm-dd";
+    private static final String DATE_PLACE_HOLDER = "yyyy-mm-dd";
     private final PropertyChangeSupport myPCS;
     private JTable mySearchTable;
-    private JTextField myExtensionField;
+    private JComboBox<String> myExtensionField;
     private JButton mySubmitButton;
     private JButton myExportButton;
     private JTextField myPathField;
@@ -78,10 +79,18 @@ public class DBFrame extends JFrame {
         queryPanel.add(myFileField, gbc);
         gbc.gridy++;
 
+        String[] commonExtensions = {
+                ".txt",
+                ".exe",
+                ".jar"
+        };
+
         JLabel extensionLabel = new JLabel("Extension:");
         queryPanel.add(extensionLabel, gbc);
         gbc.gridy++;
-        myExtensionField = new JTextField(15);
+        myExtensionField = new JComboBox<>(commonExtensions);
+        myExtensionField.setEditable(true);
+        myExtensionField.setSelectedItem(""); // default selection is blank instead of first option in menu
         queryPanel.add(myExtensionField, gbc);
         gbc.gridy++;
 
@@ -176,7 +185,7 @@ public class DBFrame extends JFrame {
     private void runSearchQuery() {
         String[] queries = new String[6];
         String filename = myFileField.getText().trim();
-        String extension = myExtensionField.getText().trim();
+        String extension = Objects.requireNonNull(myExtensionField.getSelectedItem()).toString().trim();
         String path = myPathField.getText().trim();
         String event = String.valueOf(myEventField.getSelectedItem());
         String startDate = myDateStartField.getText().trim();
