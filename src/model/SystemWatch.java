@@ -20,6 +20,8 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashSet;
@@ -77,14 +79,25 @@ public class SystemWatch {
             throw new IllegalStateException("System watch is not running");
         }
         myIsRunning = false;
-//        try {
-//            myWatchService = null;
-//        } catch (IOException theE) {
-//            System.err.println("Error closing systemWatch: " + theE.getMessage());
-//        }
+        if (myWatched != null) {
+            for (WatchObject wo : myWatched.values()) {
+                try {
+                    if (wo.getWatchKeyActive()) {
+                        wo.cancelWatchKey();
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error canceling watch key: " + e.getMessage());
+                }
+            }
+            myWatched.clear();
+        }
         myWatchService = null;
         myWatched = null;
-        myExecutor.shutdownNow();
+        if (myExecutor != null) {
+            myExecutor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+        myExecutor = null;
         System.out.println("shut down executor");
     }
 
@@ -182,12 +195,8 @@ public class SystemWatch {
                         String fileName = event.context().toString();
                         Path path = ((Path) key.watchable()).resolve(fileName);
                         WatchEvent.Kind<?> eType = event.kind();
-                        // FIXME: when deleting directory, path.isdirectory does not work
-                        // FIXME: if you have an extension being watched in a directory, if you delete
-                        // that directory then the files will be reported as modified instead of deleted
-                        // FIXME: deleting watched directory should unregister
                         Path matchKey = myPathMap.keySet().stream().filter(path::startsWith).findFirst().orElse(null);
-                        if (path.toFile().isDirectory()) {
+                        if (path.toFile().isDirectory() || myWatched.containsKey(path)) {
                             if (eType == StandardWatchEventKinds.ENTRY_CREATE) {
                                 new Thread(() -> {
                                     if (myPathMap.get(matchKey).isRecursive()) {
@@ -204,11 +213,21 @@ public class SystemWatch {
                                 System.err.println("removing directory from watch");
                                 new Thread(() -> {
                                     if (myPathMap.get(matchKey).isRecursive()) {
-                                        unregisterDirectoryRecursive(matchKey);
+                                        unregisterDirectoryRecursive(path);
                                     } else {
-                                        unregisterDirectory(matchKey);
+                                        unregisterDirectory(path);
                                     }
                                 }).start();
+                                ResultSet rS = DBManager.getDBManager().getWatchFiles(path);
+                                if (rS != null) {
+                                    try {
+                                        while (rS.next()) {
+                                            regEvent(event.kind().toString(), rS.getString("filename"), path);
+                                        }
+                                    } catch (SQLException theE) {
+                                        System.err.println("Could not create delete event");
+                                    }
+                                }
                             }
                             continue;
                         }
@@ -220,7 +239,7 @@ public class SystemWatch {
                     }
                     key.reset();
                 }
-            } catch (InterruptedException | ClosedWatchServiceException theEvent) {
+            } catch (InterruptedException | ClosedWatchServiceException | NullPointerException theEvent) {
                 Thread.currentThread().interrupt();
             }
         });
@@ -263,24 +282,27 @@ public class SystemWatch {
         try {
             Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
                 // // TOO SLOW :(
-                // // @Override
-                // // public FileVisitResult visitFile(Path theCurrentPath, BasicFileAttributes
-                // // theAttrs) throws IOException {
-                // // if (Files.isRegularFile(theCurrentPath)) {
-                // // DBManager.getDBManager().addToWatch(theCurrentPath.toFile());
-                // // }
-                // // return FileVisitResult.CONTINUE;
-                // // }
+                @Override
+                public FileVisitResult visitFile(Path theCurrentPath, BasicFileAttributes theAttrs) throws IOException {
+                    if (Files.isRegularFile(theCurrentPath)) {
+                        try {
+                            DBManager.getDBManager().addToWatch(theCurrentPath.toFile());
+                        } catch (DatabaseException e) {
+                            // TODO Auto-generated catch block
+                        }
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
 
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                    // System.out.println(dir);
                     if (theIsNewEvent) {
+                        Path root = myPathMap.keySet().stream().filter(dir::startsWith).findFirst().orElse(null);
                         try (Stream<Path> stream = Files.list(dir)) {
                             stream.filter(Files::isRegularFile)
-                                    .forEach(file ->
-                                            regEventRecursive(StandardWatchEventKinds.ENTRY_CREATE.toString(),
-                                                    file.getFileName().toString(), file.toAbsolutePath(), dir));
+                                    .forEach(file -> regEventRecursive(
+                                            StandardWatchEventKinds.ENTRY_CREATE.toString(),
+                                            file.getFileName().toString(), file.toAbsolutePath(), root));
 
                         } catch (IOException e) {
                             System.err.println("Error listing directories: " + e.getMessage());
@@ -313,7 +335,6 @@ public class SystemWatch {
             myWatched.get(LOG_DIR).decrementAtomicInt();
             myWatched.remove(LOG_DIR);
         }
-        // }
         myPCS.firePropertyChange(ModelProperties.REGISTER_DONE, null, null); // if gui needs to be
         // held until done
 
@@ -346,7 +367,6 @@ public class SystemWatch {
         }
     }
 
-    // TODO refactor this at some point
     private void regEvent(String theEvent, String theFileName, Path thePath) {
         Path directoryPath = thePath.getParent();
         if (myPathMap.get(directoryPath).getExts().contains(getExtension(theFileName))
@@ -429,7 +449,6 @@ public class SystemWatch {
             });
         } catch (IOException theE) {
             System.err.println("Could not register " + theE.getMessage());
-            // TODO Auto-generated catch block
         }
     }
 
@@ -444,17 +463,15 @@ public class SystemWatch {
         if (myWatched.containsKey(theDirectory)) {
             WatchObject wO = myWatched.get(theDirectory);
             if (wO.decrementAtomicInt() == 0) {
-                System.out.println(wO + " " + wO.getAtomicInteger().get());
+//                System.out.println(wO + " " + wO.getAtomicInteger().get());
                 myWatched.remove(theDirectory);
             }
-            // TODO: something about pathmap
         }
     }
 
     private boolean checkIfSystem(Path thePath) {
         String system = System.getProperty("os.name");
         // System.err.println("Operating system: " + system);
-        System.out.println(thePath.toString());
         if (system.contains("Mac OS")) {
             return !(thePath.toString().contains("/System"));
         }
