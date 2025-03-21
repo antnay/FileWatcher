@@ -33,7 +33,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private final static String SAVE_CLOSE_RESPONSE = "Save Changes and Close";
 
     /**
-     * PropertyChangeSupport for notifying listeners of events.
+     * <code>PropertyChangeSupport</code> for notifying listeners of events.
      */
     private final PropertyChangeSupport myPCS;
 
