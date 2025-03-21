@@ -17,24 +17,80 @@ import model.ModelProperties;
  */
 public class MainFrame extends JFrame implements PropertyChangeListener {
 
+    /**
+     * Constant string for confirmation that the user wants to close the window.
+     */
     private final static String CONFIRM_CLOSE_RESPONSE = "Yes";
+
+    /**
+     * Constant string for confirmation that the user wants to keep the window open.
+     */
     private final static String CANCEL_CLOSE_RESPONSE = "No";
+
+    /**
+     * Constant string for confirmation that the user wants to save changes then close the window.
+     */
     private final static String SAVE_CLOSE_RESPONSE = "Save Changes and Close";
+
+    /**
+     * PropertyChangeSupport for notifying listeners of events.
+     */
     private final PropertyChangeSupport myPCS;
+
+    /**
+     * JMenuItem to let users start the watch service that enables and disables when it is available.
+     * Provides the same functionality as myStartToolbarButton.
+     */
     private JMenuItem myStartMItem;
+
+    /**
+     * JMenuItem to let users stop the watch service that enables and disables when it is available.
+     * Provides the same functionality as myStopToolbarButton.
+     */
     private JMenuItem myStopMItem;
+
+    /**
+     * JMenuItem to let users save to the database that enables and disables when it is available.
+     * Provides the same functionality as mySaveToolbarButton.
+     */
     private JMenuItem mySaveMItem;
-    private JMenuItem myClearMItem;
+
+    /**
+     * JMenuItem to let users clear the database that enables and disables when it is available.
+     * Provides the same functionality as myClearToolbarButton.
+     */
+    private JMenuItem myClearLogMItem;
+
+    /**
+     * JButton to let users start the watch service from the toolbar that enables and disables when it is available.
+     * Provides the same functionality as myStartMItem.
+     */
     private JButton myStartToolbarButton;
+
+    /**
+     * JButton to let users stop the watch service from the toolbar that enables and disables when it is available.
+     * Provides the same functionality as myStopMItem.
+     */
     private JButton myStopToolbarButton;
+
+    /**
+     * JButton to let users save to the database from the toolbar that enables and disables when it is available.
+     * Provides the same functionality as mySaveMItem.
+     */
     private JButton mySaveToolbarButton;
-    private JButton myClearToolbarButton;
+
+    /**
+     * JButton to let users clear the database from the toolbar that enables and disables when it is available.
+     * Provides the same functionality as myClearMItem.
+     */
+    private JButton myClearLogToolbarButton;
 
     /**
      * Constructor for the main GUI of the program. Displays a window that users can use to control the program.
      * If the window is closed while there are unsaved changes to the database, a confirmation window will appear
      * asking the user if they want to close without saving, cancel closing the program, or save the unsaved changes
      * and then close.
+     *
      * @param thePcs The property change support that action listeners should be added to.
      */
     public MainFrame(final PropertyChangeSupport thePcs) {
@@ -48,16 +104,15 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         }
         setLocationRelativeTo(null);
 
-        //<editor-fold desc="Code that controls what happens when the user tries closing the window with unsaved changes">
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 // if there are rows in the log table
                 if (mySaveMItem.isEnabled()
-                        && myClearMItem.isEnabled()
+                        && myClearLogMItem.isEnabled()
                         && mySaveToolbarButton.isEnabled()
-                        && myClearToolbarButton.isEnabled()) {
+                        && myClearLogToolbarButton.isEnabled()) {
                     String[] responses = {CONFIRM_CLOSE_RESPONSE, CANCEL_CLOSE_RESPONSE, SAVE_CLOSE_RESPONSE};
                     int userResponse = JOptionPane.showOptionDialog(
                             null,
@@ -91,14 +146,17 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
                 }
             }
         });
-        //</editor-fold>
 
         setLayout(new BorderLayout());
         initMenuBar();
         initToolBar();
-        initFrames();
+        initPanels();
     }
 
+    /**
+     * Creates a menu bar for the frame and populates it with a File and Help menu. Menus can be accessed with
+     * keyboard shortcuts by using mnemonics and accelerators.
+     */
     private void initMenuBar() {
         JMenuBar menuBar = new JMenuBar();
         JMenu fileItem = new JMenu("File");
@@ -109,12 +167,16 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         menuBar.add(helpItem);
 
         myStartMItem = new JMenuItem("Start Logging");
-        addActionToStartButtons(myStartMItem);
+        myStartMItem.addActionListener(theE -> {
+            startFunctionality();
+        });
         myStartMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK));
         fileItem.add(myStartMItem);
 
         myStopMItem = new JMenuItem("Stop Logging");
-        addActionToStopButtons(myStopMItem);
+        myStopMItem.addActionListener(theE -> {
+            stopFunctionality();
+        });
         myStopMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK));
         myStopMItem.setEnabled(false);
         fileItem.add(myStopMItem);
@@ -123,20 +185,19 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 
         mySaveMItem = new JMenuItem("Save Log");
         mySaveMItem.addActionListener(theE -> {
-            setUpSaveDatabase();
+            saveFunctionality();
         });
         mySaveMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
         mySaveMItem.setEnabled(false);
         fileItem.add(mySaveMItem);
 
-        myClearMItem = new JMenuItem("Clear Log");
-        myClearMItem.addActionListener(theE -> {
-            myPCS.firePropertyChange(ViewProperties.CLEAR_LOG, null, null);
-            disableSaveClearButtons();
+        myClearLogMItem = new JMenuItem("Clear Log");
+        myClearLogMItem.addActionListener(theE -> {
+            clearLogFunctionality();
         });
-        myClearMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
-        myClearMItem.setEnabled(false);
-        fileItem.add(myClearMItem);
+        myClearLogMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
+        myClearLogMItem.setEnabled(false);
+        fileItem.add(myClearLogMItem);
 
         fileItem.addSeparator();
 
@@ -147,7 +208,7 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 
         JMenuItem clearDBMItem = new JMenuItem("Clear Database");
         clearDBMItem.addActionListener(theE -> {
-            setUpClearDatabase();
+            clearDatabaseFunctionality();
         });
         clearDBMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, KeyEvent.CTRL_DOWN_MASK));
         fileItem.add(clearDBMItem);
@@ -163,64 +224,62 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         setJMenuBar(menuBar);
     }
 
-    private void setUpSaveDatabase() {
-        myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
-        disableSaveClearButtons();
-    }
-
-    private void setUpClearDatabase() {
-        myPCS.firePropertyChange(ViewProperties.CLEAR_DATABASE, null, null);
-        JOptionPane.showMessageDialog(this, "Database cleared");
-    }
-
+    /**
+     * Creates a toolbar for the frame and populates it with buttons for each option in the File menu.
+     */
     private void initToolBar() {
         JToolBar toolBar = new JToolBar();
 
         myStartToolbarButton = new JButton(new ImageIcon("src/resources/startIcon.png"));
         myStartToolbarButton.setToolTipText("Start the file watch system.");
-        addActionToStartButtons(myStartToolbarButton);
+        myStartToolbarButton.addActionListener(theE -> {
+            startFunctionality();
+        });
+        toolBar.add(myStartToolbarButton);
 
         myStopToolbarButton = new JButton(new ImageIcon("src/resources/stopIcon.png"));
         myStopToolbarButton.setToolTipText("Stop the file watch system.");
-        addActionToStopButtons(myStopToolbarButton);
+        myStopToolbarButton.addActionListener(theE -> {
+            stopFunctionality();
+        });
         myStopToolbarButton.setEnabled(false);
+        toolBar.add(myStopToolbarButton);
 
         mySaveToolbarButton = new JButton(new ImageIcon("src/resources/saveIcon.png"));
         mySaveToolbarButton.setToolTipText("Save the current watched files log to the database.");
         mySaveToolbarButton.addActionListener(theE -> {
-            setUpSaveDatabase();
+            saveFunctionality();
         });
         mySaveToolbarButton.setEnabled(false);
+        toolBar.add(mySaveToolbarButton);
 
-        myClearToolbarButton = new JButton(new ImageIcon("src/resources/clearIcon.png"));
-        myClearToolbarButton.setToolTipText("Clear the current watched files log without saving to the database.");
-        myClearToolbarButton.addActionListener(theE -> {
-            myPCS.firePropertyChange(ViewProperties.CLEAR_LOG, null, null);
-            disableSaveClearButtons();
+        myClearLogToolbarButton = new JButton(new ImageIcon("src/resources/clearIcon.png"));
+        myClearLogToolbarButton.setToolTipText("Clear the current watched files log without saving to the database.");
+        myClearLogToolbarButton.addActionListener(theE -> {
+            clearLogFunctionality();
         });
-        myClearToolbarButton.setEnabled(false);
+        myClearLogToolbarButton.setEnabled(false);
+        toolBar.add(myClearLogToolbarButton);
 
         JButton openDatabaseWindowButton = new JButton(new ImageIcon("src/resources/databaseIcon.png"));
         openDatabaseWindowButton.setToolTipText("Open the database query window.");
         openDatabaseWindowButton.addActionListener(theE -> new DBFrame(myPCS).setVisible(true));
+        toolBar.add(openDatabaseWindowButton);
 
         JButton clearDatabaseButton = new JButton(new ImageIcon("src/resources/clearDatabaseIcon.png"));
         clearDatabaseButton.setToolTipText("Clear all rows in the database.");
         clearDatabaseButton.addActionListener(theE -> {
-            setUpClearDatabase();
+            clearDatabaseFunctionality();
         });
-
-        toolBar.add(myStartToolbarButton);
-        toolBar.add(myStopToolbarButton);
-        toolBar.add(mySaveToolbarButton);
-        toolBar.add(myClearToolbarButton);
-        toolBar.add(openDatabaseWindowButton);
         toolBar.add(clearDatabaseButton);
 
         this.add(toolBar, BorderLayout.NORTH);
     }
 
-    private void initFrames() {
+    /**
+     * Creates the panels needed for the window and adds them to the frame.
+     */
+    private void initPanels() {
         JPanel framePanel = new JPanel(new BorderLayout());
         framePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
@@ -241,39 +300,80 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         add(framePanel, BorderLayout.CENTER);
     }
 
-    private void addActionToStartButtons(final AbstractButton theButton) {
-        theButton.addActionListener(theE -> {
-            myPCS.firePropertyChange(ModelProperties.START, null, null);
-        });
+    /**
+     * Helper method to add functionality to a component that will be used to start the file watcher.
+     * Should be updated when a new component is added with this function.
+     */
+    private void startFunctionality() {
+        myPCS.firePropertyChange(ModelProperties.START, null, null);
+
+        // toggle the start button off and the stop button on
+        myStartMItem.setEnabled(false);
+        myStartToolbarButton.setEnabled(false);
+        myStopMItem.setEnabled(true);
+        myStopToolbarButton.setEnabled(true);
     }
 
-    private void addActionToStopButtons(final AbstractButton theButton) {
-        theButton.addActionListener(theE -> {
-            myPCS.firePropertyChange(ModelProperties.STOP, null, null);
-        });
+    /**
+     * Helper method to add functionality to a component that will be used to stop the file watcher.
+     * Should be updated when a new component is added with this function.
+     */
+    private void stopFunctionality() {
+        myPCS.firePropertyChange(ModelProperties.STOP, null, null);
+
+        // toggle the stop button off and the start button on
+        myStartMItem.setEnabled(true);
+        myStartToolbarButton.setEnabled(true);
+        myStopMItem.setEnabled(false);
+        myStopToolbarButton.setEnabled(false);
     }
 
-    private void toggleStartStopButtons(final String theProperty) {
-        if (theProperty.equals(ModelProperties.START)) { // if start was clicked
-            myStartMItem.setEnabled(false);
-            myStartToolbarButton.setEnabled(false);
-            myStopMItem.setEnabled(true);
-            myStopToolbarButton.setEnabled(true);
-        } else { // if stop was clicked
-            myStartMItem.setEnabled(true);
-            myStartToolbarButton.setEnabled(true);
-            myStopMItem.setEnabled(false);
-            myStopToolbarButton.setEnabled(false);
-        }
+    /**
+     * Helper method to add functionality to a component that will be used
+     * to save changes caught by the file watcher to the database.
+     */
+    private void saveFunctionality() {
+        myPCS.firePropertyChange(ViewProperties.SAVE_LOG, null, null);
+        disableSaveClearButtons();
     }
 
+    /**
+     * Helper method to add functionality to a component that will be used
+     * to clear the log of changes caught by the file watcher without saving to the database.
+     */
+    private void clearLogFunctionality() {
+        myPCS.firePropertyChange(ViewProperties.CLEAR_LOG, null, null);
+        disableSaveClearButtons();
+    }
+
+    /**
+     * Helper method to disable the components that allow users
+     * to save and clear changes caught by the file watcher.
+     * Should be updated whenever a new component is added with one of these functions.
+     */
     private void disableSaveClearButtons() {
         mySaveMItem.setEnabled(false);
         mySaveToolbarButton.setEnabled(false);
-        myClearMItem.setEnabled(false);
-        myClearToolbarButton.setEnabled(false);
+        myClearLogMItem.setEnabled(false);
+        myClearLogToolbarButton.setEnabled(false);
     }
 
+    /**
+     * Helper method to add functionality to a component that will be used
+     * to clear all rows saved in the database. Displays a dialog that an attempt
+     * was made to save the changes to the database.
+     */
+    private void clearDatabaseFunctionality() {
+        myPCS.firePropertyChange(ViewProperties.CLEAR_DATABASE, null, null);
+        JOptionPane.showMessageDialog(this, "Database cleared");
+    }
+
+    /**
+     * Displays an error window when input is invalid in some way. The properties of the window will change depending on
+     * <code>theErrorType</code>.
+     *
+     * @param theErrorType Any string from InputErrorProperties that represents which error occurred.
+     */
     private void showErrorWindow(final String theErrorType) {
         String errorTitle = switch (theErrorType) {
             case InputErrorProperties.EXTENSION -> "Invalid File Extension";
@@ -286,58 +386,24 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     }
 
     /**
-     * Add a PropertyChangeListener to the listener list.
-     * The listener is registered for all properties.
-     * The same listener object may be added more than once, and will be called
-     * as many times as it is added.
-     * If {@code listener} is null, no exception is thrown and no action
-     * is taken.
+     * This method gets called when a property bound in myPcs is changed.
      *
-     * @param theListener The PropertyChangeListener to be added
+     * @param theEvent A PropertyChangeEvent object describing the event source
+     *          and the property that has changed.
      */
-    public void addPropertyChangeListener(final PropertyChangeListener theListener) {
-        myPCS.addPropertyChangeListener(theListener);
-    }
-
-    /**
-     * Remove a PropertyChangeListener from the listener list.
-     * This removes a PropertyChangeListener that was registered
-     * for all properties.
-     * If {@code listener} was added more than once to the same event
-     * source, it will be notified one less time after being removed.
-     * If {@code listener} is null, or was never added, no exception is
-     * thrown and no action is taken.
-     *
-     * @param theListener The PropertyChangeListener to be removed
-     */
-    public void removePropertyChangeListener(final PropertyChangeListener theListener) {
-        myPCS.removePropertyChangeListener(theListener);
-    }
-
     @Override
     public void propertyChange(PropertyChangeEvent theEvent) {
-        // System.out.println("view pc: " + theEvent.getPropertyName());
         switch (theEvent.getPropertyName()) {
-            case ModelProperties.START:
-                toggleStartStopButtons(ModelProperties.START);
-                break;
-            case ModelProperties.STOP:
-                toggleStartStopButtons(ModelProperties.STOP);
-                break;
             case InputErrorProperties.BOTH_INPUTS, InputErrorProperties.EXTENSION, InputErrorProperties.DIRECTORY:
                 showErrorWindow(theEvent.getPropertyName());
                 break;
             case ModelProperties.LOG_LIST_MODEL_UPDATED:
                 mySaveMItem.setEnabled(true);
                 mySaveToolbarButton.setEnabled(true);
-                myClearMItem.setEnabled(true);
-                myClearToolbarButton.setEnabled(true);
+                myClearLogMItem.setEnabled(true);
+                myClearLogToolbarButton.setEnabled(true);
             default:
                 break;
         }
-    }
-
-    public PropertyChangeSupport getPCS() {
-        return myPCS;
     }
 }
