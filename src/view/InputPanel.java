@@ -13,20 +13,56 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * An element of the GUi that lets the user enter a file extension and directory
+ * to have the watcher system monitor for changes.
+ */
 public class InputPanel extends JPanel {
-    private final static JButton myAddButton = new JButton("Add");
-    private final static JFileChooser myJFileChooser = new JFileChooser();
+    /**
+     * Constant reference to a JButton that allows users to add files and
+     * extensions to the list of changes the watcher system looks for.
+     */
+    private final static JButton MY_ADD_BUTTON = new JButton("Add");
+
+    /**
+     * Constant reference to a JFileChooser that allows users to browse their file system
+     * to select a directory instead of needing to type the path into the text field.
+     */
+    private final static JFileChooser MY_J_FILE_CHOOSER = new JFileChooser();
+
+    /**
+     * <code>PropertyChangeSupport</code> for notifying listeners of events.
+     */
     private final PropertyChangeSupport myPCS;
+
+    /**
+     * JComboBox that allows users to type a file extension starting with a '.' character
+     * or choose an extension from the dropdown list. Gets automatically filled with the extension if the user selects
+     * a file in the file browser.
+     */
     private JComboBox<String> myComboBox;
+
+    /**
+     * JTextField that lets users type the path to a directory on their machine. Gets automatically filled
+     * if the user selects a directory in the file browser.
+     */
     private JTextField myTextField;
+
+    /**
+     * JCheckBox that allows the user to enable watching directories recursively
+     * (adds all subdirectories in the given directory).
+     */
     private JCheckBox myRecurCheckBox ;
 
+    /**
+     * Constructs a panel that provides input fields and buttons for users to
+     * enter extensions and directories for the watcher system to watch.
+     *
+     * @param thePcs The <code>PropertyChangeSupport</code> that this listener should be added to.
+     */
     public InputPanel(PropertyChangeSupport thePcs) {
         myPCS = thePcs;
-        initInputFields();
-    }
 
-    private void initInputFields() {
         BorderLayout layout = new BorderLayout(10, 10);
         setLayout(layout);
 
@@ -43,6 +79,11 @@ public class InputPanel extends JPanel {
         add(createDirectoryPanel(), BorderLayout.EAST);
     }
 
+    /**
+     * Helper method that creates a panel allowing users to enter a file extension.
+     *
+     * @return The <code>JPanel</code> with the extension input field.
+     */
     private JPanel createExtensionPanel() {
         // label for extension combo box
         JLabel extensionLabel = new JLabel("Monitor by extension");
@@ -74,6 +115,12 @@ public class InputPanel extends JPanel {
         return extensionPanel;
     }
 
+    /**
+     * Helper method that creates a panel allowing users to watch
+     * directories recursively (will watch subdirectories).
+     *
+     * @return The <code>JPanel</code> with the toggle to watch subdirectories.
+     */
     private JPanel createRecursivePanel() {
         JLabel directoryLabel = new JLabel();
         myRecurCheckBox = new JCheckBox("Watch recursively");
@@ -85,6 +132,12 @@ public class InputPanel extends JPanel {
         return recursivePanel;
     }
 
+    /**
+     * Helper method that creates a panel allowing users to enter the path
+     * to a directory they want watched by the watcher system.
+     *
+     * @return The <code>JPanel</code> with the directory input field.
+     */
     private JPanel createDirectoryPanel() {
         // label for directory field
         JLabel directoryLabel = new JLabel("Directory to monitor");
@@ -104,15 +157,21 @@ public class InputPanel extends JPanel {
         return directoryPanel;
     }
 
+    /**
+     * Helper method that creates a panel with a button for users to submit the extension
+     * and directory they have entered, as well as a button to open a file browser to select a directory or file.
+     *
+     * @return The <code>JPanel</code> with the add and browse buttons.
+     */
     private JPanel initInputButtons() {
         JPanel buttonGrid = new JPanel(new GridLayout());
 
-        myAddButton.addActionListener(theEvent -> {
+        MY_ADD_BUTTON.addActionListener(theEvent -> {
             setUpAddButton();
         });
-        myAddButton.setMnemonic(KeyEvent.VK_S);
-        myAddButton.setEnabled(false);
-        buttonGrid.add(myAddButton);
+        MY_ADD_BUTTON.setMnemonic(KeyEvent.VK_S);
+        MY_ADD_BUTTON.setEnabled(false);
+        buttonGrid.add(MY_ADD_BUTTON);
 
         JButton browseButton = new JButton("Browse Files");
         browseButton.addActionListener(theEvent -> {
@@ -124,22 +183,10 @@ public class InputPanel extends JPanel {
         return buttonGrid;
     }
 
-    private void setUpBrowseButton() {
-        myJFileChooser.setDialogTitle("Choose Directory");
-        myJFileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-        int returnValue = myJFileChooser.showDialog(this, "Select");
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = myJFileChooser.getSelectedFile();
-            if (selectedFile.isDirectory()) {
-                myTextField.setText(selectedFile.toString());
-            } else if (selectedFile.isFile()) {
-                String fileName = selectedFile.getName();
-                myComboBox.setSelectedItem(fileName.substring(fileName.lastIndexOf('.')));
-                myTextField.setText(selectedFile.getParent());
-            }
-        }
-    }
-
+    /**
+     * Helper method that adds functionality to the add button. Gets the input
+     * from the text fields and checkbox and sends that data to the controller.
+     */
     private void setUpAddButton() {
         Map<String, String> userInput = new HashMap<>();
         // get input from user and trim whitespace
@@ -150,39 +197,84 @@ public class InputPanel extends JPanel {
         clearInput();
     }
 
+    /**
+     * Helper method that clears the input fields and disables the add button.
+     */
     private void clearInput() {
         myComboBox.setSelectedIndex(-1);
         myTextField.setText("");
         myRecurCheckBox.setSelected(false);
-        myAddButton.setEnabled(false);
+        MY_ADD_BUTTON.setEnabled(false);
     }
 
+    /**
+     * Helper method to add functionality to the browse button. If the user picks a directory the directory field
+     * will be populated with a path to the chosen directory. If the user picks a file the extension field
+     * will be populated with extension of the selected file, and the directory field will be
+     * populated with the path to the directory that the selected file was located in.
+     */
+    private void setUpBrowseButton() {
+        MY_J_FILE_CHOOSER.setDialogTitle("Choose Directory");
+        MY_J_FILE_CHOOSER.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        int returnValue = MY_J_FILE_CHOOSER.showDialog(this, "Select");
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = MY_J_FILE_CHOOSER.getSelectedFile();
+            if (selectedFile.isDirectory()) {
+                myTextField.setText(selectedFile.toString());
+            } else if (selectedFile.isFile()) {
+                String fileName = selectedFile.getName();
+                myComboBox.setSelectedItem(fileName.substring(fileName.lastIndexOf('.')));
+                myTextField.setText(selectedFile.getParent());
+            }
+        }
+    }
+
+    /**
+     * Helper method that checks if the data in the extension and directory fields is
+     * valid and enables or disables the add button accordingly.
+     */
     private void checkForInput() {
         String extensionInput = myComboBox.getEditor().getItem().toString().strip();
         boolean extensionHasInput = extensionInput.matches(FileListModel.VALID_EXTENSION_REGEX);
 
         String directoryInput = myTextField.getText().strip();
-        // boolean directoryHasInput = directoryInput.matches(FileListModel.VALID_DIRECTORY_REGEX);
         boolean directoryHasInput = new File(directoryInput).exists();
 
         // enable start button if extension and directory input are both not empty/null
-        myAddButton.setEnabled(extensionHasInput && directoryHasInput);
+        MY_ADD_BUTTON.setEnabled(extensionHasInput && directoryHasInput);
     }
 
-    // inner class to reuse document listener properties for both input fields
+    /**
+     * Inner class to allow reuse of document listener properties for both input fields.
+     */
     private class InputDocumentListener implements DocumentListener {
+        /**
+         * Gives a notification that something was inserted into the field.
+         *
+         * @param theE the document event
+         */
         @Override
-        public void insertUpdate(DocumentEvent e) {
+        public void insertUpdate(final DocumentEvent theE) {
             checkForInput();
         }
 
+        /**
+         * Gives a notification that something was removed from the field.
+         *
+         * @param theE the document event
+         */
         @Override
-        public void removeUpdate(DocumentEvent e) {
+        public void removeUpdate(final DocumentEvent theE) {
             checkForInput();
         }
 
+        /**
+         * Gives a notification that an attribute of the field changed.
+         *
+         * @param theE the document event
+         */
         @Override
-        public void changedUpdate(DocumentEvent e) {
+        public void changedUpdate(final DocumentEvent theE) {
             checkForInput();
         }
     }
