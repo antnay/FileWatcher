@@ -77,11 +77,11 @@ public class SystemWatch {
             throw new IllegalStateException("System watch is not running");
         }
         myIsRunning = false;
-        try {
-            myWatchService.close();
-        } catch (IOException theE) {
-            System.err.println("Error closing systemWatch: " + theE.getMessage());
-        }
+//        try {
+//            myWatchService = null;
+//        } catch (IOException theE) {
+//            System.err.println("Error closing systemWatch: " + theE.getMessage());
+//        }
         myWatchService = null;
         myWatched = null;
         myExecutor.shutdownNow();
@@ -242,7 +242,7 @@ public class SystemWatch {
                         stream.filter(Files::isDirectory)
                                 .filter(this::checkIfSystem)
                                 .forEach(path -> regExecutor.submit(() -> {
-                                    System.out.println(path);
+//                                    System.out.println(path);
                                     registerDirTree(path, false, null);
                                 }));
                     } catch (IOException e) {
@@ -454,15 +454,17 @@ public class SystemWatch {
     private boolean checkIfSystem(Path thePath) {
         String system = System.getProperty("os.name");
         // System.err.println("Operating system: " + system);
-        if (thePath.toString().contains("/System")) {
-            System.out.println("OOOOOOOW WE SKIPPONG");
+        System.out.println(thePath.toString());
+        if (system.contains("Mac OS")) {
+            return !(thePath.toString().contains("/System"));
         }
-        return switch (system) {
-            case "Mac OS X" -> !(thePath.toString().contains("/System"));
-            case "Windows" -> !(thePath.toString().matches(".:\\\\Windows\\."));
-            case "Linux" -> !(thePath.toString().contains("/proc"));
-            default -> true;
-        };
+        if (system.contains("Windows")) {
+            return !(thePath.toString().matches(".:\\\\Windows"));
+        }
+        if (system.contains("Linux")) {
+            return !(thePath.toString().contains("/proc"));
+        }
+        return true;
     }
 
     /**
