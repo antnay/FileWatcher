@@ -108,6 +108,18 @@ public class SystemWatch {
         myPCS.firePropertyChange(ModelProperties.CLEAR_TABLE, null, null);
     }
 
+    public void clearDatabase() {
+        if (!DBManager.getDBManager().isConnected()) {
+            throw new IllegalStateException("Not connected a database");
+        }
+        try {
+            DBManager.getDBManager().clearTable();
+        } catch (DatabaseException theE) {
+            // TODO Auto-generated catch block
+        }
+        myPCS.firePropertyChange(ModelProperties.CLEAR_TABLE, null, null);
+    }
+
     public boolean isRunning() {
         return myIsRunning;
     }

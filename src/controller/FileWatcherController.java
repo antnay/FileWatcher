@@ -51,6 +51,9 @@ public class FileWatcherController implements PropertyChangeListener {
                 System.out.println("clearing table");
                 mySysWatch.clearLog();
                 break;
+            case ViewProperties.CLEAR_DATABASE:
+                mySysWatch.clearDatabase();
+                break;
             case ViewProperties.SAVE_LOG:
                 mySysWatch.saveToDB();
                 break;

@@ -5,6 +5,7 @@ public interface ViewProperties {
     String REMOVE_BUTTON = "stopView";
     String SUBMIT_BUTTON = "submitView";
     String CLEAR_LOG = "clearLogView";
+    String CLEAR_DATABASE = "clearDatabase";
     String SAVE_LOG = "saveView";
     String SHORTCUTS = "shortcutView";
     String ABOUT = "aboutView";

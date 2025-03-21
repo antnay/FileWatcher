@@ -126,10 +126,17 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
 
         fileItem.addSeparator();
 
-        JMenuItem openDBFrameItem = new JMenuItem("Query Database (File Extension)");
-        openDBFrameItem.addActionListener(e -> new DBFrame(myPCS).setVisible(true));
-        openDBFrameItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, KeyEvent.CTRL_DOWN_MASK));
-        fileItem.add(openDBFrameItem);
+        JMenuItem openDBFrameMItem = new JMenuItem("Query Database (Opens another window)");
+        openDBFrameMItem.addActionListener(e -> new DBFrame(myPCS).setVisible(true));
+        openDBFrameMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, KeyEvent.CTRL_DOWN_MASK));
+        fileItem.add(openDBFrameMItem);
+
+        JMenuItem clearDBMItem = new JMenuItem("Clear Database");
+        clearDBMItem.addActionListener(theE -> {
+            setUpClearDatabase();
+        });
+        clearDBMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, KeyEvent.CTRL_DOWN_MASK));
+        fileItem.add(clearDBMItem);
 
         JMenuItem aboutMItem = new JMenuItem("About");
         aboutMItem.addActionListener(theE -> {
@@ -140,6 +147,11 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         helpItem.add(aboutMItem);
 
         setJMenuBar(menuBar);
+    }
+
+    private void setUpClearDatabase() {
+        myPCS.firePropertyChange(ViewProperties.CLEAR_DATABASE, null, null);
+        JOptionPane.showMessageDialog(this, "Database cleared");
     }
 
     private void initToolBar() {
@@ -170,15 +182,22 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         });
         myClearToolbarButton.setEnabled(false);
 
-        JButton openDatabaseWindow = new JButton(new ImageIcon("src/resources/databaseIcon.png"));
-        openDatabaseWindow.setToolTipText("Open the database query window.");
-        openDatabaseWindow.addActionListener(theE -> new DBFrame(myPCS).setVisible(true));
+        JButton openDatabaseWindowButton = new JButton(new ImageIcon("src/resources/databaseIcon.png"));
+        openDatabaseWindowButton.setToolTipText("Open the database query window.");
+        openDatabaseWindowButton.addActionListener(theE -> new DBFrame(myPCS).setVisible(true));
+
+        JButton clearDatabaseButton = new JButton(new ImageIcon("src/resources/clearDatabaseIcon.png"));
+        clearDatabaseButton.setToolTipText("Clear all rows in the database.");
+        clearDatabaseButton.addActionListener(theE -> {
+            setUpClearDatabase();
+        });
 
         toolBar.add(myStartToolbarButton);
         toolBar.add(myStopToolbarButton);
         toolBar.add(mySaveToolbarButton);
         toolBar.add(myClearToolbarButton);
-        toolBar.add(openDatabaseWindow);
+        toolBar.add(openDatabaseWindowButton);
+        toolBar.add(clearDatabaseButton);
 
         this.add(toolBar, BorderLayout.NORTH);
     }
