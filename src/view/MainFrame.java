@@ -216,7 +216,6 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         JMenuItem aboutMItem = new JMenuItem("About");
         aboutMItem.addActionListener(theE -> {
             new HelpFrame();
-            myPCS.firePropertyChange(ViewProperties.ABOUT, null, null);
         });
         aboutMItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK));
         helpItem.add(aboutMItem);

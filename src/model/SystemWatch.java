@@ -173,7 +173,6 @@ public class SystemWatch {
         } catch (DatabaseException theE) {
             System.err.println("Error clearing log: " + theE.getMessage());
         }
-        myPCS.firePropertyChange(ModelProperties.CLEAR_TABLE, null, null);
     }
 
     public void clearDatabase() {
@@ -185,7 +184,6 @@ public class SystemWatch {
         } catch (DatabaseException theE) {
             // TODO Auto-generated catch block
         }
-        myPCS.firePropertyChange(ModelProperties.CLEAR_TABLE, null, null);
     }
 
     /**
