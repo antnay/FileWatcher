@@ -86,12 +86,12 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     private JButton myClearLogToolbarButton;
 
     /**
-     * Constructor for the main GUI of the program. Displays a window that users can use to control the program.
+     * Constructs the main GUI of the program. Displays a window that users can use to control the program.
      * If the window is closed while there are unsaved changes to the database, a confirmation window will appear
      * asking the user if they want to close without saving, cancel closing the program, or save the unsaved changes
      * and then close.
      *
-     * @param thePcs The property change support that action listeners should be added to.
+     * @param thePcs The <code>PropertyChangeSupport</code> that this listener should be added to.
      */
     public MainFrame(final PropertyChangeSupport thePcs) {
         myPCS = thePcs;
@@ -386,7 +386,8 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
     }
 
     /**
-     * This method gets called when a property bound in myPcs is changed.
+     * This method gets called when a property bound in a
+     * <code>PropertyChangeSupport</code> this listener is added to is changed.
      *
      * @param theEvent A PropertyChangeEvent object describing the event source
      *          and the property that has changed.
