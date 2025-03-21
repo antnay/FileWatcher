@@ -18,27 +18,6 @@ public class LogListModel extends DefaultTableModel {
         setRowCount(0);
     }
 
-    /**
-     * Adds the given Array to the table if the input is a valid row. The Array must have exactly 2 elements,
-     * the file extension followed by the directory.
-     * @param theRowData the data of the row being added
-     */
-    @Override
-    public void addRow(@NonNull final Object[] theRowData) {
-        super.addRow(theRowData);
-    }
-
-    /**
-     * Adds the given Vector to the table if the input is a valid row. The Vector must have exactly 2 elements,
-     * the file extension followed by the directory.
-     * @param theRowData the data of the row being added
-     */
-    @Override
-    public void addRow(final Vector theRowData) {
-        super.addRow(theRowData);
-    }
-
-
     @Override
     public boolean isCellEditable(final int theRow, final int theColumn) {
         return false;
