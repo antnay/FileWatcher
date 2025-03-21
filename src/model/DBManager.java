@@ -11,6 +11,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+/**
+ * This class manages the database connection and operations.
+ */
 final class DBManager {
 
     private static final DBManager DB_INSTANCE = new DBManager();
@@ -20,6 +23,11 @@ final class DBManager {
         connection = null;
     }
 
+    /**
+     * This gets the single instance of DBManager.
+     *
+     * @return the singleton instance of DBManager.
+     */
     static DBManager getDBManager() {
         return DB_INSTANCE;
     }
@@ -33,6 +41,11 @@ final class DBManager {
         return connection != null;
     }
 
+    /**
+     * It sets up a connection to the SQLite database.
+     *
+     * @throws DatabaseException if there is an error connecting to the database.
+     */
     void connect() throws DatabaseException {
         File dbPath = new File("database/log.sql");
         Path path = Path.of(dbPath.getAbsolutePath());
@@ -54,6 +67,11 @@ final class DBManager {
         }
     }
 
+    /**
+     * It disconnects from the database.
+     *
+     * @throws DatabaseException if an error occurs while disconnecting.
+     */
     void disconnect() throws DatabaseException {
         try {
             if (isConnected()) {
@@ -66,6 +84,13 @@ final class DBManager {
         }
     }
 
+    /**
+     * It executes a SQL query and returns the results.
+     *
+     * @param theQuery the SQL query to execute.
+     * @return a ResultSet containing the query results.
+     * @throws DatabaseException if the query fails.
+     */
     public ResultSet executeQuery(String theQuery) throws DatabaseException {
         if (!isConnected()) {
             throw new DatabaseException("Not connected to database");
@@ -91,6 +116,11 @@ final class DBManager {
     // }
     // }
 
+    /**
+     * It clears all data from the event log table.
+     *
+     * @throws DatabaseException if an error occurs while clearing the table.
+     */
     void clearTable() throws DatabaseException {
         if (!isConnected()) {
             throw new DatabaseException("Not connected to database");
@@ -103,6 +133,11 @@ final class DBManager {
         }
     }
 
+    /**
+     * It clears all data from the temporary event log table.
+     *
+     * @throws DatabaseException if an error occurs while clearing the table.
+     */
     void clearTempTable() throws DatabaseException {
         if (!isConnected()) {
             throw new DatabaseException("Not connected to database");
@@ -115,6 +150,12 @@ final class DBManager {
         }
     }
 
+    /**
+     * Gets a list of files being monitored in the database for a specific path.
+     *
+     * @param thePath the path to check for watched files.
+     * @return a ResultSet containing the filenames and paths.
+     */
     ResultSet getWatchFiles(Path thePath) {
         ResultSet res = null;
         try {
@@ -131,6 +172,11 @@ final class DBManager {
         return res;
     }
 
+    /**
+     * It clears all data from the watch table.
+     *
+     * @throws DatabaseException if an error occurs while clearing the table.
+     */
     void clearWatchTable() throws DatabaseException {
         if (!isConnected()) {
             throw new DatabaseException("Not connected to database");
@@ -143,6 +189,12 @@ final class DBManager {
         }
     }
 
+    /**
+     * This adds a file to the watch table.
+     *
+     * @param theFile the file to add.
+     * @throws DatabaseException if an error occurs while adding the file.
+     */
     void addToWatch(File theFile) throws DatabaseException {
         if (!isConnected()) {
             throw new DatabaseException("Not connected to database");
@@ -161,6 +213,12 @@ final class DBManager {
 
     }
 
+    /**
+     * This adds an event to the temporary event log table.
+     *
+     * @param theEvent theEvent the event to add.
+     * @throws DatabaseException if an error occurs while adding the event.
+     */
     void addEvent(Event theEvent) throws DatabaseException {
         if (!isConnected()) {
             throw new DatabaseException("Not connected to database");
@@ -182,6 +240,11 @@ final class DBManager {
         }
     }
 
+    /**
+     * It moves all events from the temporary event log table to the main event log table.
+     *
+     * @throws DatabaseException if an error occurs while merging the tables.
+     */
     void mergeTempEvents() throws DatabaseException {
         if (!isConnected()) {
             throw new DatabaseException("Not connected to database");
@@ -199,6 +262,11 @@ final class DBManager {
         }
     }
 
+    /**
+     * Sets up the database by creating tables if they are missing.
+     *
+     * @throws DatabaseException if an error occurs while setting up the database.
+     */
     void initDB() throws DatabaseException {
         if (!isConnected()) {
             throw new DatabaseException("Not connected to database");
