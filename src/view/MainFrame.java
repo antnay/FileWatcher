@@ -209,12 +209,12 @@ public class MainFrame extends JFrame implements PropertyChangeListener {
         JPanel userControls = new JPanel(new BorderLayout());
         userControls.setBorder(new EmptyBorder(0, 0, 20, 0));
 
-        ControlPanel controlPanel = new ControlPanel(myPCS);
+        InputPanel inputPanel = new InputPanel(myPCS);
         FileListPanel fileListPanel = new FileListPanel(myPCS);
         LogPanel logPanel = new LogPanel(myPCS);
 
 
-        userControls.add(controlPanel, BorderLayout.NORTH);
+        userControls.add(inputPanel, BorderLayout.NORTH);
         userControls.add(fileListPanel, BorderLayout.CENTER);
 
         framePanel.add(userControls, BorderLayout.NORTH);
