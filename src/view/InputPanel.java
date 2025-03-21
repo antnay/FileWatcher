@@ -185,7 +185,7 @@ public class InputPanel extends JPanel {
 
     /**
      * Helper method that adds functionality to the add button. Gets the input
-     * from the text fields and checkbox and sends that data to the controller.
+     * from the text fields and checkbox and sends that data to the controller so it can be added to the model.
      */
     private void setUpAddButton() {
         Map<String, String> userInput = new HashMap<>();
