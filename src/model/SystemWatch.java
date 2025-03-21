@@ -32,29 +32,71 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
+/**
+ * A file system monitoring service that watches directories for changes.
+ * Tracks file creation, modification, and deletion events and persists them to a database.
+ */
 public class SystemWatch {
 
+    /**
+     * Directory where log and database files are stored.
+     */
     private static Path LOG_DIR = Path.of(new File("database").getAbsolutePath());
 
+    /**
+     * PropertyChangeSupport for notifying listeners of events.
+     */
     private final PropertyChangeSupport myPCS;
+
+    /**
+     * Map of directory paths to their associated PathObjects.
+     */
     private final ConcurrentHashMap<Path, PathObject> myPathMap;
+
+    /**
+     * Map of directory paths to their associated WatchObjects.
+     */
     private Map<Path, WatchObject> myWatched;
+
+    /**
+     * WatchService for monitoring file system events.
+     */
     private WatchService myWatchService;
+
+    /**
+     * Executor service for running background tasks.
+     */
     private ExecutorService myExecutor;
+
+    /**
+     * Flag indicating whether the watch service is running.
+     */
     private boolean myIsRunning;
 
+    /**
+     * Constructs a SystemWatch with the specified property change support.
+     * Attempts to connect to the database.
+     *
+     * @param propertyChangeSupport The property change support used for event notifications
+     */
     public SystemWatch(PropertyChangeSupport propertyChangeSupport) {
         myWatchService = null;
         try {
             DBManager.getDBManager().connect();
         } catch (DatabaseException theE) {
-            System.err.println("Cannot connect to database " + theE.getCause());
+            System.err.println("Cannot connect to database: " + theE.getMessage());
+            theE.printStackTrace();
         }
         myIsRunning = false;
         myPCS = propertyChangeSupport;
         myPathMap = new ConcurrentHashMap<>();
     }
 
+    /**
+     * Starts the file system monitoring service.
+     *
+     * @throws IllegalStateException if the watch service is already running
+     */
     public void startWatch() {
         if (myIsRunning) {
             throw new IllegalStateException("System watch is already running");
@@ -64,8 +106,11 @@ public class SystemWatch {
             DBManager.getDBManager().clearTempTable();
             DBManager.getDBManager().clearWatchTable();
         } catch (IOException theE) {
-            // TODO Auto-generated catch block
+            System.err.println("IO error when starting watch service: " + theE.getMessage());
+            theE.printStackTrace();
         } catch (DatabaseException theE) {
+            System.err.println("Database error when starting watch service: " + theE.getMessage());
+            theE.printStackTrace();
             throw new IllegalStateException(theE.getCause());
         }
         myWatched = new ConcurrentHashMap<>();
@@ -74,6 +119,12 @@ public class SystemWatch {
         runLogger();
     }
 
+    /**
+     * Stops the file system monitoring service.
+     * Cancels all active watch keys and shuts down the executor.
+     *
+     * @throws IllegalStateException if the watch service is not running
+     */
     public void stopWatch() {
         if (!myIsRunning) {
             throw new IllegalStateException("System watch is not running");
@@ -85,11 +136,18 @@ public class SystemWatch {
                     if (wo.getWatchKeyActive()) {
                         wo.cancelWatchKey();
                     }
-                } catch (Exception e) {
-                    System.err.println("Error canceling watch key: " + e.getMessage());
+                } catch (Exception theE) {
+                    System.err.println("Error canceling watch key: " + theE.getMessage());
                 }
             }
             myWatched.clear();
+        }
+        try {
+            if (myWatchService != null) {
+                myWatchService.close();
+            }
+        } catch (IOException theE) {
+            System.err.println("Error closing watch service: " + theE.getMessage());
         }
         myWatchService = null;
         myWatched = null;
@@ -101,6 +159,11 @@ public class SystemWatch {
         System.out.println("shut down executor");
     }
 
+    /**
+     * Clears the event log in the database.
+     *
+     * @throws IllegalStateException if not connected to a database
+     */
     public void clearLog() {
         if (!DBManager.getDBManager().isConnected()) {
             throw new IllegalStateException("Not connected a database");
@@ -108,15 +171,28 @@ public class SystemWatch {
         try {
             DBManager.getDBManager().clearTempTable();
         } catch (DatabaseException theE) {
-            // TODO Auto-generated catch block
+            System.err.println("Error clearing log: " + theE.getMessage());
         }
         myPCS.firePropertyChange(ModelProperties.CLEAR_TABLE, null, null);
     }
 
+    /**
+     * Checks if the watch service is currently running.
+     *
+     * @return true if the watch service is running, false otherwise
+     */
     public boolean isRunning() {
         return myIsRunning;
     }
 
+    /**
+     * Adds a directory to the watch list with the specified file extension filter.
+     *
+     * @param theExtension      File extension to monitor (e.g., ".txt")
+     * @param theDirectory      Directory path to monitor
+     * @param theRecursivelyAdd Whether to recursively monitor subdirectories
+     * @throws IllegalArgumentException if parameters are invalid
+     */
     public void addDir(final String theExtension, final Path theDirectory, final boolean theRecursivelyAdd) {
         if (theDirectory == null) {
             throw new IllegalArgumentException("Directory is null");
@@ -144,12 +220,20 @@ public class SystemWatch {
                 try {
                     registerDirectory(theDirectory);
                 } catch (IllegalAccessException theE) {
-                    System.err.println("Could not add: " + theDirectory);
+                    System.err.println("Could not add directory: " + theDirectory);
                 }
             }
         }
     }
 
+    /**
+     * Removes a directory from the watch list.
+     *
+     * @param theExtension         File extension to stop monitoring
+     * @param theDirectory         Directory path to stop monitoring
+     * @param theRecursivelyRemove Whether to recursively remove monitoring from subdirectories
+     * @throws IllegalArgumentException if directory or extension is not being watched
+     */
     public void removeDir(final String theExtension, final Path theDirectory, final boolean theRecursivelyRemove) {
         HashSet<String> extSet = myPathMap.get(theDirectory).getExts();
         if (!myPathMap.containsKey(theDirectory)) {
@@ -171,6 +255,11 @@ public class SystemWatch {
         }
     }
 
+    /**
+     * Saves temporary events to the persistent database.
+     *
+     * @throws IllegalStateException if not connected to database
+     */
     public void saveToDB() {
         if (!DBManager.getDBManager().isConnected()) {
             throw new IllegalStateException("Not connected to database");
@@ -179,10 +268,14 @@ public class SystemWatch {
             DBManager.getDBManager().mergeTempEvents();
             DBManager.getDBManager().clearTempTable();
         } catch (DatabaseException theE) {
-            // TODO Auto-generated catch block
+            System.err.println("Error saving to database: " + theE.getMessage());
         }
     }
 
+    /**
+     * Starts the logging threads that monitor file system events.
+     * One thread registers paths and another processes events.
+     */
     private void runLogger() {
         myExecutor.submit(() -> {
             new Thread(this::registerPathMap).start();
@@ -205,7 +298,7 @@ public class SystemWatch {
                                         try {
                                             registerDirectory(path);
                                         } catch (IllegalAccessException theE) {
-                                            System.err.println("Could not add: " + path);
+                                            System.err.println("Could not add path: " + path);
                                         }
                                     }
                                 }).start();
@@ -225,7 +318,7 @@ public class SystemWatch {
                                             regEvent(event.kind().toString(), rS.getString("filename"), path);
                                         }
                                     } catch (SQLException theE) {
-                                        System.err.println("Could not create delete event");
+                                        System.err.println("Could not create delete event: " + theE.getMessage());
                                     }
                                 }
                             }
@@ -240,28 +333,31 @@ public class SystemWatch {
                     key.reset();
                 }
             } catch (InterruptedException | ClosedWatchServiceException | NullPointerException theEvent) {
+                System.err.println("Watch service interrupted or closed: " + theEvent.getMessage());
                 Thread.currentThread().interrupt();
             }
         });
     }
 
+    /**
+     * Registers all directories in the path map for watching.
+     * Creates a thread pool to register directories in parallel.
+     */
     private void registerPathMap() {
         Instant now = Instant.now();
-        // myPathList.forEach(theRoot -> registerDirTree(theRoot, false));
         try (ExecutorService regExecutor = Executors.newCachedThreadPool()) {
             myPathMap.forEach((theDirectory, myOptions) -> {
                 try {
                     registerDirectory(theDirectory);
                 } catch (Exception theE) {
-                    System.err.println("Could not add: " + theDirectory);
-                    throw new IllegalArgumentException("Could not add directory");
+                    System.err.println("Could not add directory: " + theDirectory);
+                    throw new IllegalArgumentException("Could not add directory", theE);
                 }
                 if (myOptions.isRecursive()) {
                     try (Stream<Path> stream = Files.list(theDirectory)) {
                         stream.filter(Files::isDirectory)
                                 .filter(this::checkIfSystem)
                                 .forEach(path -> regExecutor.submit(() -> {
-//                                    System.out.println(path);
                                     registerDirTree(path, false, null);
                                 }));
                     } catch (IOException e) {
@@ -269,26 +365,30 @@ public class SystemWatch {
                     }
                     regExecutor.shutdown();
                 }
-
             });
         }
         System.out.println("Time (s): " + Duration.between(now, Instant.now()).getSeconds());
-        System.out.println();
-
     }
 
+    /**
+     * Recursively registers a directory tree for watching.
+     * Adds all files to the watch database and registers all subdirectories.
+     *
+     * @param theRoot        The root directory to start from
+     * @param theIsNewEvent  Whether this is for a newly created directory
+     * @param theWatchedPath The parent watched path
+     */
     private void registerDirTree(Path theRoot, boolean theIsNewEvent, Path theWatchedPath) {
         myPCS.firePropertyChange(ModelProperties.REGISTER_START, null, null); // if gui needs to be held until done
         try {
             Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
-                // // TOO SLOW :(
                 @Override
                 public FileVisitResult visitFile(Path theCurrentPath, BasicFileAttributes theAttrs) throws IOException {
                     if (Files.isRegularFile(theCurrentPath)) {
                         try {
                             DBManager.getDBManager().addToWatch(theCurrentPath.toFile());
                         } catch (DatabaseException e) {
-                            // TODO Auto-generated catch block
+                            System.err.println("Error adding file to watch database: " + e.getMessage());
                         }
                     }
                     return FileVisitResult.CONTINUE;
@@ -323,8 +423,9 @@ public class SystemWatch {
                         System.err.println("Access denied: " + file);
                         return FileVisitResult.SKIP_SUBTREE;
                     }
+                    System.err.println("Failed to visit file: " + file + " - " + exc.getMessage());
+                    exc.printStackTrace();
                     return FileVisitResult.SKIP_SUBTREE;
-
                 }
             });
         } catch (IOException e) {
@@ -335,11 +436,15 @@ public class SystemWatch {
             myWatched.get(LOG_DIR).decrementAtomicInt();
             myWatched.remove(LOG_DIR);
         }
-        myPCS.firePropertyChange(ModelProperties.REGISTER_DONE, null, null); // if gui needs to be
-        // held until done
-
+        myPCS.firePropertyChange(ModelProperties.REGISTER_DONE, null, null);
     }
 
+    /**
+     * Registers a single directory for watching.
+     *
+     * @param thePath The directory path to register
+     * @throws IllegalAccessException If access to the directory is denied
+     */
     private void registerDirectory(final Path thePath) throws IllegalAccessException {
         handleRegisterDirectory(thePath);
         if (myWatched.containsKey(LOG_DIR)) {
@@ -348,6 +453,12 @@ public class SystemWatch {
         }
     }
 
+    /**
+     * Handles the logic for registering a directory with the watch service.
+     * Either increments the reference count or creates a new watch.
+     *
+     * @param thePath The directory path to register
+     */
     private void handleRegisterDirectory(final Path thePath) {
         if (myWatched.get(thePath) != null) {
             WatchObject wO = myWatched.get(thePath);
@@ -367,6 +478,13 @@ public class SystemWatch {
         }
     }
 
+    /**
+     * Records a file system event for non-recursive watches.
+     *
+     * @param theEvent    The event type
+     * @param theFileName The file name
+     * @param thePath     The file path
+     */
     private void regEvent(String theEvent, String theFileName, Path thePath) {
         Path directoryPath = thePath.getParent();
         if (myPathMap.get(directoryPath).getExts().contains(getExtension(theFileName))
@@ -376,18 +494,18 @@ public class SystemWatch {
                 DBManager.getDBManager().addEvent(logEvent);
                 myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
             } catch (DatabaseException theE) {
-                // TODO Auto-generated catch block
+                System.err.println("Error adding event to database: " + theE.getMessage());
             }
         }
     }
 
     /**
-     * Like regEvent but used when watch is recursive.
+     * Records a file system event for recursively watched directories.
      *
-     * @param theEvent
-     * @param theFileName
-     * @param thePath
-     * @param theRoot     is the watched directory in myPathMap
+     * @param theEvent    The event type
+     * @param theFileName The file name
+     * @param thePath     The file path
+     * @param theRoot     The root watched directory
      */
     private void regEventRecursive(String theEvent, String theFileName, Path thePath, Path theRoot) {
         PathObject pO = myPathMap.get(theRoot);
@@ -398,18 +516,30 @@ public class SystemWatch {
                 DBManager.getDBManager().addEvent(logEvent);
                 myPCS.firePropertyChange(ModelProperties.EVENT, null, logEvent);
             } catch (DatabaseException theE) {
-                System.err.println(theE.getMessage());
-                // TODO Auto-generated catch block
+                System.err.println("Error adding recursive event to database: " + theE.getMessage());
             }
         }
-
     }
 
+    /**
+     * Creates an Event object for a file system event.
+     *
+     * @param theEvent    The event type
+     * @param theFileName The file name
+     * @param thePath     The file path
+     * @return A new Event object
+     */
     private Event getEvent(String theEvent, String theFileName, Path thePath) {
         String extension = getExtension(theFileName);
         return new Event(extension, theFileName, thePath.getParent().toString(), theEvent);
     }
 
+    /**
+     * Extracts the file extension from a filename.
+     *
+     * @param theFileName The file name
+     * @return The file extension including the dot, or empty string if none
+     */
     private String getExtension(final String theFileName) {
         String extension = "";
         int i = theFileName.length() - 1;
@@ -427,6 +557,11 @@ public class SystemWatch {
         return extension;
     }
 
+    /**
+     * Recursively unregisters a directory tree from watching.
+     *
+     * @param theRoot The root directory to unregister
+     */
     private void unregisterDirectoryRecursive(Path theRoot) {
         try {
             Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
@@ -440,18 +575,25 @@ public class SystemWatch {
                             return FileVisitResult.CONTINUE;
                         }
                     } catch (ClosedWatchServiceException theE) {
+                        System.err.println("Watch service closed: " + theE.getMessage());
                         return FileVisitResult.TERMINATE;
                     } catch (SecurityException theE) {
+                        System.err.println("Security exception: " + theE.getMessage());
                         return FileVisitResult.SKIP_SUBTREE;
                     }
                     return FileVisitResult.SKIP_SUBTREE;
                 }
             });
         } catch (IOException theE) {
-            System.err.println("Could not register " + theE.getMessage());
+            System.err.println("Could not unregister directory: " + theE.getMessage());
         }
     }
 
+    /**
+     * Unregisters a single directory from watching.
+     *
+     * @param theDirectory The directory to unregister
+     */
     private void unregisterDirectory(Path theDirectory) {
         if (Files.isDirectory(theDirectory)) {
             System.err.println(theDirectory);
@@ -459,19 +601,30 @@ public class SystemWatch {
         }
     }
 
+    /**
+     * Handles the logic for unregistering a directory.
+     * Decrements the reference counter and removes if zero.
+     *
+     * @param theDirectory The directory to unregister
+     */
     private void handleUnregister(Path theDirectory) {
         if (myWatched.containsKey(theDirectory)) {
             WatchObject wO = myWatched.get(theDirectory);
             if (wO.decrementAtomicInt() == 0) {
-//                System.out.println(wO + " " + wO.getAtomicInteger().get());
                 myWatched.remove(theDirectory);
             }
         }
     }
 
+    /**
+     * Checks if a path is a system directory that should be excluded.
+     * Handles different system paths based on operating system.
+     *
+     * @param thePath The path to check
+     * @return true if the path is not a system directory, false otherwise
+     */
     private boolean checkIfSystem(Path thePath) {
         String system = System.getProperty("os.name");
-        // System.err.println("Operating system: " + system);
         if (system.contains("Mac OS")) {
             return !(thePath.toString().contains("/System"));
         }
@@ -513,69 +666,165 @@ public class SystemWatch {
         myPCS.removePropertyChangeListener(theListener);
     }
 
+    /**
+     * Helper class that stores path-related data including extensions and reference counting.
+     */
     private static class PathObject {
+        /**
+         * Reference counter for this path.
+         */
         private final AtomicInteger myAtomicInteger;
+
+        /**
+         * Set of file extensions to watch.
+         */
         private HashSet<String> myExts;
+
+        /**
+         * Flag indicating whether to watch subdirectories recursively.
+         */
         private boolean myRecursive;
 
+        /**
+         * Constructs a PathObject.
+         *
+         * @param theSet           Set of file extensions to watch
+         * @param theAtomicInteger Reference counter
+         * @param theIsRecursive   Whether to watch subdirectories
+         */
         private PathObject(HashSet<String> theSet, AtomicInteger theAtomicInteger, boolean theIsRecursive) {
             myExts = theSet;
             myAtomicInteger = theAtomicInteger;
             myRecursive = true;
         }
 
+        /**
+         * Gets the set of watched file extensions.
+         *
+         * @return Set of file extensions
+         */
         private HashSet<String> getExts() {
             return myExts;
         }
 
+        /**
+         * Gets the reference counter.
+         *
+         * @return The atomic integer reference counter
+         */
         private AtomicInteger getAtomicInteger() {
             return myAtomicInteger;
         }
 
+        /**
+         * Adds a file extension to watch.
+         *
+         * @param theExt File extension to add
+         */
         private void addExt(String theExt) {
             myExts.add(theExt);
         }
 
+        /**
+         * Removes a file extension from watch.
+         *
+         * @param theExt File extension to remove
+         */
         private void removeExt(String theExt) {
             myExts.remove(theExt);
         }
 
+        /**
+         * Increments the reference counter.
+         *
+         * @return The new counter value
+         */
         private int incrementAtomicInt() {
             return myAtomicInteger.incrementAndGet();
         }
 
+        /**
+         * Decrements the reference counter.
+         *
+         * @return The new counter value
+         */
         private int decrementAtomicInt() {
             return myAtomicInteger.decrementAndGet();
         }
 
+        /**
+         * Checks if this path is watched recursively.
+         *
+         * @return true if watched recursively, false otherwise
+         */
         private boolean isRecursive() {
             return myRecursive;
         }
     }
 
+    /**
+     * Helper class that stores watch-related data including WatchKey and reference counting.
+     */
     private static class WatchObject {
+        /**
+         * Reference counter for this watch.
+         */
         private final AtomicInteger myAtomicInteger;
+
+        /**
+         * WatchKey for the directory.
+         */
         private WatchKey myWatchKey;
+
+        /**
+         * Flag indicating whether the WatchKey is active.
+         */
         private boolean myWatchKeyActive;
 
+        /**
+         * Constructs a WatchObject.
+         *
+         * @param theWK            WatchKey for the directory
+         * @param theAtomicInteger Reference counter
+         */
         private WatchObject(WatchKey theWK, AtomicInteger theAtomicInteger) {
             myWatchKey = theWK;
             myAtomicInteger = theAtomicInteger;
             myWatchKeyActive = true;
         }
 
+        /**
+         * Gets the WatchKey.
+         *
+         * @return The WatchKey
+         */
         private WatchKey getWatchKey() {
             return myWatchKey;
         }
 
+        /**
+         * Gets the reference counter.
+         *
+         * @return The atomic integer reference counter
+         */
         private AtomicInteger getAtomicInteger() {
             return myAtomicInteger;
         }
 
+        /**
+         * Checks if the WatchKey is active.
+         *
+         * @return true if active, false otherwise
+         */
         private boolean getWatchKeyActive() {
             return myWatchKeyActive;
         }
 
+        /**
+         * Cancels the WatchKey.
+         *
+         * @throws IllegalStateException if the WatchKey is not active
+         */
         private void cancelWatchKey() {
             if (!myWatchKeyActive) {
                 throw new IllegalStateException("Cannot cancel inactive watchkey");
@@ -585,10 +834,20 @@ public class SystemWatch {
             myWatchKey = null;
         }
 
+        /**
+         * Increments the reference counter.
+         *
+         * @return The new counter value
+         */
         private int incrementAtomicInt() {
             return myAtomicInteger.incrementAndGet();
         }
 
+        /**
+         * Decrements the reference counter and cancels WatchKey if zero.
+         *
+         * @return The new counter value
+         */
         private int decrementAtomicInt() {
             int val = myAtomicInteger.decrementAndGet();
             if (val == 0) {
@@ -597,5 +856,4 @@ public class SystemWatch {
             return val;
         }
     }
-
 }
