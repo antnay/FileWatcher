@@ -1,6 +1,7 @@
 package model;
 
-import javax.annotation.Nonnull;
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import javax.swing.table.DefaultTableModel;
 import java.util.Vector;
 
@@ -23,7 +24,7 @@ public class LogListModel extends DefaultTableModel {
      * @param theRowData the data of the row being added
      */
     @Override
-    public void addRow(@Nonnull final Object[] theRowData) {
+    public void addRow(@NonNull final Object[] theRowData) {
         super.addRow(theRowData);
     }
 

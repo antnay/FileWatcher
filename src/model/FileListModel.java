@@ -1,6 +1,7 @@
 package model;
 
-import javax.annotation.Nonnull;
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import javax.swing.table.DefaultTableModel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,7 +50,7 @@ public class FileListModel extends DefaultTableModel {
      * @param theRowData the data of the row being added
      */
     @Override
-    public void addRow(@Nonnull final Object[] theRowData) {
+    public void addRow(@NonNull final Object[] theRowData) {
         if (theRowData.length == 3) {
             if (isRowDataValid(theRowData[0].toString(), theRowData[1].toString())) {
                 super.addRow(theRowData);
