@@ -25,10 +25,9 @@ public class FileListPanel extends JPanel implements PropertyChangeListener {
         myJTable = new JTable(empty2DStringArray, FileListModel.COLUMN_HEADER_ARRAY);
         myJTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // sets width of last column to be smaller but changes back to normal when entry is added idk why
-        // myJTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-        // TableColumn column = myJTable.getColumnModel().getColumn(2);
-        // column.setMaxWidth(SMALL_COLUMN_WIDTH);
+        // sets width of last column to be smaller
+        myJTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        myJTable.getColumnModel().getColumn(2).setMaxWidth(SMALL_COLUMN_WIDTH);
 
         myPcs = thePcs;
         myPcs.addPropertyChangeListener(this);
@@ -75,6 +74,10 @@ public class FileListPanel extends JPanel implements PropertyChangeListener {
     public void propertyChange(final PropertyChangeEvent theEvent) {
         if (theEvent.getPropertyName().equals(ModelProperties.FILE_LIST_MODEL_UPDATED)) {
             myJTable.setModel((TableModel) theEvent.getNewValue());
+
+            // maintain the size of the columns when getting the new model
+            myJTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+            myJTable.getColumnModel().getColumn(2).setMaxWidth(SMALL_COLUMN_WIDTH);
         }
     }
 }
