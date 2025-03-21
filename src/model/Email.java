@@ -48,24 +48,28 @@ import static javax.mail.Message.RecipientType.TO;
 
 class Email {
 
-    private Gmail service;
+    private Gmail myService;
 
     /**
-     * Initializes Gmail API service.
+     * Initializes Gmail API service and sets up authentication.
      */
     public Email() {
         try {
-            NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-            GsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-            service = new Gmail.Builder(httpTransport, jsonFactory, getCredentials(httpTransport, jsonFactory))
+            NetHttpTransport theHttpTransport = GoogleNetHttpTransport.newTrustedTransport();
+            GsonFactory theJsonFactory = GsonFactory.getDefaultInstance();
+            myService = new Gmail.Builder(theHttpTransport, theJsonFactory, getCredentials(theHttpTransport, theJsonFactory))
                     .setApplicationName("File Watcher Email")
                     .build();
         } catch (GeneralSecurityException | IOException e) {
             System.err.println("Error initializing Gmail API: " + e.getMessage());
-            service = null;
+            myService = null;
         }
     }
 
+    /**
+     * It checks if the Google credentials file exists.
+     * @return true, if the file exists, otherwise, it returns false.
+     */
     static boolean gCheck() {
         String credentialsPath = "";
         try {
@@ -82,9 +86,13 @@ class Email {
     }
 
     /**
-     * Gets authorized Gmail credentials.
+     * Gets Gmail API credentials.
+     *
+     * @param theHttpTransport HTTP transport.
+     * @param theJsonFactory JSON factory for API processing.
+     * @return object for Gmail authentication.
      */
-    private Credential getCredentials(final NetHttpTransport httpTransport, GsonFactory jsonFactory) {
+    private Credential getCredentials(final NetHttpTransport theHttpTransport, GsonFactory theJsonFactory) {
         String credentialsPath = "";
         try {
             credentialsPath = Dotenv.load().get("GOOGLE_APPLICATION_CREDENTIALS", "config/credentials.json");
@@ -98,11 +106,11 @@ class Email {
                 throw new FileNotFoundException("Error: Credentials file not found at " + credentialsPath);
             }
 
-            GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(jsonFactory,
+            GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(theJsonFactory,
                     new FileReader(credentialsFile));
 
             GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                    httpTransport, jsonFactory, clientSecrets, Set.of(GmailScopes.GMAIL_COMPOSE))
+                     theHttpTransport, theJsonFactory, clientSecrets, Set.of(GmailScopes.GMAIL_COMPOSE))
                     .setDataStoreFactory(new FileDataStoreFactory(Paths.get("token").toFile()))
                     .setAccessType("offline")
                     .build();
@@ -117,11 +125,13 @@ class Email {
     }
 
     /**
-     * Retrieves the authenticated user's email from Gmail API.
+     * Gets the authenticated user's email address.
+     *
+     * @return The user's email or "unknown_user@gmail.com" if an error occurs.
      */
     private String getAuthenticatedUserEmail() {
         try {
-            return service.users().getProfile("me").execute().getEmailAddress();
+            return myService.users().getProfile("me").execute().getEmailAddress();
         } catch (IOException e) {
             System.err.println("Error fetching authenticated email: " + e.getMessage());
             return "unknown_user@gmail.com";
@@ -129,16 +139,19 @@ class Email {
     }
 
     /**
-     * Creates a Gmail draft with the CSV file attached.
+     * It sends an email with a log file attachment by creating a Gmail draft.
+     *
+     * @param theRecipientEmail Recipient's email address.
+     * @param theAttachment File to attach.
      */
-    public void sendEmailWithLogFile(String recipientEmail, File attachment) {
-        if (service == null) {
+    public void sendEmailWithLogFile(String theRecipientEmail, File theAttachment) {
+        if (myService == null) {
             System.err.println("Error: Gmail service not initialized. Check authentication.");
             return;
         }
         try {
             String senderEmail = getAuthenticatedUserEmail();
-            MimeMessage email = createMimeMessage(senderEmail, recipientEmail, attachment);
+            MimeMessage email = createMimeMessage(senderEmail, theRecipientEmail, theAttachment);
             Message message = createDraftMessage(email);
             if (message != null) {
                 openGmailWithDraft(message.getId());
@@ -151,9 +164,16 @@ class Email {
     }
 
     /**
-     * Creates a MIME message with an attachment.
+     * Creates an email with an attachment.
+     *
+     * @param theFromEmail Sender's email.
+     * @param theToEmail Recipient's email.
+     * @param theFile File to attach.
+     * @return A MimeMessage object.
+     * @throws MessagingException If an error occurs while creating the email.
+     * @throws IOException If an error occurs reading the file.
      */
-    private MimeMessage createMimeMessage(String fromEmail, String toEmail, File file)
+    private MimeMessage createMimeMessage(String theFromEmail, String theToEmail, File theFile)
             throws MessagingException, IOException {
 
         String subject = "File Watcher Log";
@@ -166,20 +186,20 @@ class Email {
         Properties props = new Properties();
         Session session = Session.getDefaultInstance(props, null);
         MimeMessage email = new MimeMessage(session);
-        email.setFrom(new InternetAddress(fromEmail));
-        email.addRecipient(TO, new InternetAddress(toEmail));
+        email.setFrom(new InternetAddress(theFromEmail));
+        email.addRecipient(TO, new InternetAddress(theToEmail));
         email.setSubject(subject);
 
         MimeBodyPart textPart = new MimeBodyPart();
         textPart.setText(bodyText, "utf-8");
 
         MimeBodyPart filePart = new MimeBodyPart();
-        if (file.length() == 0) {
+        if (theFile.length() == 0) {
             System.out.println("Empty File.");
         }
-        DataSource source = new FileDataSource(file);
+        DataSource source = new FileDataSource(theFile);
         filePart.setDataHandler(new DataHandler(source));
-        filePart.setFileName(file.getName());
+        filePart.setFileName(theFile.getName());
 
         Multipart multipart = new MimeMultipart();
         multipart.addBodyPart(textPart);
@@ -191,10 +211,15 @@ class Email {
 
     /**
      * Creates a Gmail draft message.
+     *
+     * @param theEmail The email content that will be stored as a draft.
+     * @return The created draft message.
+     * @throws IOException If an error occurs while saving the draft.
+     * @throws MessagingException If an error occurs creating the message.
      */
-    private Message createDraftMessage(MimeMessage email) throws IOException, MessagingException {
+    private Message createDraftMessage(MimeMessage theEmail) throws IOException, MessagingException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        email.writeTo(buffer);
+        theEmail.writeTo(buffer);
         byte[] rawMessageBytes = buffer.toByteArray();
         String encodedEmail = Base64.encodeBase64URLSafeString(rawMessageBytes);
         Message message = new Message();
@@ -204,7 +229,7 @@ class Email {
         draft.setMessage(message);
 
         try {
-            draft = service.users().drafts().create("me", draft).execute();
+            draft = myService.users().drafts().create("me", draft).execute();
             // System.out.println("Draft created with ID: " + draft.getId());
             return draft.getMessage();
         } catch (GoogleJsonResponseException e) {
@@ -216,10 +241,12 @@ class Email {
 
     /**
      * Opens Gmail in a browser with the draft loaded.
+     *
+     * @param theDraftId The unique ID of the draft to open.
      */
-    private void openGmailWithDraft(String draftId) {
+    private void openGmailWithDraft(String theDraftId) {
         try {
-            String url = "https://mail.google.com/mail/u/0/#drafts?compose=" + draftId;
+            String url = "https://mail.google.com/mail/u/0/#drafts?compose=" + theDraftId;
             Desktop.getDesktop().browse(new URI(url));
             // System.out.println("Opened Gmail with draft.");
         } catch (Exception e) {

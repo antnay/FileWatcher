@@ -28,7 +28,7 @@ bin/
 ### Mac OS ###
 .DS_Store
 
-resources/
+library/
 src/.env
 
 database/*
