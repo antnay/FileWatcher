@@ -1,6 +1,6 @@
 package model;
 
-import javax.annotation.Nonnull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -173,7 +173,17 @@ public class SystemWatch {
         } catch (DatabaseException theE) {
             System.err.println("Error clearing log: " + theE.getMessage());
         }
-        myPCS.firePropertyChange(ModelProperties.CLEAR_TABLE, null, null);
+    }
+
+    public void clearDatabase() {
+        if (!DBManager.getDBManager().isConnected()) {
+            throw new IllegalStateException("Not connected a database");
+        }
+        try {
+            DBManager.getDBManager().clearTable();
+        } catch (DatabaseException theE) {
+            // TODO Auto-generated catch block
+        }
     }
 
     /**
@@ -367,7 +377,7 @@ public class SystemWatch {
                 }
             });
         }
-        System.out.println("Time (s): " + Duration.between(now, Instant.now()).getSeconds());
+        //System.out.println("Time (s): " + Duration.between(now, Instant.now()).getSeconds());
     }
 
     /**
@@ -565,7 +575,7 @@ public class SystemWatch {
     private void unregisterDirectoryRecursive(Path theRoot) {
         try {
             Files.walkFileTree(theRoot, new SimpleFileVisitor<Path>() {
-                @Nonnull
+                @NonNull
                 public FileVisitResult preVisitDirectory(Path theCurrentDir, BasicFileAttributes attrs) {
                     try {
                         if (Files.isSymbolicLink(theCurrentDir)) {

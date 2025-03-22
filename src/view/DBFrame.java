@@ -12,7 +12,6 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
-import model.FileListModel;
 import model.ModelProperties;
 
 import java.awt.BorderLayout;
@@ -26,27 +25,84 @@ import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeSupport;
-import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Objects;
 
+/**
+ * A window that allows users to query the database. Also allows users to send
+ * an email of a .csv file representing the query results.
+ */
 public class DBFrame extends JFrame {
 
-    private static String DATE_PLACE_HOLDER = "yyyy-mm-dd";
+    /**
+     * Constant string to use as placeholder text for date query input field to show expected format.
+     */
+    private final static String DATE_PLACE_HOLDER = "yyyy-mm-dd";
+
+    /**
+     * <code>PropertyChangeSupport</code> for notifying listeners of events.
+     */
     private final PropertyChangeSupport myPCS;
+
+    /**
+     * The JTable displayed in this panel.
+     */
     private JTable mySearchTable;
-    private JTextField myExtensionField;
+
+    /**
+     * JButton to let users submit the query criteria and search the database.
+     */
     private JButton mySubmitButton;
+
+    /**
+     * JButton to let users email a .csv representation of the query results.
+     */
     private JButton myExportButton;
-    private JTextField myPathField;
+
+    /**
+     * JTextField to let users query for a specific file name.
+     */
     private JTextField myFileField;
-    private JTextField myDateStartField;
-    private JTextField myDateEndField;
-    private JTextField myEmailField;
+
+    /**
+     * JComboBox to let users query for a specific file extension. Provides a small list of extensions.
+     */
+    private JComboBox<String> myExtensionField;
+
+    /**
+     * JTextField to let users query for a specific path.
+     */
+    private JTextField myPathField;
+
+    /**
+     * JComboBox to let users query for a specific file change event. Provides a list of file change events.
+     */
     private JComboBox<String> myEventField;
 
-    public DBFrame(PropertyChangeSupport pcs) {
-        this.myPCS = pcs;
+    /**
+     * JTextField to let users query for entries after a specific date.
+     */
+    private JTextField myDateStartField;
+
+    /**
+     * JTextField to let users query for entries before a specific date.
+     */
+    private JTextField myDateEndField;
+
+    /**
+     * JTextField to let users provide an email address to send the .csv file to.
+     */
+    private JTextField myEmailField;
+
+    /**
+     * Constructs a window that allows the user to query the database
+     * and send the query results as a .csv file through email.
+     *
+     * @param thePcs The <code>PropertyChangeSupport</code> that this listener should be added to.
+     */
+    public DBFrame(final PropertyChangeSupport thePcs) {
+        this.myPCS = thePcs;
         setTitle("Database Search");
         setSize(900, 600);
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -61,6 +117,9 @@ public class DBFrame extends JFrame {
         });
     }
 
+    /**
+     * Helper method to set up the input fields and buttons to allow the user to query the database.
+     */
     private void setUIComponents() {
         JPanel queryPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -78,10 +137,18 @@ public class DBFrame extends JFrame {
         queryPanel.add(myFileField, gbc);
         gbc.gridy++;
 
+        String[] commonExtensions = {
+                ".txt",
+                ".exe",
+                ".jar"
+        };
+
         JLabel extensionLabel = new JLabel("Extension:");
         queryPanel.add(extensionLabel, gbc);
         gbc.gridy++;
-        myExtensionField = new JTextField(15);
+        myExtensionField = new JComboBox<>(commonExtensions);
+        myExtensionField.setEditable(true);
+        myExtensionField.setSelectedItem(""); // default selection is blank instead of first option in menu
         queryPanel.add(myExtensionField, gbc);
         gbc.gridy++;
 
@@ -173,10 +240,13 @@ public class DBFrame extends JFrame {
         add(tableScrollPane, BorderLayout.CENTER);
     }
 
+    /**
+     * Helper method to get the data from the input fields and run the query against the database.
+     */
     private void runSearchQuery() {
         String[] queries = new String[6];
         String filename = myFileField.getText().trim();
-        String extension = myExtensionField.getText().trim();
+        String extension = Objects.requireNonNull(myExtensionField.getSelectedItem()).toString().trim();
         String path = myPathField.getText().trim();
         String event = String.valueOf(myEventField.getSelectedItem());
         String startDate = myDateStartField.getText().trim();
@@ -191,37 +261,55 @@ public class DBFrame extends JFrame {
         myPCS.firePropertyChange(ViewProperties.DB_QUERY, null, queries);
     }
 
-    public void updateTable(DefaultTableModel tableModel) {
+    /**
+     * Helper method to display the query results to the table
+     * and enable the email export button when appropriate.
+     *
+     * @param tableModel The <code>DefaultTableModel</code> to display in the table.
+     */
+    private void updateTable(DefaultTableModel tableModel) {
         mySearchTable.setModel(tableModel);
         checkForInput();
     }
 
-    private void addPlaceholder(JTextField textField) {
-        textField.setText(DATE_PLACE_HOLDER);
-        textField.setForeground(Color.GRAY);
-        textField.addFocusListener(new FocusListener() {
+    /**
+     * Helper method that adds placeholder text to the given <code>JTextField</code>.
+     * Text will only be visible when there is no text in the field and it does not have focus.
+     *
+     * @param theTextField The <code>JTextField</code> to add placeholder text to.
+     */
+    private void addPlaceholder(final JTextField theTextField) {
+        theTextField.setText(DATE_PLACE_HOLDER);
+        theTextField.setForeground(Color.GRAY);
+        theTextField.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent theE) {
-                if (textField.getText().equals(DATE_PLACE_HOLDER)) {
-                    textField.setText("");
-                    textField.setForeground(Color.BLACK);
+                if (theTextField.getText().equals(DATE_PLACE_HOLDER)) {
+                    theTextField.setText("");
+                    theTextField.setForeground(Color.BLACK);
                 }
             }
 
             @Override
             public void focusLost(FocusEvent theE) {
-                String text = textField.getText().trim();
+                String text = theTextField.getText().trim();
                 if (text.isEmpty()) {
-                    textField.setText(DATE_PLACE_HOLDER);
-                    textField.setForeground(Color.GRAY);
+                    theTextField.setText(DATE_PLACE_HOLDER);
+                    theTextField.setForeground(Color.GRAY);
                 } else if (!isValidDate(text)) {
-                    textField.setText("");
-                    textField.setForeground(Color.BLACK);
+                    theTextField.setText("");
+                    theTextField.setForeground(Color.BLACK);
                 }
             }
         });
     }
 
+    /**
+     * Helper method to validate that the date input is in the expected format yyyy-mm-dd.
+     *
+     * @param date The input to validate is in the expected date format.
+     * @return <code>true</code> if the given string can be parsed as a simple date format, <code>false</code> otherwise.
+     */
     private boolean isValidDate(String date) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         sdf.setLenient(false);
@@ -233,11 +321,20 @@ public class DBFrame extends JFrame {
         }
     }
 
+    /**
+     * Helper method to add functionality to the export button.
+     */
     private void export() {
         myPCS.firePropertyChange(ViewProperties.EMAIL, null, myEmailField.getText().strip());
     }
 
-    private KeyAdapter addListeners(JButton theButton) {
+    /**
+     * Helper method to create a KeyAdapter to map an "Enter" key press to a button click.
+     *
+     * @param theButton The <code>JButton</code> to click when "Enter" is pressed.
+     * @return A KeyAdapter for the given button that will listen for the "Enter" key to be pressed.
+     */
+    private KeyAdapter addListeners(final JButton theButton) {
         return new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -248,24 +345,45 @@ public class DBFrame extends JFrame {
         };
     }
 
+    /**
+     * Helper method to check that there is input in the email field and enabling the export button as appropriate.
+     */
     private void checkForInput() {
         String email = myEmailField.getText().strip();
         myExportButton.setEnabled(!email.isEmpty() && mySearchTable.getRowCount() != 0);
     }
 
+    /**
+     * Inner class to allow reuse of document listener properties for both input fields.
+     */
     private class InputDocumentListener implements DocumentListener {
+        /**
+         * Gives a notification that something was inserted into the field.
+         *
+         * @param theE the document event
+         */
         @Override
-        public void insertUpdate(DocumentEvent e) {
+        public void insertUpdate(final DocumentEvent theE) {
             checkForInput();
         }
 
+        /**
+         * Gives a notification that something was removed from the field.
+         *
+         * @param theE the document event
+         */
         @Override
-        public void removeUpdate(DocumentEvent e) {
+        public void removeUpdate(final DocumentEvent theE) {
             checkForInput();
         }
 
+        /**
+         * Gives a notification that an attribute of the field changed.
+         *
+         * @param theE the document event
+         */
         @Override
-        public void changedUpdate(DocumentEvent e) {
+        public void changedUpdate(final DocumentEvent theE) {
             checkForInput();
         }
     }
